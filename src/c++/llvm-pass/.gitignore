@@ -1,0 +1,6 @@
+Release-build/*
+Debug-build/*
+config
+*.bc
+*.o
+*.ll
