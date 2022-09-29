@@ -3,6 +3,7 @@
 #include "SVF-FE/PAGBuilder.h"
 #include "PreProcessor.h"
 #include "RustifyUtils.h"
+#include "ValueCostAnalysis.h"
 
 #ifndef FunctionCostAnalysis_H_
 #define FunctionCostAnalysis_H_
@@ -95,6 +96,10 @@ public:
 
     void analyze(std::unordered_set<llvm::Function*>&);
 
+    void analyzeInst(llvm::Instruction*, std::unordered_set<llvm::Function*>&);
+
+    void getInstValues(llvm::Instruction*, std::unordered_set<llvm::Value*>&);
+
     void analyzeCall(llvm::CallInst*, std::unordered_set<llvm::Function*>&);
 
     void analyzeArgs(void);
@@ -110,6 +115,8 @@ public:
     TypeIntPair getTupleFromGep(llvm::GetElementPtrInst*);
 
     void analyzePtrArith(llvm::Instruction*);
+
+    void addAddrTakenValue(llvm::Value*, llvm::Value*);
 
     int getScore(void) {
         return rustifyScore;
@@ -143,6 +150,16 @@ public:
         return useStFuncs;
     }
 
+    std::unordered_set<llvm::Type*>& getArgTypes(void) {
+        return argTypes;
+    }
+
+    ValueCostAnalysis* getValue(llvm::Value*, llvm::Instruction*);
+
+    bool isComplex(void) {
+        return isComplex_;
+    }
+
 private:
 
     /// the function which this cost analysis represents
@@ -169,6 +186,9 @@ private:
     /// keep arg type in map (struct or not)
     std::unordered_map<llvm::Argument*, bool> argIsStType;
 
+    /// keep arg types in set
+    std::unordered_set<llvm::Type*> argTypes;
+
     /// set of struct type and field tuples which must be mutable (written to) in this function
     std::map<TypeIntPair, std::unordered_set<llvm::Function*>> stFieldMutFuncs;
 
@@ -187,8 +207,37 @@ private:
     /// all functions which need access to a struct
     std::unordered_set<llvm::Function*> useStFuncs;
 
+    /// we bind each llvm::Value to a Rustify::ValueCostAnalysis object
+    std::unordered_map<llvm::Value*, ValueCostAnalysis*> valueCosts;
+
     /// keep score of rustifying this function
     int rustifyScore = 0;
+
+    /// instead of score should we switch to simple/complex? score seems arbitrary
+    bool isComplex_ = false;
+
+    /// special cases: functions modifies collection objects implemented by the target itself (list, vector, ...)
+    bool isCollectionRelated = false;
+
+    /// special cases: does string operations
+    bool isStringRelated = false;
+    bool hasCharPtrArg = false;
+
+    /// has address taken variable, either passes to another function, returns addr or just stores in ptr
+    /// this makes the analysis complex because we must assume when the addr is taken it becomes
+    /// a mutable borrow which will restrict the rest of the code
+    bool hasAddrTaken = false;
+
+    /// has void* passed to it
+    /// void* is typically used as a means of doing polymorphism, it needs a more
+    /// in-depth analysis to identify its patterns and for now we will consider these cases as complex
+    bool hasVoidPtrArg = false;
+
+    /// accessing global variables is an unsafe procedure
+    /// for now if a global variable is accessed in a function we will consider it as complex
+    /// we will refine our analysis by considering places where a global variable is modified
+    /// and see if it can be converted to a local variable passed through function arguments
+    bool hasGlobalVar = false;
 
     /// how many CVEs have been associated with this function in the past?
     int cveCount = 0;

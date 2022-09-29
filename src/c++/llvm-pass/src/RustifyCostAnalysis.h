@@ -38,6 +38,9 @@ public:
     void addToMap(FunctionCostAnalysis*);
 
     void printStFieldComplexity(void);
+
+    void printAllArgTypeStrs(void);
+
 private:
 
     /// the module we are running our analysis against
@@ -67,6 +70,9 @@ private:
 
     std::unordered_set<llvm::Function*> allMutStFuncs, allUseStFuncs;   
 
+    std::unordered_set<llvm::Type*> allArgTypes;
+
+    std::unordered_set<std::string> allArgTypeStrs;
 
 };
 

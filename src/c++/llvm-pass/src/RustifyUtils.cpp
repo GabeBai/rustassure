@@ -233,6 +233,18 @@ int Rustify::getCmpInstOperator(llvm::CmpInst *cmpInst){
     return -1;
 }
 
+bool Rustify::isCharPtrType(Type *type) {
+    if ( !SVFUtil::isa<PointerType>(type) )
+        return false;
+    return getBaseType(type)->isIntegerTy(CHARLEN);
+}
+
+bool Rustify::isVoidPtrType(Type *type) {
+    if ( !SVFUtil::isa<PointerType>(type) )
+        return false;
+    return getBaseType(type)->isIntegerTy(PTRLEN);
+}
+
 bool Rustify::isIntType(Value *value){
     assert(value != nullptr &&
             "isIntType called for nullptr value!");

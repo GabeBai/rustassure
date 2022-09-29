@@ -82,6 +82,8 @@ public:
         }
     };
 
+    void performDfa(llvm::Value*);
+
     std::string toString(void) const;
 
     void extractReachableFuncs(void);

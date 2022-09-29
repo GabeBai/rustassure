@@ -26,11 +26,58 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
     for ( inst_iterator I = inst_begin(function), E = inst_end(function);
                                 I != E; ++I ){
         Instruction* inst = &*I;
-        if ( SVFUtil::isa<CallInst>(inst) )
-            analyzeCall(SVFUtil::dyn_cast<CallInst>(inst), rustifiedFuncs);
+        analyzeInst(inst, rustifiedFuncs);
+    }
+
+    isComplex_ = isCollectionRelated | 
+                    isStringRelated | 
+                    hasCharPtrArg |
+                    hasVoidPtrArg |
+                    hasGlobalVar;
+    MyLogger(logDEBUG) << "Func: " << function->getName() << " isComplex: " << isComplex_ << "\n";
+}
+
+void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llvm::Function*>& rustifiedFuncs) {
+    std::unordered_set<Value*> instValues;
+    getInstValues(inst, instValues);
+    if ( SVFUtil::isa<CallInst>(inst) )
+        analyzeCall(SVFUtil::dyn_cast<CallInst>(inst), rustifiedFuncs);
+    for ( auto value : instValues ) {
+        ValueCostAnalysis *valueCost = getValue(value, inst);
+        hasAddrTaken = valueCost->isAddrTaken();
+        hasGlobalVar = valueCost->isGlobalVar();
     }
 }
 
+void FunctionCostAnalysis::getInstValues(Instruction *inst, 
+                                        std::unordered_set<Value*>& values) {
+    if ( SVFUtil::isa<StoreInst>(inst) ) {
+        StoreInst *stInst = SVFUtil::dyn_cast<StoreInst>(inst);
+        values.insert(stInst->getValueOperand());
+    } else if ( SVFUtil::isa<CallInst>(inst) ) {
+        CallInst *callInst = SVFUtil::dyn_cast<CallInst>(inst);
+        for ( int i = 0; i < callInst->arg_size(); i++ )
+            values.insert(callInst->getArgOperand(i));
+    } else if ( SVFUtil::isa<ReturnInst>(inst) ) {
+        ReturnInst *retInst = SVFUtil::dyn_cast<ReturnInst>(inst);
+        if ( retInst->getReturnValue() )
+            values.insert(retInst->getReturnValue());
+    }
+}
+
+void FunctionCostAnalysis::analyzePtrArith(Instruction* inst) {
+
+}
+
+/*
+ * analyzeCall
+ * Each call instruction is analyzed to identify the complexity of this function
+ * 
+ * Indirect call -> complex
+ * Call to another function -> 
+ * Call to another library ->
+ * Call to another libc ->
+*/
 void FunctionCostAnalysis::analyzeCall(CallInst* callInst, 
                             std::unordered_set<llvm::Function*>& rustifiedFuncs) {
     if ( callInst->isIndirectCall() ) {
@@ -39,7 +86,7 @@ void FunctionCostAnalysis::analyzeCall(CallInst* callInst,
     }
     Function* callee = getDirectCallee(callInst);
     if ( !callee ) {
-        MyLogger(logDEBUG) << "direct callee isn't valid: " << getValueString(callInst) << "\n";
+        //MyLogger(logDEBUG) << "direct callee isn't valid: " << getValueString(callInst) << "\n";
         return;
     }
 
@@ -57,10 +104,24 @@ void FunctionCostAnalysis::analyzeCall(CallInst* callInst,
 
 }
 
+/*
+ * analyzeArgs
+ * Analyze argument types of this function to identify argument types
+*/
 void FunctionCostAnalysis::analyzeArgs(void) {
     for ( int i = 0; i < function->arg_size(); ++i ) {
         Argument* arg = function->getArg(i);
         Type* origArgType = arg->getType();
+
+        /// does the function have a char* arg type?
+        if ( isCharPtrType(origArgType) )
+            hasCharPtrArg = true;
+
+        /// does the function have a void* arg type?
+        if ( isVoidPtrType(origArgType) )
+            hasVoidPtrArg = true;
+
+        argTypes.insert(origArgType);
         Type* argType = getBaseType(arg->getType());
         if ( argType->isStructTy() ) {
             hasStructArg = true;
@@ -73,6 +134,21 @@ void FunctionCostAnalysis::analyzeArgs(void) {
             argIsStType[arg] = false;
     }
 }
+
+ValueCostAnalysis* FunctionCostAnalysis::getValue(Value *value, Instruction *inst) {
+    if ( valueCosts.find(value) == valueCosts.end() ) {
+        ValueCostAnalysis *valueCost = 
+            new ValueCostAnalysis(value, inst, function, preProcessor);
+        valueCosts[value] = valueCost;
+        return valueCost;
+    }
+    return valueCosts[value];
+}
+
+void FunctionCostAnalysis::addAddrTakenValue(Value *addrTakenVal, Value *addrTakenPlace) {
+    // TODO do we need this?
+}
+
 
 /*
  * everything in this class is intra-procedural, focusing only on a single function
@@ -95,7 +171,8 @@ void FunctionCostAnalysis::findReadAndWrites(Argument* arg) {
     std::vector<Value*> visitedList;
     Value* argOnStack = findInitialArgOnStack(arg, visitedList);
 
-    workStack.push(std::make_tuple(argOnStack, nullptr, nullptr));
+    if ( argOnStack )
+        workStack.push(std::make_tuple(argOnStack, nullptr, nullptr));
 
     while ( !workStack.empty() ) {
         Value* work = std::get<0>(workStack.top());
@@ -152,8 +229,7 @@ void FunctionCostAnalysis::findReadAndWrites(Argument* arg) {
                    }
                } else {
                    Value* argOnStack = findArgOnStack(parent, CI, visitedList);
-
-                   if (std::find(visitedList.begin(), visitedList.end(), argOnStack) == visitedList.end()) {
+                   if (argOnStack && std::find(visitedList.begin(), visitedList.end(), argOnStack) == visitedList.end()) {
                        workStack.push(std::make_tuple(argOnStack, work, parentGep));
                    }
                }
@@ -242,6 +318,10 @@ Value* FunctionCostAnalysis::findInitialArgOnStack(Argument* arg,
             }
         }
     }
+
+    if ( stInst == nullptr )
+        return NULL;
+
     assert(stInst && "Argument not stored on stack?!");
     visitedList.push_back(stInst);
 
@@ -315,10 +395,6 @@ Value* FunctionCostAnalysis::findArgOnStack(Value* operand, CallInst* CI, std::v
     }
     */
     return stackObj;
-}
-
-void FunctionCostAnalysis::analyzePtrArith(Instruction* inst) {
-
 }
 
 void FunctionCostAnalysis::calculateScore(void) {

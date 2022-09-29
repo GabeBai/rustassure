@@ -4,6 +4,8 @@
 #ifndef RustifyUtil_H_
 #define RustifyUtil_H_
 
+#define PTRLEN 8
+#define CHARLEN 1
 
 namespace Rustify
 {
@@ -66,6 +68,10 @@ namespace Rustify
                      std::map<std::string, llvm::StructType*>& structEqMap);
 
     int getCmpInstOperator(llvm::CmpInst *cmpInst);
+
+    bool isCharPtrType(llvm::Type*);
+
+    bool isVoidPtrType(llvm::Type*);
 
     bool isConstant(llvm::Value*);
 
