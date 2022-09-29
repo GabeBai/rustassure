@@ -15,5 +15,6 @@ while read line; do
     val=$(echo $line|tr '\n' ' ')
     filename=$(basename $val)
     echo "running Rustifer for $val"
-   ./Debug-build/bin/rustifier -libc-func-file /tmp/libc.exported $val -enable-cve -enable-debugging -print-easy-funcs > outputs/$filename.out;
+#   ./Debug-build/bin/rustifier -libc-func-file /tmp/libc.exported $val -enable-cve -enable-debugging -print-easy-funcs > outputs/$filename.out;
+   ./Debug-build/bin/rustifier $val -enable-debugging -print-arg-type-strs > outputs/$filename.out;
 done < $input
