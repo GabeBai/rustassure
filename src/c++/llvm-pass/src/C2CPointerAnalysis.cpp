@@ -80,12 +80,15 @@ void C2CPointerAnalysis::run(void){
                 return;
             }
 
+        }else {
+            _pta = new AndersenWaveDiff(pag);
         }
     }
 
     /// Create Andersen's pointer analysis
     MyLogger(logINFO) << "Starting to run Andersen's pointer analysis\n";
     //ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    assert(_pta && "_pta is null, please select an andersen algorithm with pta");
     _pta->analyze();
     callgraph = _pta->getPTACallGraph();
     callEdgeMap = &(callgraph->getIndCallMap());

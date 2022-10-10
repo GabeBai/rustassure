@@ -49,6 +49,7 @@ public:
     }
 
     inline static SVF::PTACallGraph *getCallGraph(void){
+        assert(callgraph && "Trying to use callgraph when PTA is not enabled!\n");
         return callgraph;
     }
 

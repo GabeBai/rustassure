@@ -9,6 +9,7 @@ using namespace llvm;
 using namespace SVF;
 using namespace Rustify;
 
+
 std::string Rustify::getValueString(Value *value) {
     //assert(value != nullptr && "getValueString on value is NULL!");
     std::string str;
@@ -315,17 +316,17 @@ void Rustify::addListToUnorderedSet(llvm::cl::list<std::string>& input,
 }
 
 void Rustify::populateStrSetFromFile(std::string filePath, 
-                                 std::set<std::string>& structStrs){
-    std::fstream configTypeFile;
+                                 std::set<std::string>& fileStrs){
+    std::fstream file;
 
     if ( filePath == "" )
         return;
-    configTypeFile.open(filePath, std::ios::in);
-    if ( !configTypeFile.is_open() )
+    file.open(filePath, std::ios::in);
+    if ( !file.is_open() )
         return;
     std::string inputLine;
-    while ( getline(configTypeFile, inputLine) )
-        structStrs.insert(inputLine);
+    while ( getline(file, inputLine) )
+        fileStrs.insert(inputLine);
 }
 
 llvm::StructType* Rustify::convertStructNameToType(Module *module,
@@ -535,4 +536,56 @@ void Rustify::splitString(std::string input, std::vector<std::string>& output, c
         getline(ss, substr, delim);
         output.push_back(substr);
     }
+}
+
+int Rustify::getGepIndex(GetElementPtrInst *gepInst) {
+    int gepIndex = -1;
+    int index = 0;
+    for ( GetElementPtrInst::const_op_iterator 
+                        it = gepInst->idx_begin(), 
+                        eit = gepInst->idx_end(); 
+                        it != eit; ++it ){
+        ConstantInt const* lastElement = SVFUtil::dyn_cast<ConstantInt>(it);
+        if ( lastElement && index == 1 )
+            gepIndex = lastElement->getSExtValue();
+        index++;
+    }
+    return gepIndex;
+}
+
+bool Rustify::isRecursiveStruct(StructType *stType) {
+    for ( auto innerElemType : stType->elements() ) {
+        Type *baseType = getBaseType(innerElemType);
+        if ( !SVFUtil::isa<StructType>(baseType) )
+            continue;
+        StructType *baseStType = SVFUtil::dyn_cast<StructType>(baseType);
+        if ( baseStType == stType )
+            return true;
+    }
+    return false;
+}
+
+bool Rustify::hasNestedStructPtr(StructType *stType, 
+                    std::unordered_set<StructType*>& nestedStTypes) {
+    for ( auto innerElemType : stType->elements() ) {
+        if ( !SVFUtil::isa<PointerType>(innerElemType) )    /// only care about ptrs to other struct types
+            continue;
+        Type *baseType = getBaseType(innerElemType);
+        if ( !SVFUtil::isa<StructType>(baseType) )      /// not struct type? -> continue
+            continue;
+        StructType *baseStType = SVFUtil::dyn_cast<StructType>(baseType);
+        if ( baseStType != stType )      /// looking for different nested struct types other than 
+            nestedStTypes.insert(baseStType);
+    }
+    return nestedStTypes.size() != 0;
+}
+
+bool Rustify::isUnion(Type *type) {
+    type = getBaseType(type);
+    StructType *stType = SVFUtil::dyn_cast<StructType>(type);
+    if ( !stType )
+        return false;
+    std::string stOrigName = stType->getName().str();
+    std::string stCleanName = cleanStructName(stOrigName);
+    return stCleanName == "union.anon";
 }

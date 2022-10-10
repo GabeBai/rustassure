@@ -116,6 +116,8 @@ public:
 
     void analyzePtrArith(llvm::Instruction*);
 
+    void analyzeGepInst(llvm::GetElementPtrInst*);
+
     void addAddrTakenValue(llvm::Value*, llvm::Value*);
 
     int getScore(void) {
@@ -156,8 +158,28 @@ public:
 
     ValueCostAnalysis* getValue(llvm::Value*, llvm::Instruction*);
 
+    llvm::StringRef getFuncName(void) {
+        return function->getName();
+    }
+
     bool isComplex(void) {
         return isComplex_;
+    }
+
+    bool isStringRelated(void) {
+        return isStringRelated_;
+    }
+
+    std::unordered_set<llvm::Function*>& getReachableFuncs(void) {
+        return reachableFuncs;
+    }
+
+    bool hasCollectionStruct(void) {
+        return hasCollectionStruct_;
+    }
+
+    bool hasUnion(void) {
+        return hasUnion_;
     }
 
 private:
@@ -210,6 +232,9 @@ private:
     /// we bind each llvm::Value to a Rustify::ValueCostAnalysis object
     std::unordered_map<llvm::Value*, ValueCostAnalysis*> valueCosts;
 
+    /// store all reachable functions from a specific source
+    std::unordered_set<llvm::Function*> reachableFuncs;
+
     /// keep score of rustifying this function
     int rustifyScore = 0;
 
@@ -220,7 +245,7 @@ private:
     bool isCollectionRelated = false;
 
     /// special cases: does string operations
-    bool isStringRelated = false;
+    bool isStringRelated_ = false;
     bool hasCharPtrArg = false;
 
     /// has address taken variable, either passes to another function, returns addr or just stores in ptr
@@ -238,6 +263,19 @@ private:
     /// we will refine our analysis by considering places where a global variable is modified
     /// and see if it can be converted to a local variable passed through function arguments
     bool hasGlobalVar = false;
+
+    /// we try to identify whether a function modifies a customized recursive struct type
+    /// these struct types should have a ptr to its own type, which shows it is used
+    /// to store a list, vector or ...
+    bool hasCollectionStruct_ = false;
+
+    /// if a struct type has a ptr to another struct type, AND
+    /// that nested struct type is passed as a function argument,
+    /// it could potentially need multiple owners and require lifetime parameters
+    bool hasMultiOwnerStruct_ = false;
+
+    /// currently, unions cannot be handled by safe Rust
+    bool hasUnion_ = false;
 
     /// how many CVEs have been associated with this function in the past?
     int cveCount = 0;

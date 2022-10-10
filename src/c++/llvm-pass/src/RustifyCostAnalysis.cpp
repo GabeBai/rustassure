@@ -2,6 +2,7 @@
 #include "Util/ExtAPI.h"
 #include "llvm/IR/InstIterator.h"
 #include "RustifyCostAnalysis.h"
+#include "ApiCostAnalysis.h"
 #include "CveCostAnalysis.h"
 #include "HeapInitFunction.h"
 #include "RustifyUtils.h"
@@ -21,6 +22,151 @@ static llvm::cl::opt<bool> PrintEasyFuncs("print-easy-funcs", llvm::cl::desc("Ru
 static llvm::cl::opt<bool> PrintArgTypeStrs("print-arg-type-strs", llvm::cl::desc("Rustify - Print argument type strings"),
                             llvm::cl::init(false));
 
+static llvm::cl::opt<bool> ApiBasedAnalysis("enable-api-based", llvm::cl::desc("Rustify - Enable api-based analysis"),
+                            llvm::cl::init(false));
+
+static llvm::cl::opt<bool> FuncBasedAnalysis("enable-func-based", llvm::cl::desc("Rustify - Enable func-based analysis"),
+                            llvm::cl::init(false));
+
+static llvm::cl::opt<std::string> ApiListFile("export-func-list",
+                            llvm::cl::desc("Rustify - functions which are exported by the library - listed in a file"),
+                            llvm::cl::init(""));
+
+static llvm::cl::opt<bool> PrintEasyApis("print-easy-apis", llvm::cl::desc("Rustify - Print easy APIs"),
+                            llvm::cl::init(false));
+
+
+
+void RustifyCostAnalysis::run(void) {
+    runFuncBasedAnalysis();
+    if ( ApiBasedAnalysis )
+        runApiBasedAnalysis();
+}
+
+void RustifyCostAnalysis::runApiBasedAnalysis(void) {
+    int totalApis = 0, complexApis = 0;
+    std::set<std::string> exportedFuncs;
+    std::set<const Function*> easyApis;
+
+    if ( ApiListFile != "" )
+        populateStrSetFromFile(ApiListFile, exportedFuncs);
+    else
+        ApiCostAnalysis::extractExportedFuncs(exportedFuncs);
+    if ( exportedFuncs.size() == 0 ) {
+        MyLogger(logERROR) << "ApiBasedAnalysis enabled, but no APIs identified, returning...\n";
+        return;
+    }
+
+    for ( auto exportedFunc : exportedFuncs ) {
+        const SVFFunction *func = findFunctionByName(svfModule, exportedFunc);
+        if ( !func || func->isDeclaration() ) {
+            MyLogger(logWARNING) << "Could not find function specified as exported func!\n";
+            continue;
+        }
+        ApiCostAnalysis* apiCostObj = new ApiCostAnalysis(func->getLLVMFun(), funcCostMap, preProcessor);
+        apiCostObj->analyze();
+        totalApis++;
+        if ( apiCostObj->isComplex() )
+            complexApis++;
+        else
+            easyApis.insert(func->getLLVMFun());
+    }
+    MyLogger(logDEBUG) << "Total APIs: " << totalApis
+                    << " Complex APIs: " << complexApis << "\n";
+    if ( PrintEasyApis ) {
+        MyLogger(logINFO) << "Printing APIs which are not complex:\n";
+        for ( auto func : easyApis ) {
+            MyLogger(logINFO) << "API name: " << func->getName().str() << "\n";
+        }
+    }
+
+}
+
+void RustifyCostAnalysis::runFuncBasedAnalysis(void) {
+    std::set<llvm::Function*>& allModuleFuncs = PreProcessor::getModuleFuncs();
+    std::unordered_set<llvm::Function*> rustifiedFuncs;
+    std::set<llvm::Function*> easyFuncs;
+    int prevSize;
+    int threshold = 16;
+
+    int stringFuncs = 0, complexFuncs = 0, totalFuncs = 0;
+    do { 
+        prevSize = rustifiedFuncs.size();
+        std::map<int, std::unordered_set<FunctionCostAnalysis*>> scoreToFuncs;
+        std::map<int, int> scoreToCves;
+        for ( auto func : allModuleFuncs ) {
+            FunctionCostAnalysis* funcCostAnalysis = 
+                    new FunctionCostAnalysis(func, preProcessor);
+            funcCostAnalysis->analyze(rustifiedFuncs);
+            if ( funcCostAnalysis->isComplex() )
+                complexFuncs++;
+            if ( funcCostAnalysis->isStringRelated() ) {
+                MyLogger(logDEBUG) << "Function: " << funcCostAnalysis->getFuncName()
+                                    << " is String related\n";
+                stringFuncs++;
+            }
+            totalFuncs++;
+
+            funcCostAnalysis->calculateScore();
+            addToMap(funcCostAnalysis);
+            int score = funcCostAnalysis->getScore();
+            if ( !(score & (INDCALL|INTCALL|LIBCALL|STRUCT))  )
+                rustifiedFuncs.insert(func);
+            scoreToFuncs[score].insert(funcCostAnalysis);
+            scoreToCves[score] += funcCostAnalysis->getCveCount();
+            if ( score < threshold )
+                easyFuncs.insert(func);
+            funcCostMap[func] = funcCostAnalysis;
+            //MyLogger(logDEBUG) << funcCostAnalysis->toString();
+        }
+
+
+        int lessThan16 = 0;
+        int lessThan32 = 0;
+        int moreThan32 = 0;
+        int lessThan16Cves = 0;
+        int lessThan32Cves = 0;
+        int moreThan32Cves = 0;
+        for ( auto const& item : scoreToFuncs ) {
+            float funcCountToTotal = 
+                    (float)item.second.size()/(float)allModuleFuncs.size();
+            if ( item.first < 16 ) {
+                lessThan16 += item.second.size();
+                lessThan16Cves += scoreToCves[item.first];
+            } else if ( item.first < 32 ) {
+                lessThan32 += item.second.size();
+                lessThan32Cves += scoreToCves[item.first];
+            } else {
+                moreThan32 += item.second.size();
+                moreThan32Cves += scoreToCves[item.first];
+            }
+            //MyLogger(logINFO) << "Score: " << item.first 
+            //                  << ", Cve Count: " 
+            //                  << scoreToCves[item.first] 
+            //                  << ", Function Count: " 
+            //                  << item.second.size() 
+            //                  << ", Function %: " << funcCountToTotal*100 << "\n";
+        }
+        //MyLogger(logINFO) << lessThan16 << "," << lessThan32 << "," << moreThan32 << "\n";
+        //MyLogger(logINFO) << lessThan16Cves << "," << lessThan32Cves << "," << moreThan32Cves << "\n";
+    } while ( false ); // prevSize != rustifiedFuncs.size() ); TODO
+
+    if ( PrintArgTypeStrs )
+        printAllArgTypeStrs();
+
+    if ( PrintEasyFuncs ) {
+        MyLogger(logINFO) << "Printing functions with score less than " << threshold << "\n";
+        for ( auto func : easyFuncs )
+            MyLogger(logINFO) << func->getName().str() << " (cveCount:" 
+                  << CveCostAnalysis::getCveCount(func->getName().str()) << "\n";
+    }
+
+    MyLogger(logINFO) << "Total Funcs: " << totalFuncs 
+                        << " Complex Funcs: " << complexFuncs 
+                        << " (String Funcs: " << stringFuncs << ")\n";
+
+    // printStFieldComplexity();
+}
 
 void RustifyCostAnalysis::addToMap(FunctionCostAnalysis* funcCostAnalysis) {
     std::map<TypeIntPair, std::unordered_set<llvm::Function*>>& mutMap = 
@@ -61,87 +207,6 @@ void RustifyCostAnalysis::addToMap(FunctionCostAnalysis* funcCostAnalysis) {
         allArgTypes.insert(it);
         allArgTypeStrs.insert(getTypeString(it));
     }
-}
-
-void RustifyCostAnalysis::run(void) {
-    std::set<llvm::Function*>& allModuleFuncs = PreProcessor::getModuleFuncs();
-    std::unordered_set<llvm::Function*> rustifiedFuncs;
-    std::set<llvm::Function*> easyFuncs;
-    int prevSize;
-    int threshold = 16;
-
-    int complexFuncs = 0, totalFuncs = 0;
-
-    do { 
-        prevSize = rustifiedFuncs.size();
-        std::map<int, std::unordered_set<FunctionCostAnalysis*>> scoreToFuncs;
-        std::map<int, int> scoreToCves;
-        for ( auto func : allModuleFuncs ) {
-            FunctionCostAnalysis* funcCostAnalysis = 
-                    new FunctionCostAnalysis(func, preProcessor);
-            funcCostAnalysis->analyze(rustifiedFuncs);
-            if ( funcCostAnalysis->isComplex() )
-                complexFuncs++;
-            totalFuncs++;
-
-            funcCostAnalysis->calculateScore();
-            addToMap(funcCostAnalysis);
-            int score = funcCostAnalysis->getScore();
-            if ( !(score & (INDCALL|INTCALL|LIBCALL|STRUCT))  )
-                rustifiedFuncs.insert(func);
-            scoreToFuncs[score].insert(funcCostAnalysis);
-            scoreToCves[score] += funcCostAnalysis->getCveCount();
-            if ( score < threshold )
-                easyFuncs.insert(func);
-            funcCostObjs.insert(funcCostAnalysis);
-            //MyLogger(logDEBUG) << funcCostAnalysis->toString();
-        }
-
-
-        int lessThan16 = 0;
-        int lessThan32 = 0;
-        int moreThan32 = 0;
-        int lessThan16Cves = 0;
-        int lessThan32Cves = 0;
-        int moreThan32Cves = 0;
-        for ( auto const& item : scoreToFuncs ) {
-            float funcCountToTotal = 
-                    (float)item.second.size()/(float)allModuleFuncs.size();
-            if ( item.first < 16 ) {
-                lessThan16 += item.second.size();
-                lessThan16Cves += scoreToCves[item.first];
-            } else if ( item.first < 32 ) {
-                lessThan32 += item.second.size();
-                lessThan32Cves += scoreToCves[item.first];
-            } else {
-                moreThan32 += item.second.size();
-                moreThan32Cves += scoreToCves[item.first];
-            }
-            //MyLogger(logINFO) << "Score: " << item.first 
-            //                  << ", Cve Count: " 
-            //                  << scoreToCves[item.first] 
-            //                  << ", Function Count: " 
-            //                  << item.second.size() 
-            //                  << ", Function %: " << funcCountToTotal*100 << "\n";
-        }
-        //MyLogger(logINFO) << lessThan16 << "," << lessThan32 << "," << moreThan32 << "\n";
-        //MyLogger(logINFO) << lessThan16Cves << "," << lessThan32Cves << "," << moreThan32Cves << "\n";
-    } while ( prevSize != rustifiedFuncs.size() );
-
-    if ( PrintArgTypeStrs )
-        printAllArgTypeStrs();
-
-    if ( PrintEasyFuncs ) {
-        MyLogger(logINFO) << "Printing functions with score less than " << threshold << "\n";
-        for ( auto func : easyFuncs )
-            MyLogger(logINFO) << func->getName().str() << " (cveCount:" 
-                  << CveCostAnalysis::getCveCount(func->getName().str()) << "\n";
-    }
-
-    MyLogger(logINFO) << "Total Funcs: " << totalFuncs 
-                        << " Complex Funcs: " << complexFuncs << "\n";
-
-    // printStFieldComplexity();
 }
 
 void RustifyCostAnalysis::printAllArgTypeStrs(void) {

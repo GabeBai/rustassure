@@ -41,6 +41,10 @@ std::set<std::string> PreProcessor::heapInitFuncStrs;
 std::map<std::string, int> PreProcessor::heapInitFuncPairs;
 std::unordered_set<HeapInitFunction*> PreProcessor::heapInitFunctions;
 std::set<std::string> PreProcessor::libcFunctionStrs;
+std::unordered_set<llvm::StructType*> PreProcessor::collectionStTypes;
+std::unordered_set<llvm::StructType*> PreProcessor::structTypesWithNested;
+std::unordered_set<llvm::StructType*> PreProcessor::multiOwnerStTypes;
+std::unordered_map<llvm::StructType*, std::unordered_set<llvm::StructType*>> PreProcessor::nestedStTypeToParent;
 int PreProcessor::totalFunctionCount;
 
 
@@ -50,6 +54,7 @@ void PreProcessor::run(void){
     findHeapInitCallInsts();
     createIndexes();
     initializeStructEquivalentMap();
+    classifyStructTypes();
 }
 
 void PreProcessor::initializeLibcFunctions(void) {
@@ -57,6 +62,66 @@ void PreProcessor::initializeLibcFunctions(void) {
     if ( LibcExportedFuncFile != "" ) {
         MyLogger(logDEBUG) << "Parsing " << LibcExportedFuncFile << "\n";
         populateStrSetFromFile(LibcExportedFuncFile, libcFunctionStrs);
+    }
+}
+
+/*
+ * This function goes through all structs defined in this module
+ * and tries to identify whether or not they represent a collection-related
+ * struct (e.g. list, vector, stack, ...)
+*/
+void PreProcessor::classifyStructTypes(void) {
+    std::unordered_set<StructType*> allStTypes;
+    extractAllStructTypes(allStTypes);
+    for ( auto stType : allStTypes ) {
+        std::unordered_set<StructType*> nestedStTypes;
+        if ( isRecursiveStruct(stType) ) {  /// struct A { ... struct A *a_ptr; ... }
+            MyLogger(logDEBUG) << "recursive struct: " << getTypeString(stType) << "\n";
+            collectionStTypes.insert(stType);
+        }
+        if ( hasNestedStructPtr(stType, nestedStTypes) ) {   /// struct A { ... struct B *b_ptr; ... }
+            MyLogger(logDEBUG) << "struct with other struct types: " 
+                                << getTypeString(stType) << "\n";
+            structTypesWithNested.insert(stType);
+            addParentToNested(nestedStTypes, stType);
+        }
+    }
+    findMultiOwnerStructTypes();
+}
+
+void PreProcessor::addParentToNested(std::unordered_set<StructType*> &nestedStTypes,
+                                    StructType* parentStType) {
+    for ( auto nestedStType : nestedStTypes )
+        nestedStTypeToParent[nestedStType].insert(parentStType);
+}
+
+/*
+ * findMultiOwnerStructTypes
+ *
+ * This function goes through all function arguments and identifies
+ * whether a struct type argument is passed as an argument while 
+ * being nested in another struct type
+*/
+void PreProcessor::findMultiOwnerStructTypes(void) {
+    /// 1) go through all function arguments
+    /// 2) if a function argument is of a nested struct type -> we mark all its parents as multi owner
+    for ( auto func : moduleFuncs ) {
+        for ( int i = 0; i < func->arg_size(); ++i ) {
+            Argument* arg = func->getArg(i);
+            Type* argType = arg->getType();
+            if ( isNestedStructType(argType) ) {
+                addStTypesToMultiOwner(
+                    nestedStTypeToParent[SVFUtil::dyn_cast<StructType>(
+                                                    getBaseType(argType))]);
+            }
+        }
+    }
+}
+
+void PreProcessor::extractAllStructTypes(std::unordered_set<StructType*>& stTypes) {
+    for ( auto stType : module->getIdentifiedStructTypes() ) {
+        stTypes.insert(stType);
+        MyLogger(logDEBUG) << "stType: " << getTypeString(stType) << "\n";
     }
 }
 

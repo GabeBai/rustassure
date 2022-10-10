@@ -11,16 +11,22 @@ using namespace SVF;
 using namespace Rustify;
 
 void ApiCostAnalysis::analyze(void) {
-    //MyLogger(logDEBUG) << "Analyzing func: " << function->getName() << "\n";
-    for ( inst_iterator I = inst_begin(function), E = inst_end(function);
-                                I != E; ++I ){
-        Instruction* inst = &*I;
-        performDfa(inst);
+    if ( funcCostMap.find(function) == funcCostMap.end() ) {
+        MyLogger(logERROR) << "API function: " << function->getName() << " doesn't have cost object\n";
+        assert(false && "API function without cost object reached, this shouldn't happen!\n");
     }
-}
 
-void ApiCostAnalysis::performDfa(Value* value) {
+    FunctionCostAnalysis* apiFuncCostObj = funcCostMap[function];   /// get cost of api function itself
+    isComplex_ |= apiFuncCostObj->isComplex();
+    std::unordered_set<Function*>& reachableFuncs = apiFuncCostObj->getReachableFuncs();
 
+    /// get cost of all reachable funcs
+    for ( auto reachableFunc : reachableFuncs ) {
+        if ( funcCostMap.find(reachableFunc) == funcCostMap.end() ) 
+            assert(false && "reachable function without cost object reached, this shouldn't happen!\n");
+        FunctionCostAnalysis *funcCostObj = funcCostMap[reachableFunc];
+        isComplex_ |= funcCostObj->isComplex();
+    }
 }
 
 //void FunctionCostAnalysis::analyzeCall(CallInst* callInst, 

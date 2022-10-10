@@ -35,6 +35,10 @@ public:
 
     void run(void);
 
+    void runApiBasedAnalysis(void);
+
+    void runFuncBasedAnalysis(void);
+
     void addToMap(FunctionCostAnalysis*);
 
     void printStFieldComplexity(void);
@@ -53,8 +57,8 @@ private:
     /// we need access to the information processed by the preprocessor
     PreProcessor *preProcessor;
 
-    /// keep each function cost analysis object in this set for later use
-    std::unordered_set<FunctionCostAnalysis*> funcCostObjs;
+    /// map each function to its cost analysis object later use
+    std::unordered_map<const llvm::Function*, FunctionCostAnalysis*> funcCostMap;
 
     /// set of struct type and field tuples which must be mutable (written to) in this function
     std::map<TypeIntPair, std::unordered_set<llvm::Function*>> stFieldMutFuncs;

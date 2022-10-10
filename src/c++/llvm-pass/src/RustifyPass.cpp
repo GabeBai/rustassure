@@ -69,6 +69,7 @@ void RustifyPass::runOnModule(SVFModule* svfModule){
 
     if ( EnablePTARustify ){
         C2CPointerAnalysis *c2cPta = new C2CPointerAnalysis(svfModule);
+        c2cPta->run();
     }
 
 

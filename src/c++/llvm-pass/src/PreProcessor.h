@@ -47,6 +47,12 @@ public:
 
     void extractGlobalVars(void);
 
+    void classifyStructTypes(void);
+
+    void findMultiOwnerStructTypes(void);
+
+    void extractAllStructTypes(std::unordered_set<llvm::StructType*>&);
+
     void initializeLibcFunctions(void);
 
     static std::map<llvm::BasicBlock*, int>& getBasicBlockToIndex(void){
@@ -160,7 +166,64 @@ public:
                            std::vector<llvm::Value*>&,
                            std::unordered_set<llvm::Value*>&);
 
+    void addParentToNested(std::unordered_set<llvm::StructType*>&,
+                                    llvm::StructType*);
+
+    void addStTypesToMultiOwner(unordered_set<llvm::StructType*>& stTypes) {
+        for ( auto stType : stTypes ) {
+            multiOwnerStTypes.insert(stType);
+        }
+    }
+
     static bool isLibcFunction(llvm::Function*);
+
+    static bool isCollectionStruct(llvm::Type *type) {
+        type = getBaseType(type);
+        llvm::StructType *stType = SVF::SVFUtil::dyn_cast<llvm::StructType>(type);
+        if ( !stType )
+            return false;
+        return std::find(collectionStTypes.begin(), collectionStTypes.end(),
+                            stType) != collectionStTypes.end();
+    }
+
+    static bool hasNestedStruct(llvm::Type *type) {
+        type = getBaseType(type);
+        llvm::StructType *stType = SVF::SVFUtil::dyn_cast<llvm::StructType>(type);
+        if ( !stType )
+            return false;
+        return std::find(structTypesWithNested.begin(), structTypesWithNested.end(),
+                            stType) != structTypesWithNested.end();
+    }
+
+    static bool isMultiOwnerStruct(llvm::Type *type) {
+        type = getBaseType(type);
+        llvm::StructType *stType = SVF::SVFUtil::dyn_cast<llvm::StructType>(type);
+        if ( !stType )
+            return false;
+        return std::find(multiOwnerStTypes.begin(), multiOwnerStTypes.end(),
+                            stType) != multiOwnerStTypes.end();
+    }
+
+    static std::unordered_set<llvm::StructType*>& getCollectionStructs(void) {
+        return collectionStTypes;
+    }
+
+    static std::unordered_set<llvm::StructType*>& getStructTypesWithNested(void) {
+        return structTypesWithNested;
+    }
+
+    static std::unordered_set<llvm::StructType*>& getMultiOwnerStTypes(void) {
+        return multiOwnerStTypes;
+    }
+
+    static bool isNestedStructType(llvm::Type *type) {
+        type = getBaseType(type);
+        llvm::StructType *stType = SVF::SVFUtil::dyn_cast<llvm::StructType>(type);
+        if ( !stType )
+            return false;
+        return nestedStTypeToParent[stType].size() != 0;
+    }
+
 private:
 
     /// the module we are running our analysis against
@@ -232,6 +295,21 @@ private:
     void initializeMatchPatterns(void);
     void initializeNotMatchPatterns(void);
     bool matchesPatterns(llvm::StructType*);
+
+    /// keep all collection-related struct types here (list, vector, ...)
+    static std::unordered_set<llvm::StructType*> collectionStTypes;
+
+    /// keep all struct types with nested struct types here (struct A { ... struct B* ptr; ...}
+    static std::unordered_set<llvm::StructType*> structTypesWithNested;
+
+    /// map each nested struct type to its parent
+    static std::unordered_map<llvm::StructType*, 
+                std::unordered_set<llvm::StructType*>> nestedStTypeToParent;
+
+    /// a struct (potentially) has multiple owners IF
+    ///     1) it has a ptr to another struct type AND
+    ///     2) that struct type is used independently as an argument for functions
+    static std::unordered_set<llvm::StructType*> multiOwnerStTypes;
 
     static std::set<std::string> libcFunctionStrs;
 };

@@ -136,6 +136,15 @@ namespace Rustify
     bool hasBeginning (std::string const &, std::string const &);
 
     void splitString(std::string, std::vector<std::string>&, char);
+
+    int getGepIndex(llvm::GetElementPtrInst*);
+
+    bool isRecursiveStruct(llvm::StructType*);
+
+    bool hasNestedStructPtr(llvm::StructType*, 
+                        std::unordered_set<llvm::StructType*>&);
+
+    bool isUnion(llvm::Type*);
 }
 
 #endif

@@ -1,6 +1,7 @@
 #include "Graphs/ICFG.h"
 #include "Util/ExtAPI.h"
 #include "llvm/IR/InstIterator.h"
+#include "C2CPointerAnalysis.h"
 #include "FunctionCostAnalysis.h"
 #include "CveCostAnalysis.h"
 #include "RustifyUtils.h"
@@ -22,6 +23,12 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
 
     if ( function->hasName() )
         cveCount = CveCostAnalysis::getCveCount(function->getName().str());
+
+    /*
+     some complex characteristics are specified by the function arguments
+        1) void* or char*
+        2) collection-related struct type
+    */
     analyzeArgs();
     for ( inst_iterator I = inst_begin(function), E = inst_end(function);
                                 I != E; ++I ){
@@ -29,8 +36,15 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
         analyzeInst(inst, rustifiedFuncs);
     }
 
+    C2CPointerAnalysis::getCallGraph()->getReachableFunctions(
+                                    SVFUtil::getDefFunForMultipleModule(function),
+                                    reachableFuncs);
+
     isComplex_ = isCollectionRelated | 
-                    isStringRelated | 
+                    isStringRelated_ | 
+                    hasCollectionStruct_ | 
+                    hasMultiOwnerStruct_ | 
+                    hasUnion_ | 
                     hasCharPtrArg |
                     hasVoidPtrArg |
                     hasGlobalVar;
@@ -39,14 +53,25 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
 
 void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llvm::Function*>& rustifiedFuncs) {
     std::unordered_set<Value*> instValues;
+
+    /// for some cases (e.g. addr taken, global var) we need to analyze 
+    /// a value being accessed by the instruction, for these cases we extract
+    /// the value and analyze it separately
     getInstValues(inst, instValues);
-    if ( SVFUtil::isa<CallInst>(inst) )
-        analyzeCall(SVFUtil::dyn_cast<CallInst>(inst), rustifiedFuncs);
     for ( auto value : instValues ) {
         ValueCostAnalysis *valueCost = getValue(value, inst);
         hasAddrTaken = valueCost->isAddrTaken();
         hasGlobalVar = valueCost->isGlobalVar();
     }
+
+    /// there are some special cases where we need to analyze the instruction in its entirety
+    /// callInst -> what is the callee? indirect call? libc function call? internal call?
+    if ( SVFUtil::isa<CallInst>(inst) )
+        analyzeCall(SVFUtil::dyn_cast<CallInst>(inst), rustifiedFuncs);
+
+    /// gepInst -> can be used to identify ptr arithmetics on strings
+    if ( SVFUtil::isa<GetElementPtrInst>(inst) )
+        analyzeGepInst(SVFUtil::dyn_cast<GetElementPtrInst>(inst));
 }
 
 void FunctionCostAnalysis::getInstValues(Instruction *inst, 
@@ -63,6 +88,16 @@ void FunctionCostAnalysis::getInstValues(Instruction *inst,
         if ( retInst->getReturnValue() )
             values.insert(retInst->getReturnValue());
     }
+}
+
+void FunctionCostAnalysis::analyzeGepInst(GetElementPtrInst *gepInst) {
+    Type *gepPtrType = gepInst->getPointerOperand()->getType();
+    /// TODO how to identify char*, bitcode seems the same as void*
+    if ( !isCharPtrType(gepPtrType) && !isVoidPtrType(gepPtrType) )
+        return;
+    int gepIndex = getGepIndex(gepInst);
+    if ( gepIndex == -1 )   /// non-constant gep index
+        isStringRelated_ = true;
 }
 
 void FunctionCostAnalysis::analyzePtrArith(Instruction* inst) {
@@ -124,6 +159,14 @@ void FunctionCostAnalysis::analyzeArgs(void) {
         argTypes.insert(origArgType);
         Type* argType = getBaseType(arg->getType());
         if ( argType->isStructTy() ) {
+            if ( PreProcessor::isCollectionStruct(argType) )
+                hasCollectionStruct_ = true;
+            if ( PreProcessor::isMultiOwnerStruct(argType) )
+                hasMultiOwnerStruct_ = true;
+            if ( isUnion(argType) ) {
+                MyLogger(logDEBUG) << "isUnion is true for: " << getTypeString(argType) << "\n";
+                hasUnion_ = true;
+            }
             hasStructArg = true;
             argIsStType[arg] = true;
             findReadAndWrites(arg);
