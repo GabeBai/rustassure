@@ -1,0 +1,3 @@
+[submodule "src/python/python-utils"]
+	path = src/python/python-utils
+	url = git@github.com:shamedgh/python-utils.git

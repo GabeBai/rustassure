@@ -13,7 +13,6 @@
 /home/hamed/library-debloating/libsrccodes/libzip-1.5.2/build/lib/libzip.so.5.0.0.0.preopt.bc
 /home/hamed/library-debloating/libsrccodes/libexpat/expat/lib/.libs/libexpat.so.1.6.11.0.0.preopt.bc
 /home/hamed/library-debloating/libsrccodes/geoip-1.6.9/libGeoIP/.libs/libGeoIP.so.1.6.9.0.0.preopt.bc
-/home/hamed/library-debloating/libsrccodes/perl5/libperl.so.0.0.preopt.bc
 /home/hamed/library-debloating/libsrccodes/libgd2-2.1.1/build/Bin/libgd.so.0.0.preopt.bc
 /home/hamed/library-debloating/libsrccodes/sqlite-autoconf-3290000/.libs/libsqlite3.so.0.8.6.0.0.preopt.bc
 /home/hamed/library-debloating/libsrccodes/heimdal-7.5.0/lib/gssapi/.libs/libgssapi.so.3.0.0.0.0.preopt.bc
@@ -148,3 +147,4 @@
 /home/hamed/library-debloating/libsrccodes/lz4-1.9.3/lib/liblz4.so.1.9.3.0.0.preopt.bc
 /home/hamed/library-debloating/libsrccodes/keyutils-1.6/libkeyutils.so.1.8.0.0.preopt.bc
 /home/hamed/library-debloating/libsrccodes/libnet/src/.libs/libnet.so.9.0.0.0.0.preopt.bc
+/home/hamed/library-debloating/libsrccodes/perl5/libperl.so.0.0.preopt.bc
