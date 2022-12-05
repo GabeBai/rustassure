@@ -1,0 +1,5 @@
+*.log
+*.key
+inputs/
+outputs/
+library-so.paths

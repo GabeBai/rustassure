@@ -1,0 +1,14 @@
+{
+    "srcLang": "c",
+    "dstLang": "rust",
+    "trainingFile": "/home/hamed/rust/rustify/src/python/training",
+    "srcFolder": "/home/hamed/rust/rustify/src/python/inputs",
+    "translators": [
+        {
+            "openai": {
+                "engine": "text-davinci-002",
+                "apikeypath": "/home/hamed/rust/rustify/src/python/openai.key"
+            }
+        }
+    ]
+}
