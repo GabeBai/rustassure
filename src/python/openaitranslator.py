@@ -21,10 +21,10 @@ class OpenAiTranslator(CodeTranslatorTool):
         openai.api_key = self.apikey
 
         response = openai.Completion.create(
-          engine="text-davinci-002",
+          engine=self.engine,
           prompt=srcStr,
           temperature=0.5,
-          max_tokens=256,
+          max_tokens=2048,
           top_p=1.0,
           frequency_penalty=0.0,
           presence_penalty=0.0
