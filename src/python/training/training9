@@ -1,0 +1,25 @@
+C code input:
+
+#include <stdio.h>
+
+int main() {
+    int x = 5;
+    int y = 10;
+    int temp = x;
+    x = y;
+    y = temp;
+    printf("x = %d, y = %d\n", x, y);
+    return 0;
+}
+
+
+Translated to Rust:
+
+fn main() {
+    let mut x = 5;
+    let mut y = 10;
+    let temp = x;
+    x = y;
+    y = temp;
+    println!("x = {}, y = {}", x, y);
+}

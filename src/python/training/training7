@@ -1,0 +1,29 @@
+C code input:
+
+#include <stdio.h>
+
+int main() {
+    char str[20] = "Hello, world!";
+    int len = 0;
+    while (str[len] != '\0') {
+        len++;
+    }
+    int i = 0;
+    char reversed[20];
+    while (len > 0) {
+        len--;
+        reversed[i] = str[len];
+        i++;
+    }
+    reversed[i] = '\0';
+    printf("Reversed string is: %s\n", reversed);
+    return 0;
+}
+
+Translated to Rust:
+
+fn main() {
+    let mut str = String::from("Hello, world!");
+    str = str.chars().rev().collect();
+    println!("Reversed string is: {}", str);
+}

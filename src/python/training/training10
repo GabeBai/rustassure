@@ -1,0 +1,25 @@
+C code input:
+
+#include <stdio.h>
+
+int main() {
+    int n = 5;
+    int fact = 1;
+    for (int i = 1; i <= n; i++) {
+        fact *= i;
+    }
+    printf("Factorial of %d is %d\n", n, fact);
+    return 0;
+}
+
+
+Translated to Rust:
+
+fn main() {
+    let n = 5;
+    let mut fact = 1;
+    for i in 1..=n {
+        fact *= i;
+    }
+    println!("Factorial of {} is {}", n, fact);
+}
