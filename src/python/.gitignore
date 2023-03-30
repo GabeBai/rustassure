@@ -3,3 +3,4 @@
 inputs/
 outputs/
 library-so.paths
+__pycache__/
