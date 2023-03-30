@@ -32,6 +32,14 @@ static llvm::cl::opt<std::string> ApiListFile("export-func-list",
                             llvm::cl::desc("Rustify - functions which are exported by the library - listed in a file"),
                             llvm::cl::init(""));
 
+static llvm::cl::opt<std::string> SimpleApiListFile("simple-apis",
+                            llvm::cl::desc("Rustify - path to store names of simple APIs"),
+                            llvm::cl::init(""));
+
+static llvm::cl::opt<std::string> ComplexApiListFile("complex-apis",
+                            llvm::cl::desc("Rustify - path to store names of complex APIs"),
+                            llvm::cl::init(""));
+
 static llvm::cl::opt<bool> PrintEasyApis("print-easy-apis", llvm::cl::desc("Rustify - Print easy APIs"),
                             llvm::cl::init(false));
 
@@ -44,9 +52,9 @@ void RustifyCostAnalysis::run(void) {
 }
 
 void RustifyCostAnalysis::runApiBasedAnalysis(void) {
-    int totalApis = 0, complexApis = 0;
+    int totalApis = 0, complexApiCount = 0;
     std::set<std::string> exportedFuncs;
-    std::set<const Function*> easyApis;
+    std::set<const Function*> easyApis, complexApis;
 
     if ( ApiListFile != "" )
         populateStrSetFromFile(ApiListFile, exportedFuncs);
@@ -66,13 +74,22 @@ void RustifyCostAnalysis::runApiBasedAnalysis(void) {
         ApiCostAnalysis* apiCostObj = new ApiCostAnalysis(func->getLLVMFun(), funcCostMap, preProcessor);
         apiCostObj->analyze();
         totalApis++;
-        if ( apiCostObj->isComplex() )
-            complexApis++;
-        else
+        if ( apiCostObj->isComplex() ) {
+            complexApis.insert(func->getLLVMFun());
+            complexApiCount++;
+        } else {
             easyApis.insert(func->getLLVMFun());
+        }
     }
     MyLogger(logDEBUG) << "Total APIs: " << totalApis
-                    << " Complex APIs: " << complexApis << "\n";
+                    << " Complex APIs: " << complexApiCount << "\n";
+    if ( SimpleApiListFile != "" ) {
+        writeFuncNamesToFile(SimpleApiListFile, easyApis);
+    }
+    if ( ComplexApiListFile != "" ) {
+        writeFuncNamesToFile(ComplexApiListFile, complexApis);
+    }
+
     if ( PrintEasyApis ) {
         MyLogger(logINFO) << "Printing APIs which are not complex:\n";
         for ( auto func : easyApis ) {

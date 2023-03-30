@@ -89,7 +89,7 @@ public:
     void extractReachableFuncs(std::unordered_set<llvm::Function*>&);
 
     static void extractExportedFuncs(std::set<std::string>& exportedFuncs) {
-
+        assert(false && "extractExportedFuncs has not been implemented!");
     }
 
     void analyze(void);

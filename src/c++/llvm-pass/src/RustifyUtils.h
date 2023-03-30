@@ -145,6 +145,8 @@ namespace Rustify
                         std::unordered_set<llvm::StructType*>&);
 
     bool isUnion(llvm::Type*);
+
+    void writeFuncNamesToFile(std::string, std::set<const llvm::Function*>&);
 }
 
 #endif

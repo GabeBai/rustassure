@@ -589,3 +589,12 @@ bool Rustify::isUnion(Type *type) {
     std::string stCleanName = cleanStructName(stOrigName);
     return stCleanName == "union.anon";
 }
+
+void Rustify::writeFuncNamesToFile(std::string path, std::set<const Function*>& funcs) {
+    std::ofstream myfile;
+    myfile.open(path);
+    for ( auto func : funcs ) {
+        myfile << func->getName().str() << "\n";
+    }
+    myfile.close();
+}
