@@ -252,6 +252,13 @@ bool Rustify::isIntType(Value *value){
     return SVFUtil::isa<IntegerType>(value->getType());
 }
 
+bool Rustify::isCharType(Value *value){
+    assert(value != nullptr &&
+            "isCharType called for nullptr value!");
+    Type *type = value->getType();
+    return type->isIntegerTy(CHARLEN);
+}
+
 bool Rustify::isNullPtr(Value *value){
     if ( !isConstant(value) )
         return false;
