@@ -280,6 +280,12 @@ private:
     /// how many CVEs have been associated with this function in the past?
     int cveCount = 0;
 
+    /// Dylan - How many simple types does this function have?
+    int numSimpleTypes = 0;
+
+    /// Dylan - Does this function not call any other functions?
+    bool isLeaf;
+
 };
 
 }

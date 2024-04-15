@@ -30,6 +30,7 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
         2) collection-related struct type
     */
     analyzeArgs();
+    isLeaf = true;
     for ( inst_iterator I = inst_begin(function), E = inst_end(function);
                                 I != E; ++I ){
         Instruction* inst = &*I;
@@ -67,7 +68,10 @@ void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llv
     /// there are some special cases where we need to analyze the instruction in its entirety
     /// callInst -> what is the callee? indirect call? libc function call? internal call?
     if ( SVFUtil::isa<CallInst>(inst) )
+    {
+        isLeaf = false;
         analyzeCall(SVFUtil::dyn_cast<CallInst>(inst), rustifiedFuncs);
+    }
 
     /// gepInst -> can be used to identify ptr arithmetics on strings
     if ( SVFUtil::isa<GetElementPtrInst>(inst) )
@@ -147,6 +151,12 @@ void FunctionCostAnalysis::analyzeArgs(void) {
     for ( int i = 0; i < function->arg_size(); ++i ) {
         Argument* arg = function->getArg(i);
         Type* origArgType = arg->getType();
+
+        /// Dylan testing for simple types
+        if (isIntType(arg) || isCharType(arg) || isFloatType(arg) || isDoubleType(arg))
+        {
+            numSimpleTypes++;
+        }
 
         /// does the function have a char* arg type?
         if ( isCharPtrType(origArgType) )
