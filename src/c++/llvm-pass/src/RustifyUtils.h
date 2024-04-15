@@ -79,6 +79,10 @@ namespace Rustify
 
     bool isCharType(llvm::Value*);
 
+    bool isFloatType(llvm::Value*);
+
+    bool isDoubleType(llvm::Value*);
+
     bool isNullPtr(llvm::Value*);
 
     bool isConstantInt(llvm::Value*);

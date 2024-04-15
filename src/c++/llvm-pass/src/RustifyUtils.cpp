@@ -259,6 +259,23 @@ bool Rustify::isCharType(Value *value){
     return type->isIntegerTy(CHARLEN);
 }
 
+bool Rustify::isFloatType(Value *value)
+{
+    assert(value != nullptr &&
+            "isFloatType called for nullptr value!");
+    Type *type = value->getType();
+    return type->isFloatTy();
+}
+
+bool Rustify::isDoubleType(Value *value)
+{
+    assert(value != nullptr &&
+            "isDoubleType called for nullptr value!");
+    Type *type = value->getType();
+    return type->isDoubleTy();
+}
+
+
 bool Rustify::isNullPtr(Value *value){
     if ( !isConstant(value) )
         return false;
