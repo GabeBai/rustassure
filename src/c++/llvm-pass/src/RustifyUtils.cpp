@@ -622,3 +622,38 @@ void Rustify::writeFuncNamesToFile(std::string path, std::set<const Function*>& 
     }
     myfile.close();
 }
+
+bool Rustify::isStructSimple(StructType* stType)
+{
+    bool isPtr = false;
+    bool out = true;
+    if (SVFUtil::isa<PointerType>(stType))
+    {
+        isPtr = true;
+    }
+
+    if (SVFUtil::isa<PointerType>(stType->getPointerElementType()))
+    {
+        return false;
+    }
+
+    for ( auto innerElemType : stType->elements())
+    {
+        Type *baseType = getBaseType(innerElemType);
+        if (SVFUtil::isa<PointerType>(innerElemType))
+        {
+            if (SVFUtil::isa<StructType>(innerElemType->getPointerElementType()))
+            {
+                if (SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)) != stType)
+		{
+			out = out && isStructSimple(SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)));
+		}
+            }
+	    else
+	    {
+		return false;
+	    }
+        }
+    }
+    return out;
+}

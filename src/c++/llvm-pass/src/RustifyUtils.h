@@ -153,6 +153,8 @@ namespace Rustify
     bool isUnion(llvm::Type*);
 
     void writeFuncNamesToFile(std::string, std::set<const llvm::Function*>&);
+
+    bool isStructSimple(llvm::StructType*);
 }
 
 #endif
