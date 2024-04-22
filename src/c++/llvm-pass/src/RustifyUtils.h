@@ -154,7 +154,10 @@ namespace Rustify
 
     void writeFuncNamesToFile(std::string, std::set<const llvm::Function*>&);
 
-    bool isStructSimple(llvm::StructType*);
+    int isStructSimple(llvm::StructType*);
+
+    //Return options for isStructSimple. If a struct is simple but has struct pointers, then it is t_hasptr.
+    enum StructComplication {t_simple, t_hasptr, t_complicated};
 }
 
 #endif

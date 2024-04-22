@@ -286,6 +286,9 @@ private:
     /// Dylan - Does this function not call any other functions?
     bool isLeaf;
 
+    int structComplexitySum = 0;
+
+    bool hasDoubleStructPointer = false;
 };
 
 }

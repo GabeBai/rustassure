@@ -158,6 +158,25 @@ void FunctionCostAnalysis::analyzeArgs(void) {
             numSimpleTypes++;
         }
 
+	/// Dylan testing for simple struct
+	if (origArgType->isPointerTy())
+	{
+	    PointerType* pointerType = SVFUtil::dyn_cast<PointerType>(origArgType);
+	    if ((pointerType->getPointerElementType())->isPointerTy())
+	    {
+		hasDoubleStructPointer = false;
+	    }
+	    else if (isStructType(pointerType->getPointerElementType()))
+	    {
+		structComplexitySum += 1;
+		structComplexitySum += isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));
+	    }
+	}
+
+	if (isStructType(origArgType))
+	{
+	    structComplexitySum += isStructSimple(SVFUtil::dyn_cast<StructType>(origArgType));
+	}
         /// does the function have a char* arg type?
         if ( isCharPtrType(origArgType) )
             hasCharPtrArg = true;
