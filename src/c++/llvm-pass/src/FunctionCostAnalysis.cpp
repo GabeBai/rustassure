@@ -54,6 +54,7 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
 		    (structComplexityMax >= 2) |
 		    hasNonSimpleType;
     MyLogger(logDEBUG) << "Func: " << function->getName() << " isComplex: " << isComplex_ << "\n";
+    cout << "Func: " << function->getName().str() << " isComplex: " << isComplex_ << " isLeaf: " << isLeaf << " hasDoubleStructPointer: " << hasDoubleStructPointer << " structComplexityMax: " << structComplexityMax << " hasNonSimpleType: " << hasNonSimpleType <<"\n";
 }
 
 void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llvm::Function*>& rustifiedFuncs) {
