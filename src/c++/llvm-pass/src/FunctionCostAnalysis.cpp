@@ -48,7 +48,11 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
                     hasUnion_ | 
                     hasCharPtrArg |
                     hasVoidPtrArg |
-                    hasGlobalVar;
+                    hasGlobalVar |
+		    hasDoubleStructPointer |
+		    !isLeaf |
+		    (structComplexityMax >= 2) |
+		    hasNonSimpleType;
     MyLogger(logDEBUG) << "Func: " << function->getName() << " isComplex: " << isComplex_ << "\n";
 }
 
@@ -152,12 +156,6 @@ void FunctionCostAnalysis::analyzeArgs(void) {
         Argument* arg = function->getArg(i);
         Type* origArgType = arg->getType();
 
-        /// Dylan testing for simple types
-        if (isIntType(arg) || isCharType(arg) || isFloatType(arg) || isDoubleType(arg))
-        {
-            numSimpleTypes++;
-        }
-
 	/// Dylan testing for simple struct
 	if (origArgType->isPointerTy())
 	{
@@ -168,22 +166,34 @@ void FunctionCostAnalysis::analyzeArgs(void) {
 	    }
 	    else if (pointerType->getPointerElementType()->isStructTy())
 	    {
-		structComplexitySum += 1;
-		structComplexitySum += isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));
+		int out = isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));
+		if (out > structComplexityMax)
+		{
+		    structComplexityMax = out;
+		}
 	    }
 	}
 
-	if (origArgType->isStructTy())
+	else if (origArgType->isStructTy())
 	{
-	    structComplexitySum += isStructSimple(SVFUtil::dyn_cast<StructType>(origArgType));
+	    int out = isStructSimple(SVFUtil::dyn_cast<StructType>(origArgType));
+	    if (out > structComplexityMax)
+	    {
+		structComplexityMax = out;
+	    }
 	}
         /// does the function have a char* arg type?
-        if ( isCharPtrType(origArgType) )
+        else if ( isCharPtrType(origArgType) )
             hasCharPtrArg = true;
 
         /// does the function have a void* arg type?
-        if ( isVoidPtrType(origArgType) )
+        else if ( isVoidPtrType(origArgType) )
             hasVoidPtrArg = true;
+
+	else if (!isIntType(arg) || isCharType(arg) || isFloatType(arg) || isDoubleType(arg))
+	{
+	    hasNonSimpleType = true;
+	}
 
         argTypes.insert(origArgType);
         Type* argType = getBaseType(arg->getType());

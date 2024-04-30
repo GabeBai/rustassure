@@ -280,14 +280,16 @@ private:
     /// how many CVEs have been associated with this function in the past?
     int cveCount = 0;
 
-    /// Dylan - How many simple types does this function have?
-    int numSimpleTypes = 0;
+    /// Dylan - Does this function have a non-simple type?
+    bool hasNonSimpleType = false;
 
     /// Dylan - Does this function not call any other functions?
     bool isLeaf;
 
-    int structComplexitySum = 0;
+    //Dylan - how complex is the most complex struct?
+    int structComplexityMax = 0;
 
+    //Dylan - has a double pointer to a struct
     bool hasDoubleStructPointer = false;
 };
 
