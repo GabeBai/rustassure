@@ -166,14 +166,14 @@ void FunctionCostAnalysis::analyzeArgs(void) {
 	    {
 		hasDoubleStructPointer = false;
 	    }
-	    else if (isStructType(pointerType->getPointerElementType()))
+	    else if (pointerType->getPointerElementType()->isStructTy())
 	    {
 		structComplexitySum += 1;
 		structComplexitySum += isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));
 	    }
 	}
 
-	if (isStructType(origArgType))
+	if (origArgType->isStructTy())
 	{
 	    structComplexitySum += isStructSimple(SVFUtil::dyn_cast<StructType>(origArgType));
 	}

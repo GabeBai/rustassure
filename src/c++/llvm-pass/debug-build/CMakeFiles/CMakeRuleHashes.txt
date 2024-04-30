@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+3d2fe219416ba2cc358f423768e2d28f src/CMakeFiles/install-rustifier-lib
+bb2c783a84a5d49aafe6276f88cf44e0 src/CMakeFiles/install-rustifier-lib-stripped
