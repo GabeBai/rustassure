@@ -52,9 +52,10 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
 		    hasDoubleStructPointer |
 		    !isLeaf |
 		    (structComplexityMax >= 2) |
-		    hasNonSimpleType;
+		    hasNonSimpleType |
+		    hasNonSimplePointer;
     MyLogger(logDEBUG) << "Func: " << function->getName() << " isComplex: " << isComplex_ << "\n";
-    cout << "Func: " << function->getName().str() << " isComplex: " << isComplex_ << " isLeaf: " << isLeaf << " hasDoubleStructPointer: " << hasDoubleStructPointer << " structComplexityMax: " << structComplexityMax << " hasNonSimpleType: " << hasNonSimpleType <<"\n";
+    cout << "Func: " << function->getName().str() << " isComplex: " << isComplex_ << " isLeaf: " << isLeaf << " hasDoubleStructPointer: " << hasDoubleStructPointer << " structComplexityMax: " << structComplexityMax << " hasNonSimpleType: " << hasNonSimpleType << " hasNonSimplePointer: " << hasNonSimplePointer <<"\n";
 }
 
 void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llvm::Function*>& rustifiedFuncs) {
@@ -163,15 +164,26 @@ void FunctionCostAnalysis::analyzeArgs(void) {
 	    PointerType* pointerType = SVFUtil::dyn_cast<PointerType>(origArgType);
 	    if ((pointerType->getPointerElementType())->isPointerTy())
 	    {
-		hasDoubleStructPointer = false;
+		if (pointerType->getPointerElementType()->getPointerElementType()->isStructTy())
+		{
+		    hasDoubleStructPointer = true;
+		}
 	    }
 	    else if (pointerType->getPointerElementType()->isStructTy())
 	    {
+		if (structComplexityMax < t_hasptr)
+		{
+		    structComplexityMax = t_hasptr;
+		}
 		int out = isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));
 		if (out > structComplexityMax)
 		{
 		    structComplexityMax = out;
 		}
+	    }
+	    else
+	    {
+		hasNonSimplePointer = true;
 	    }
 	}
 
@@ -185,12 +197,14 @@ void FunctionCostAnalysis::analyzeArgs(void) {
 	}
         /// does the function have a char* arg type?
         else if ( isCharPtrType(origArgType) )
+	{
             hasCharPtrArg = true;
-
+	}
         /// does the function have a void* arg type?
         else if ( isVoidPtrType(origArgType) )
+	{
             hasVoidPtrArg = true;
-
+	}
 	else if (!isIntType(arg) || isCharType(arg) || isFloatType(arg) || isDoubleType(arg))
 	{
 	    hasNonSimpleType = true;

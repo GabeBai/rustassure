@@ -291,6 +291,9 @@ private:
 
     //Dylan - has a double pointer to a struct
     bool hasDoubleStructPointer = false;
+
+    //Dylan - has a pointer not pointing to a struct
+    bool hasNonSimplePointer = false;
 };
 
 }
