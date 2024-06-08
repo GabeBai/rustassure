@@ -30,6 +30,7 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
         2) collection-related struct type
     */
     analyzeArgs();
+    isLeaf = true;
     for ( inst_iterator I = inst_begin(function), E = inst_end(function);
                                 I != E; ++I ){
         Instruction* inst = &*I;
@@ -47,8 +48,14 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
                     hasUnion_ | 
                     hasCharPtrArg |
                     hasVoidPtrArg |
-                    hasGlobalVar;
+                    hasGlobalVar |
+		    hasDoubleStructPointer |
+		    !isLeaf |
+		    (structComplexityMax >= 2) |
+		    hasNonSimpleType |
+		    hasNonSimplePointer;
     MyLogger(logDEBUG) << "Func: " << function->getName() << " isComplex: " << isComplex_ << "\n";
+    cout << "Func: " << function->getName().str() << " isComplex: " << isComplex_ << " isLeaf: " << isLeaf << " hasDoubleStructPointer: " << hasDoubleStructPointer << " structComplexityMax: " << structComplexityMax << " hasNonSimpleType: " << hasNonSimpleType << " hasNonSimplePointer: " << hasNonSimplePointer <<"\n";
 }
 
 void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llvm::Function*>& rustifiedFuncs) {
@@ -67,7 +74,10 @@ void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llv
     /// there are some special cases where we need to analyze the instruction in its entirety
     /// callInst -> what is the callee? indirect call? libc function call? internal call?
     if ( SVFUtil::isa<CallInst>(inst) )
+    {
+        isLeaf = false;
         analyzeCall(SVFUtil::dyn_cast<CallInst>(inst), rustifiedFuncs);
+    }
 
     /// gepInst -> can be used to identify ptr arithmetics on strings
     if ( SVFUtil::isa<GetElementPtrInst>(inst) )
@@ -148,13 +158,57 @@ void FunctionCostAnalysis::analyzeArgs(void) {
         Argument* arg = function->getArg(i);
         Type* origArgType = arg->getType();
 
-        /// does the function have a char* arg type?
-        if ( isCharPtrType(origArgType) )
-            hasCharPtrArg = true;
+	/// Dylan testing for simple struct
+	if (origArgType->isPointerTy())
+	{
+	    PointerType* pointerType = SVFUtil::dyn_cast<PointerType>(origArgType);
+	    if ((pointerType->getPointerElementType())->isPointerTy())
+	    {
+		if (pointerType->getPointerElementType()->getPointerElementType()->isStructTy())
+		{
+		    hasDoubleStructPointer = true;
+		}
+	    }
+	    else if (pointerType->getPointerElementType()->isStructTy())
+	    {
+		if (structComplexityMax < t_hasptr)
+		{
+		    structComplexityMax = t_hasptr;
+		}
+		int out = isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));
+		if (out > structComplexityMax)
+		{
+		    structComplexityMax = out;
+		}
+	    }
+	    else
+	    {
+		hasNonSimplePointer = true;
+	    }
+	}
 
+	else if (origArgType->isStructTy())
+	{
+	    int out = isStructSimple(SVFUtil::dyn_cast<StructType>(origArgType));
+	    if (out > structComplexityMax)
+	    {
+		structComplexityMax = out;
+	    }
+	}
+        /// does the function have a char* arg type?
+        else if ( isCharPtrType(origArgType) )
+	{
+            hasCharPtrArg = true;
+	}
         /// does the function have a void* arg type?
-        if ( isVoidPtrType(origArgType) )
+        else if ( isVoidPtrType(origArgType) )
+	{
             hasVoidPtrArg = true;
+	}
+	else if (!isIntType(arg) || isCharType(arg) || isFloatType(arg) || isDoubleType(arg))
+	{
+	    hasNonSimpleType = true;
+	}
 
         argTypes.insert(origArgType);
         Type* argType = getBaseType(arg->getType());

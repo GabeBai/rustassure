@@ -252,6 +252,30 @@ bool Rustify::isIntType(Value *value){
     return SVFUtil::isa<IntegerType>(value->getType());
 }
 
+bool Rustify::isCharType(Value *value){
+    assert(value != nullptr &&
+            "isCharType called for nullptr value!");
+    Type *type = value->getType();
+    return type->isIntegerTy(CHARLEN);
+}
+
+bool Rustify::isFloatType(Value *value)
+{
+    assert(value != nullptr &&
+            "isFloatType called for nullptr value!");
+    Type *type = value->getType();
+    return type->isFloatTy();
+}
+
+bool Rustify::isDoubleType(Value *value)
+{
+    assert(value != nullptr &&
+            "isDoubleType called for nullptr value!");
+    Type *type = value->getType();
+    return type->isDoubleTy();
+}
+
+
 bool Rustify::isNullPtr(Value *value){
     if ( !isConstant(value) )
         return false;
@@ -597,4 +621,44 @@ void Rustify::writeFuncNamesToFile(std::string path, std::set<const Function*>& 
         myfile << func->getName().str() << "\n";
     }
     myfile.close();
+}
+
+int Rustify::isStructSimple(StructType* stType)
+{
+    int out = t_simple;
+
+    for ( auto innerElemType : stType->elements())
+    {
+        if (SVFUtil::isa<PointerType>(innerElemType))
+        {
+            if (SVFUtil::isa<StructType>(innerElemType->getPointerElementType()))
+            {
+                if (SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)) != stType)
+		{
+			int result = isStructSimple(SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)));
+			if (result > out)
+			{
+			    out = result;
+			}
+			if (t_hasptr > out)
+			{
+			    out = t_hasptr;
+			}
+		}
+            }
+	    else
+	    {
+		return t_complicated;
+	    }
+        }
+        else if (SVFUtil::isa<StructType>(innerElemType))
+        {
+            int result = isStructSimple(SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)));
+	    if (result > out)
+	    {
+		out = result;
+	    }
+        }
+    }
+    return out;
 }

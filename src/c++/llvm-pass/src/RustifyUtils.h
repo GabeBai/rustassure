@@ -77,6 +77,12 @@ namespace Rustify
 
     bool isIntType(llvm::Value*);
 
+    bool isCharType(llvm::Value*);
+
+    bool isFloatType(llvm::Value*);
+
+    bool isDoubleType(llvm::Value*);
+
     bool isNullPtr(llvm::Value*);
 
     bool isConstantInt(llvm::Value*);
@@ -147,6 +153,11 @@ namespace Rustify
     bool isUnion(llvm::Type*);
 
     void writeFuncNamesToFile(std::string, std::set<const llvm::Function*>&);
+
+    int isStructSimple(llvm::StructType*);
+
+    //Return options for isStructSimple. If a struct is simple but has struct pointers, then it is t_hasptr.
+    enum StructComplication {t_simple, t_hasptr, t_complicated};
 }
 
 #endif

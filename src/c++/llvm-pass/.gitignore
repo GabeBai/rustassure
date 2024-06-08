@@ -1,5 +1,6 @@
 Release-build/*
 Debug-build/*
+build/*
 config
 *.bc
 *.o
