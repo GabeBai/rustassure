@@ -101,21 +101,22 @@ void PreProcessor::addParentToNested(std::unordered_set<StructType*> &nestedStTy
  * This function goes through all function arguments and identifies
  * whether a struct type argument is passed as an argument while 
  * being nested in another struct type
+ * Update: 6/8/24: this logic doesn't seem to be correct -> commenting out!
 */
 void PreProcessor::findMultiOwnerStructTypes(void) {
-    /// 1) go through all function arguments
-    /// 2) if a function argument is of a nested struct type -> we mark all its parents as multi owner
-    for ( auto func : moduleFuncs ) {
-        for ( int i = 0; i < func->arg_size(); ++i ) {
-            Argument* arg = func->getArg(i);
-            Type* argType = arg->getType();
-            if ( isNestedStructType(argType) ) {
-                addStTypesToMultiOwner(
-                    nestedStTypeToParent[SVFUtil::dyn_cast<StructType>(
-                                                    getBaseType(argType))]);
-            }
-        }
-    }
+    ///// 1) go through all function arguments
+    ///// 2) if a function argument is of a nested struct type -> we mark all its parents as multi owner
+    //for ( auto func : moduleFuncs ) {
+    //    for ( int i = 0; i < func->arg_size(); ++i ) {
+    //        Argument* arg = func->getArg(i);
+    //        Type* argType = arg->getType();
+    //        if ( isNestedStructType(argType) ) {
+    //            addStTypesToMultiOwner(
+    //                nestedStTypeToParent[SVFUtil::dyn_cast<StructType>(
+    //                                                getBaseType(argType))]);
+    //        }
+    //    }
+    //}
 }
 
 void PreProcessor::extractAllStructTypes(std::unordered_set<StructType*>& stTypes) {

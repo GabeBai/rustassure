@@ -73,8 +73,9 @@ void RustifyPass::runOnModule(SVFModule* svfModule){
     }
 
 
-    /// preprocessor extract any configuration related scalar global variables
-    /// it also identifies any nested config-related struct types
+    /// the preprocessor keeps information about:
+    ///     - libc functions: we want to identify libc function calls (something which DEFINITELY won't be Rust)
+    ///     - collection struct types: we want to identify struct types which represent vectors, stacks, lists,...
     PreProcessor *preProcessor = new PreProcessor(svfModule);
     preProcessor->run();
     preProcessor->init();

@@ -49,15 +49,22 @@ void FunctionCostAnalysis::analyze(std::unordered_set<llvm::Function*>& rustifie
                     hasCharPtrArg |
                     hasVoidPtrArg |
                     hasGlobalVar |
-		    hasDoubleStructPointer |
-		    !isLeaf |
-		    (structComplexityMax >= 2) |
-		    hasNonSimpleType |
-		    hasNonSimplePointer;
+        		    hasDoublePointer |
+		            !isLeaf |
+		            (structComplexityMax >= 2) |
+        		    hasNonSimpleType |
+        		    hasNonSimplePointer;
     MyLogger(logDEBUG) << "Func: " << function->getName() << " isComplex: " << isComplex_ << "\n";
-    cout << "Func: " << function->getName().str() << " isComplex: " << isComplex_ << " isLeaf: " << isLeaf << " hasDoubleStructPointer: " << hasDoubleStructPointer << " structComplexityMax: " << structComplexityMax << " hasNonSimpleType: " << hasNonSimpleType << " hasNonSimplePointer: " << hasNonSimplePointer <<"\n";
+    cout << "Func: " << function->getName().str() << " isComplex: " << isComplex_ << " isLeaf: " << isLeaf << " hasDoublePointer: " << hasDoublePointer << " structComplexityMax: " << structComplexityMax << " hasNonSimpleType: " << hasNonSimpleType << " hasNonSimplePointer: " << hasNonSimplePointer <<"\n";
 }
 
+/*
+ * analyzeInst
+ * Our current implementation analyze the instructions of a function to find the following patterns:
+ *  - is this a leaf function? (does it a have a callInst?)
+ *  - does this function access a global variable?
+ *  - does it perform any ptr arithmetics?
+ */
 void FunctionCostAnalysis::analyzeInst(Instruction *inst, std::unordered_set<llvm::Function*>& rustifiedFuncs) {
     std::unordered_set<Value*> instValues;
 
@@ -152,65 +159,16 @@ void FunctionCostAnalysis::analyzeCall(CallInst* callInst,
 /*
  * analyzeArgs
  * Analyze argument types of this function to identify argument types
+ *
+ * 
 */
 void FunctionCostAnalysis::analyzeArgs(void) {
     for ( int i = 0; i < function->arg_size(); ++i ) {
         Argument* arg = function->getArg(i);
         Type* origArgType = arg->getType();
-
-	/// Dylan testing for simple struct
-	if (origArgType->isPointerTy())
-	{
-	    PointerType* pointerType = SVFUtil::dyn_cast<PointerType>(origArgType);
-	    if ((pointerType->getPointerElementType())->isPointerTy())
-	    {
-		if (pointerType->getPointerElementType()->getPointerElementType()->isStructTy())
-		{
-		    hasDoubleStructPointer = true;
-		}
-	    }
-	    else if (pointerType->getPointerElementType()->isStructTy())
-	    {
-		if (structComplexityMax < t_hasptr)
-		{
-		    structComplexityMax = t_hasptr;
-		}
-		int out = isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));
-		if (out > structComplexityMax)
-		{
-		    structComplexityMax = out;
-		}
-	    }
-	    else
-	    {
-		hasNonSimplePointer = true;
-	    }
-	}
-
-	else if (origArgType->isStructTy())
-	{
-	    int out = isStructSimple(SVFUtil::dyn_cast<StructType>(origArgType));
-	    if (out > structComplexityMax)
-	    {
-		structComplexityMax = out;
-	    }
-	}
-        /// does the function have a char* arg type?
-        else if ( isCharPtrType(origArgType) )
-	{
-            hasCharPtrArg = true;
-	}
-        /// does the function have a void* arg type?
-        else if ( isVoidPtrType(origArgType) )
-	{
-            hasVoidPtrArg = true;
-	}
-	else if (!isIntType(arg) || isCharType(arg) || isFloatType(arg) || isDoubleType(arg))
-	{
-	    hasNonSimpleType = true;
-	}
-
         argTypes.insert(origArgType);
+
+        /// collecting information about argument type -> no complex/simple decisions
         Type* argType = getBaseType(arg->getType());
         if ( argType->isStructTy() ) {
             if ( PreProcessor::isCollectionStruct(argType) )
@@ -229,6 +187,40 @@ void FunctionCostAnalysis::analyzeArgs(void) {
             findReadAndWrites(arg);
         } else
             argIsStType[arg] = false;
+
+	    /// Dylan testing for simple struct
+        /// Using our argument-based specifier to determine whether this is a complex function -> look at GDoc for patterns
+        if (origArgType->isPointerTy()) {
+            PointerType* pointerType = SVFUtil::dyn_cast<PointerType>(origArgType);
+            /// TODO is ptr accessed as an array in this function? 
+            ///         if YES -> complex, if NO -> not complex
+            ///         for NOW: both these cases are complex!
+            if ((pointerType->getPointerElementType())->isPointerTy()) {
+                hasDoublePointer = true;    /// probably an array of elements -> considering complex for now
+            } else if (pointerType->getPointerElementType()->isStructTy()) {
+                if (structComplexityMax < t_hasptr)
+                    structComplexityMax = t_hasptr;
+                int out = isStructSimple(SVFUtil::dyn_cast<StructType>(pointerType->getPointerElementType()));  /// TODO: simplify
+                if (out > structComplexityMax)
+                    structComplexityMax = out;
+            } else if ( isCharPtrType(origArgType) ) { /// does the function have a char* arg type?
+                hasCharPtrArg = true;       /// these aren't necessarily complex
+            } else if ( isVoidPtrType(origArgType) ) { /// does the function have a void* arg type?
+                hasVoidPtrArg = true;       /// these aren't necessarily complex
+            } else if (!isIntType(arg) || isCharType(arg) || isFloatType(arg) || isDoubleType(arg)) {
+                hasNonSimpleType = true;
+            } else {
+                hasNonSimplePointer = true;
+            }
+        } else if (origArgType->isStructTy()) {
+            int out = isStructSimple(SVFUtil::dyn_cast<StructType>(origArgType));
+            if (out > structComplexityMax)
+                structComplexityMax = out;
+        } else {    /// is Int, Char, Float, Double -> primitive data type
+            hasNonSimpleType = false;
+        }
+        /// end Dylan's code
+
     }
 }
 

@@ -289,8 +289,8 @@ private:
     //Dylan - how complex is the most complex struct?
     int structComplexityMax = 0;
 
-    //Dylan - has a double pointer to a struct
-    bool hasDoubleStructPointer = false;
+    //Dylan - has a double pointer
+    bool hasDoublePointer = false;
 
     //Dylan - has a pointer not pointing to a struct
     bool hasNonSimplePointer = false;

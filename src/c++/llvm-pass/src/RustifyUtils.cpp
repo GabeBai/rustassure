@@ -634,30 +634,30 @@ int Rustify::isStructSimple(StructType* stType)
             if (SVFUtil::isa<StructType>(innerElemType->getPointerElementType()))
             {
                 if (SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)) != stType)
-		{
-			int result = isStructSimple(SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)));
-			if (result > out)
-			{
-			    out = result;
-			}
-			if (t_hasptr > out)
-			{
-			    out = t_hasptr;
-			}
-		}
+		        {
+		        	int result = isStructSimple(SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)));
+		        	if (result > out)
+		        	{
+		        	    out = result;
+		        	}
+		        	if (t_hasptr > out)
+		        	{
+		        	    out = t_hasptr;
+		        	}
+		        }
             }
-	    else
-	    {
-		return t_complicated;
-	    }
+	        else
+    	    {
+	        	return t_complicated;
+    	    }
         }
         else if (SVFUtil::isa<StructType>(innerElemType))
         {
             int result = isStructSimple(SVFUtil::dyn_cast<StructType>(getBaseType(innerElemType)));
-	    if (result > out)
-	    {
-		out = result;
-	    }
+	        if (result > out)
+    	    {
+	        	out = result;
+    	    }
         }
     }
     return out;
