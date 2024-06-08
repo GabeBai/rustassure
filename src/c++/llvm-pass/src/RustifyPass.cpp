@@ -85,10 +85,8 @@ void RustifyPass::runOnModule(SVFModule* svfModule){
         cveAnalysis->parse();
     }
 
-    /// the configDepAnalysis class identifies configuration-related conditional 
-    /// branches and initialization points
-    /// it needs the config-related struct types and scalar global variables to 
-    /// be passed to it
+    /// the rustifyCostAnalysis class is the main class for extracting the cost related
+    /// to translating functions to Rust
     RustifyCostAnalysis *rustifyCostAnalysis = 
                                     new RustifyCostAnalysis(svfModule,
                                                           preProcessor);
