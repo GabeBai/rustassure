@@ -42,11 +42,28 @@ class Translator:
 def getLogger(logPath):
     if os.path.exists(logPath):
         os.remove(logPath)
+    # Create a logger
+    logger = logging.getLogger('translationvalidator_logger')
+    logger.setLevel(logging.DEBUG)
+	
+	# Create file handler which logs even debug messages
+    fh = logging.FileHandler(logPath)
+    fh.setLevel(logging.DEBUG)
+	
+	# Create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
 
-    rootLogger = logging.getLogger("validateTranslation")
-    logging.basicConfig(filename=logPath, level=logging.INFO)
-    rootLogger.setLevel(logging.INFO)
-    return rootLogger
+    # Create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+
+    # Add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+    return logger
 
 def createTranslator(logger):
     translator = Translator(logger,
@@ -72,13 +89,32 @@ def getFunctions(logger, binPath, srcPath):
                 funcs[funcName] = code
     return funcs
 
+def process_func(translator, funcs, key, logger, individualFuncPath):
+    result = translator.translate(funcs[key])
+    rs_path = os.path.join(individualFuncPath, f"{key}.rs")
+    c_path = os.path.join(individualFuncPath, f"{key}.c")
+    logger
 
-if __name__ == "__main__":
+    with open(rs_path, "w") as rs_file:
+        rs_file.write(result)
+    with open(c_path, "w") as c_file:
+        c_file.write(funcs[key])
+
+def processCodebase(codebasePath, execPath):
     logger = getLogger("./openai.log")
     translator = createTranslator(logger) 
     # result = translator.translate("int main(void) { return 0; }")
     # print(result)
-    funcs = getFunctions(logger, "./inputs-complex/zlib-1.3.1/libz.so", "./inputs-complex/zlib-1.3.1/")
+    funcs = getFunctions(logger, execPath, codebasePath)
+    logger.info("Extracted %d functions", len(funcs))
+    individualFuncPath = codebasePath+"/individual-funcs/"
+    try:
+        os.mkdir(individualFuncPath)
+    except:
+        logger.debug("Individual functions directory already exists")
+    threads = []
     for key in funcs:
-        result = translator.translate(funcs[key])
-        print(result)
+        process_func(translator, funcs, key, logger, individualFuncPath)
+
+if __name__ == "__main__":
+    processCodebase("./inputs-complex/zlib-1.3.1/", "./inputs-complex/zlib-1.3.1/libz.so")
