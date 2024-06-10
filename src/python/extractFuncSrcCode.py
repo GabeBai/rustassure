@@ -13,21 +13,21 @@ def get_line_number(filename, funcname):
         if line.startswith(funcname + " "):    
             found = True
 
-            if output.strip() is not "":
+            if output.strip() != "":
                 output = output.split(" ")
                 lines = list(filter(None, output))
                 line_num = lines[2]
 
-                print("Function found in file " + filename + " on line: " + line_num)
+                # print("Function found in file " + filename + " on line: " + line_num)
                 return int(line_num)
 
     if found == False:
-        print("Function not found")
+        # print("Function not found")
         return 0
 
 
 def process_file(filename, line_num):
-    print("opening " + filename + " on line " + str(line_num))
+    # print("opening " + filename + " on line " + str(line_num))
 
     code = ""
     cnt_braket = 0
