@@ -1,14 +1,24 @@
 import subprocess
 import glob
+import sys
 
 
 def get_line_number(filename, funcname):
     found = False
-    cmd = "ctags -x --c-kinds=fp " + filename + " | grep " + funcname
+    cmd = "ctags  -x --languages=C,C++ --fields=+l --extra=+q --c-kinds=fp --language-force=C " + filename + " | grep " + funcname + " | grep -v extern "
 
     output = subprocess.getoutput(cmd)
     lines = output.splitlines()
 
+    """
+    if len(lines) > 0:
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        print(cmd)
+        print(filename)
+        print(lines)
+        print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+        sys.exit(0)
+    """
     for line in lines:
         if line.startswith(funcname + " "):    
             found = True
@@ -34,8 +44,10 @@ def process_file(filename, line_num):
     found_start = False
     found_end = False
 
+    codeLines = []
     with open(filename, "r") as f:
         for i, line in enumerate(f):
+            codeLines.append(i)
             if(i >= (line_num - 1)):
                 code += line
 
@@ -48,7 +60,14 @@ def process_file(filename, line_num):
 
                 if cnt_braket == 0 and found_start == True:
                     found_end = True
-                    return code
+                    # Return the code and the range of the code in a set
+                    # This will help us filter out the non-function contents from the 
+                    # preprocessed file later on. This content includes struct definitions,
+                    # typedefs and so on.
+                    # This information would be useful to not only the translator,
+                    # but also for eventually compiling these function files to emit 
+                    # the LLVM bitcodes
+                    return (code, codeLines)
 
 
 folder = "/home/hamed/rust/apps/libcsv"
