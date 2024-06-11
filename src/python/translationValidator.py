@@ -83,10 +83,10 @@ class FunctionAndDepsExtractor:
             # self.logger.info("Prev index = %d, total = %d", s, len(allLines))
             prevLine = allLines[s].strip()
             while s >= 0 and len(prevLine) > 0 and "#" not in prevLine and ";" not in prevLine and "}" not in prevLine:
-                self.logger.info("prevLine: %s", prevLine)
+                # self.logger.info("prevLine: %s", prevLine)
                 startIndex = s
                 s = startIndex - 1
-                self.logger.info("startIndex = %d", startIndex)
+                # self.logger.info("startIndex = %d", startIndex)
                 prevLine = allLines[s].strip()
         r = Range(sym, startIndex, endIndex)
         return r
@@ -163,6 +163,9 @@ class FunctionAndDepsExtractor:
         return funcMap
 
 class Translator:
+    """
+    https://platform.openai.com/docs/guides/text-generation/chat-completions-api
+    """
     def __init__(self, logger, baseUrl, apiKey,
             srcLang, dstLang,
             model, systemPrompt):
@@ -173,22 +176,28 @@ class Translator:
         self.dstLang = dstLang
         self.model = model
         self.systemPrompt = systemPrompt
-        self.client = OpenAI(base_url=self.baseUrl, api_key=self.apiKey)
- 
+        # If we're using LLAMA then we need to provide self.baseUrl
+        # self.client = OpenAI(base_url=self.baseUrl, api_key=self.apiKey)
+        self.client = OpenAI(api_key=self.apiKey)
+
     def translate(self, funcSrc):
         self.logger.debug("Translating: %s",funcSrc)
-        request = "Translate" + self.srcLang + " to " + self.dstLang + " and return ONLY the translated Rust code with NO explanation" +  "\n" + funcSrc
+        request = "Translate " + self.srcLang + " to " + self.dstLang + " and return ONLY the translated Rust code with NO explanation" +  "\n" + funcSrc
+        # self.logger.warn("Request: %s", request)
         completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self.systemPrompt},
                     {"role": "user", "content": request}], 
-                temperature=0.7,)
-        self.logger.debug("response = %s", completion)
+                temperature=0.4,)
+        # self.logger.debug("response = %s", completion)
         result = completion.choices[0].message.content
         parts = result.split("```")
         if len (parts) > 2:
             result = parts[1].strip()
+            resultLines = result.split("\n")
+            if "rust" in resultLines[0]:
+                result = "\n".join(resultLines[1:])            
         return result
 
 def getLogger(logPath):
@@ -220,11 +229,11 @@ def getLogger(logPath):
 def createTranslator(logger):
     translator = Translator(logger,
             "http://172.31.224.1:12345/v1",
-            "lm-studio",
+            os.environ.get('OPENAI_KEY'),
             "C",
             "Rust",
-            "TheBloke/CodeLlama-7B-Instruct-GGUF",
-            "You are an expert programmer in C and Rust and are an expert in translating C to Rust code. Please focus on correctness and do not add any extra explanation of the result. Return ONLY the translated code")
+            "gpt-4o",
+            "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
     return translator
 
 def getFunctions(logger, extractor, binPath, srcPath):
@@ -240,14 +249,19 @@ def getFunctions(logger, extractor, binPath, srcPath):
     return fileFuncMap
 
 def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath):
-    translatedResult = "" # translator.translate(funcs[key])
-    rs_path = os.path.join(individualFuncPath, f"{key}.rs")
-    c_path = os.path.join(individualFuncPath, f"{key}.i")
+    try:
+        translatedResult = translator.translate(funcs[key])
+        # logger.info(translatedResult)
+        rs_path = os.path.join(individualFuncPath, f"{key}.rs")
+        c_path = os.path.join(individualFuncPath, f"{key}.i")
 
-    with open(rs_path, "w") as rs_file:
-        rs_file.write(translatedResult)
-    with open(c_path, "w") as c_file:
-        c_file.write(funcs[key])
+        with open(rs_path, "w") as rs_file:
+            rs_file.write(translatedResult)
+        with open(c_path, "w") as c_file:
+            c_file.write(funcs[key])
+        logger.info("Function %s successfully translated", key)
+    except:
+        logger.warn("Function %s failed to translate", key)
 
 def emitLLVMBitcodes(rootPath, logger):
     """
@@ -258,7 +272,19 @@ def emitLLVMBitcodes(rootPath, logger):
     for filename in glob.iglob(rustSrcPattern, recursive=True):
         # Compile it and generate the bitcode file
         logger.debug("Compiling Rust file %s ", filename)
-        emitBitcodeCmd = "rustc -emit=llvm-bc " + filename
+        # Check if the file has a fn main() 
+        # If not, try to compile as a library (or it complains that there's no main)
+        # rustc doesn't seem to have a -c option
+        isBinary = False
+        with open(filename) as f:
+            for line in f:
+                if "fn main(" in line:
+                    isBinary = True
+                    break
+        if isBinary:
+            emitBitcodeCmd = "rustc -emit=llvm-bc " + filename
+        else:
+            emitBitcodeCmd = "rustc --emit=llvm-bc --crate-type=lib " + filename
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
