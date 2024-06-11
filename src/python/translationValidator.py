@@ -6,7 +6,6 @@ import glob
 from openai import OpenAI
 import subprocess
 
-
 class Range:
     """
     Represents a 0-indexed range of line numbers that span a definition (function, typedef, etc)
@@ -82,10 +81,13 @@ class FunctionAndDepsExtractor:
             s = startIndex - 1
             # As long the previous line isn't empty or containing #, ;, or }
             # self.logger.info("Prev index = %d, total = %d", s, len(allLines))
-            prevLine = allLines[s].split()
-            while s > 0 and len(prevLine) > 0 and "#" not in prevLine and ";" not in prevLine and "}" not in prevLine:
+            prevLine = allLines[s].strip()
+            while s >= 0 and len(prevLine) > 0 and "#" not in prevLine and ";" not in prevLine and "}" not in prevLine:
+                self.logger.info("prevLine: %s", prevLine)
                 startIndex = s
                 s = startIndex - 1
+                self.logger.info("startIndex = %d", startIndex)
+                prevLine = allLines[s].strip()
         r = Range(sym, startIndex, endIndex)
         return r
 
@@ -228,6 +230,10 @@ def createTranslator(logger):
 def getFunctions(logger, extractor, binPath, srcPath):
     fileFuncMap = {}
     for filename in glob.iglob(os.path.join(srcPath, "*.i"), recursive=True):
+        """
+        if "deflate.i" not in filename:
+            continue
+        """
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
@@ -258,7 +264,6 @@ def emitLLVMBitcodes(rootPath, logger):
             logger.warn ("Compilation failed for %s", filename)
         else:
             logger.debug ("Compilation succeeded for %s", filename)
-        logger.warn (result.stderr)
     for filename in glob.iglob(cSrcPattern, recursive=True):
         logger.debug("Compiling C file %s ", filename)
         emitBitcodeCmd = "clang -c -emit-llvm " + filename
@@ -267,8 +272,6 @@ def emitLLVMBitcodes(rootPath, logger):
             logger.warn ("Compilation failed for %s", filename)
         else:
             logger.debug ("Compilation succeeded for %s", filename)
-        logger.warn (result.stderr)
-
 
 def processCodebase(codebasePath, execPath):
     logger = getLogger("./validator.log")
