@@ -4,21 +4,18 @@ import sys
 import re
 import glob
 from openai import OpenAI
-import extractFuncSrcCode as funcExtractor
 import subprocess
 
-sys.path.insert(0, './python-utils/')
-
-import util
 
 class Range:
     """
     Represents a 0-indexed range of line numbers that span a definition (function, typedef, etc)
+    This range is inclusive on both ends
     """
     def __init__(self, sym, start, end):
         self.sym = sym
-        self.start = int(start) - 1
-        self.end = int(end) - 1
+        self.start = start
+        self.end = end
 
 class FileRanges:
     """
@@ -41,6 +38,7 @@ class FileRanges:
 
 class FunctionAndDepsExtractor:
     """
+    ctags -c-kinds options:
         d  macro definitions [off]
         e  enumerators (values inside an enumeration) [off]
         f  function definitions
@@ -67,7 +65,7 @@ class FunctionAndDepsExtractor:
             self.logger.critical("Need Universal Ctags to proceed")
             sys.exit(-1)
 
-    def createRangeFromCtagsLine(self, line):
+    def createRangeFromCtagsLine(self, line, allLines):
         tokens = line.split('\t')
         sym = tokens[0]
         start = tokens[4].split(":")[1]
@@ -75,10 +73,21 @@ class FunctionAndDepsExtractor:
             end = tokens[-1].split(":")[1]
         else:
             end = start
-        self.logger.info("sym = %s start = %s end = %s", sym, start, end)
-        r = Range(sym, start, end)
+        # Need for hack!
+        # The function header can span more than one lines
+        # We hack to capture it
+        startIndex = int(start) - 1
+        endIndex = int(end) - 1 
+        if startIndex > 0:
+            s = startIndex - 1
+            # As long the previous line isn't empty or containing #, ;, or }
+            # self.logger.info("Prev index = %d, total = %d", s, len(allLines))
+            prevLine = allLines[s].split()
+            while s > 0 and len(prevLine) > 0 and "#" not in prevLine and ";" not in prevLine and "}" not in prevLine:
+                startIndex = s
+                s = startIndex - 1
+        r = Range(sym, startIndex, endIndex)
         return r
-
 
     def extractFuncsAndDeps(self, filename):
         """
@@ -98,15 +107,58 @@ class FunctionAndDepsExtractor:
 
         funcExtractCmd = "ctags --fields=+ne -o -  --language-force=C --c-kinds=f " + filename
         result = subprocess.getoutput(funcExtractCmd)
+        totalRange = len(result.splitlines()) - 1
+
+        fileContents = []
+        # Read the file contents
+        with open(filename, 'r') as f:
+            for line in f:
+                fileContents.append(line)
+
         for line in result.splitlines():
-            r = self.createRangeFromCtagsLine(line)
+            r = self.createRangeFromCtagsLine(line, fileContents)
             fileRanges.addFuncRange(r)
 
+        # Compute the always include range
+        sortedFileRanges = sorted(fileRanges.funcRanges, key = lambda x: x.start)
+
+        start = 0
+        for fileRange in sortedFileRanges:
+            if fileRange.start > start:
+                r = Range("", start, fileRange.start-1)
+                fileRanges.addAlwaysIncludeRange(r)
+            start = fileRange.end + 1
+        
+        if start < totalRange:
+            r = Range("", start, totalRange)
+            fileRanges.addAlwaysIncludeRange(r)
+        
+        """
         alwaysIncludeExtractCmd = "ctags --fields=+ne -o -  --language-force=C --c-kinds=-fLl " + filename
         result = subprocess.getoutput(alwaysIncludeExtractCmd)
         for line in result.splitlines():
             r = self.createRangeFromCtagsLine(line)
             fileRanges.addAlwaysIncludeRange(r)
+        """
+
+        funcMap = {}
+
+        # for each function, add everything before it in the AlwaysInclude map
+        for funcSym in fileRanges.funcRangesMap:
+            codeLines = []
+            funcRange = fileRanges.funcRangesMap[funcSym]
+            sortedAlwaysIncludedRanges = sorted(fileRanges.alwaysIncludeRanges, key = lambda x: x.start)
+            for alwaysIncludeRange in sortedAlwaysIncludedRanges:
+                if alwaysIncludeRange.end < funcRange.start:
+                    # This range was before the function in the file
+                    # self.logger.info("For file %s, for function %s, with range %d - %d, appending ranges %d - %d", filename, funcSym, funcRange.start, funcRange.end + 1, alwaysIncludeRange.start, alwaysIncludeRange.end + 1)
+                    codeLines.extend(fileContents[alwaysIncludeRange.start : alwaysIncludeRange.end + 1])
+            codeLines.extend(fileContents[funcRange.start : funcRange.end + 1])
+            # self.logger.info(codeLines)
+            code = "".join(codeLines)
+            funcMap[funcSym] = code
+            # self.logger.info(code)
+        return funcMap
 
 class Translator:
     def __init__(self, logger, baseUrl, apiKey,
@@ -173,40 +225,21 @@ def createTranslator(logger):
             "You are an expert programmer in C and Rust and are an expert in translating C to Rust code. Please focus on correctness and do not add any extra explanation of the result. Return ONLY the translated code")
     return translator
 
-def findFunctionNames(logger, filename):
-    # Getting the function names from a file is proving to be quite challenging
-    # Hamed's way of iterating through the binary seems to cause issues if
-    # the binary has removed dead code or inlined functions
-    # Trying to use regex for this was just SAD.
-    # So, I first generate the LLVM bitcode, which standardizes the function
-    # definitions and then just grep
-    functionNodes = []
-    cmd = "clang -c -emit-llvm -S " + filename + " -o - | grep define"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout
-    logger.info(result)
-    for line in result.splitlines():
-        splits = line.split("@")
-        # logger.info(line)
-        functionName = splits[1].split("(")[0]
-        functionNodes.append(functionName)
-    """
-    for func in functionNodes:
-        logger.info("Found function: %s", func)
-    """
-    return functionNodes
-
 def getFunctions(logger, extractor, binPath, srcPath):
+    fileFuncMap = {}
     for filename in glob.iglob(os.path.join(srcPath, "*.i"), recursive=True):
         logger.debug("Extracting function bodies for file: %s", filename)
-        extractor.extractFuncsAndDeps(filename)
+        funcMap = extractor.extractFuncsAndDeps(filename)
+        fileFuncMap.update(funcMap)
+    return fileFuncMap
 
-def process_func(translator, funcs, key, logger, individualFuncPath):
-    result = "" # translator.translate(funcs[key])
+def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath):
+    translatedResult = "" # translator.translate(funcs[key])
     rs_path = os.path.join(individualFuncPath, f"{key}.rs")
     c_path = os.path.join(individualFuncPath, f"{key}.i")
 
     with open(rs_path, "w") as rs_file:
-        rs_file.write(result)
+        rs_file.write(translatedResult)
     with open(c_path, "w") as c_file:
         c_file.write(funcs[key])
 
@@ -220,7 +253,7 @@ def emitLLVMBitcodes(rootPath, logger):
         # Compile it and generate the bitcode file
         logger.debug("Compiling Rust file %s ", filename)
         emitBitcodeCmd = "rustc -emit=llvm-bc " + filename
-        result = subprocess.run(emitBitcodeCmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
         else:
@@ -229,7 +262,7 @@ def emitLLVMBitcodes(rootPath, logger):
     for filename in glob.iglob(cSrcPattern, recursive=True):
         logger.debug("Compiling C file %s ", filename)
         emitBitcodeCmd = "clang -c -emit-llvm " + filename
-        result = subprocess.run(emitBitcodeCmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
         else:
@@ -243,20 +276,16 @@ def processCodebase(codebasePath, execPath):
     # If the directory already exists, then just skip it
     if not os.path.isdir(os.path.join(codebasePath, "individual-funcs")):
         translator = createTranslator(logger) 
-        funcs = getFunctions(logger, extractor, execPath, codebasePath)
-        """
-        logger.info("Extracted %d functions", len(funcs))
+        funcMap = getFunctions(logger, extractor, execPath, codebasePath)
+        logger.debug("Extracted %d functions", len(funcMap))
         individualFuncPath = codebasePath+"/individual-funcs/"
         try:
             os.mkdir(individualFuncPath)
         except:
             logger.debug("Individual functions directory already exists")
-        threads = []
-        for key in funcs:
-            process_func(translator, funcs, key, logger, individualFuncPath)
-        """
-    
-    # emitLLVMBitcodes("./inputs-complex/zlib-1.3.1/", logger)
+        for key in funcMap:
+            translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath)
+    emitLLVMBitcodes("./inputs-complex/zlib-1.3.1/", logger)
 
 if __name__ == "__main__":
     processCodebase("./inputs-complex/zlib-1.3.1/", "./inputs-complex/zlib-1.3.1/libz.so")
