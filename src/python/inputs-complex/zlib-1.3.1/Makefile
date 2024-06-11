@@ -12,7 +12,7 @@
 # To install in $HOME instead of /usr/local, use:
 #    make install prefix=$HOME
 
-CC=gcc
+CC=../clang-wrapper.sh
 
 CFLAGS=-O3 -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
@@ -23,7 +23,7 @@ CFLAGS=-O3 -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
 SFLAGS=-O3 -fPIC -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
 LDFLAGS=
 TEST_LIBS=-L. libz.a
-LDSHARED=gcc -shared -Wl,-soname,libz.so.1,--version-script,zlib.map
+LDSHARED=../clang-wrapper.sh -shared -Wl,-soname,libz.so.1,--version-script,zlib.map
 CPP=
 
 STATICLIB=libz.a
