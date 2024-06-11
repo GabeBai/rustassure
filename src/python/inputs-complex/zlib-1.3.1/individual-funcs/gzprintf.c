@@ -1,9 +1,0 @@
-int ZEXPORTVA gzprintf(gzFile file, const char *format, ...) {
-    va_list va;
-    int ret;
-
-    va_start(va, format);
-    ret = gzvprintf(file, format, va);
-    va_end(va);
-    return ret;
-}

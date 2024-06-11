@@ -1,4 +1,5 @@
 #!/bin/bash
 
-CC=../clang-wrapper.sh ./configure
+make clean && make distclean
+CC=../clang-wrapper.sh CFLAGS="-O0" ./configure
 make
