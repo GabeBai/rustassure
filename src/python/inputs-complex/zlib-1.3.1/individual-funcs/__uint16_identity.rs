@@ -1,0 +1,129 @@
+type PtrdiffT = isize;
+type SizeT = usize;
+type WcharT = i32;
+
+#[repr(align(8))]
+struct MaxAlignT {
+    __clang_max_align_nonce1: i64,
+    __clang_max_align_nonce2: f64,
+}
+
+type ZSizeT = SizeT;
+type Byte = u8;
+type UInt = u32;
+type ULong = u64;
+type Bytef = Byte;
+type Charf = i8;
+type Intf = i32;
+type UIntf = UInt;
+type ULongf = ULong;
+type Voidpc = *const core::ffi::c_void;
+type Voidpf = *mut core::ffi::c_void;
+type Voidp = *mut core::ffi::c_void;
+type ZCrcT = u32;
+type UChar = u8;
+type UShort = u16;
+type UInt = u32;
+type ULong = u64;
+type Int8T = i8;
+type UInt8T = u8;
+type Int16T = i16;
+type UInt16T = u16;
+type Int32T = i32;
+type UInt32T = u32;
+type Int64T = i64;
+type UInt64T = u64;
+type IntLeast8T = Int8T;
+type UIntLeast8T = UInt8T;
+type IntLeast16T = Int16T;
+type UIntLeast16T = UInt16T;
+type IntLeast32T = Int32T;
+type UIntLeast32T = UInt32T;
+type IntLeast64T = Int64T;
+type UIntLeast64T = UInt64T;
+type QuadT = isize;
+type UQuadT = usize;
+type IntMaxT = isize;
+type UIntMaxT = usize;
+type DevT = usize;
+type UidT = u32;
+type GidT = u32;
+type InoT = usize;
+type Ino64T = usize;
+type ModeT = u32;
+type NLinkT = usize;
+type OffT = isize;
+type Off64T = isize;
+type PidT = i32;
+type FsidT = [i32; 2];
+type ClockT = isize;
+type RlimT = usize;
+type Rlim64T = usize;
+type IdT = u32;
+type TimeT = isize;
+type UsecondsT = u32;
+type SusecondsT = isize;
+type Suseconds64T = isize;
+type DaddrT = i32;
+type KeyT = i32;
+type ClockidT = i32;
+type TimerT = *mut core::ffi::c_void;
+type BlksizeT = isize;
+type BlkcntT = isize;
+type Blkcnt64T = isize;
+type FsblkcntT = usize;
+type Fsblkcnt64T = usize;
+type FsfilcntT = usize;
+type Fsfilcnt64T = usize;
+type FswordT = isize;
+type SsizeT = isize;
+type SyscallSLongT = isize;
+type SyscallULongT = usize;
+type LoffT = Off64T;
+type CaddrT = *mut i8;
+type IntPtrT = isize;
+type SocklenT = u32;
+type SigAtomicT = i32;
+type UChar = UChar;
+type UShort = UShort;
+type UInt = UInt;
+type ULong = ULong;
+type QuadT = QuadT;
+type UQuadT = UQuadT;
+type FsidT = FsidT;
+type LoffT = LoffT;
+type InoT = InoT;
+type Ino64T = Ino64T;
+type DevT = DevT;
+type GidT = GidT;
+type ModeT = ModeT;
+type NLinkT = NLinkT;
+type UidT = UidT;
+type OffT = OffT;
+type Off64T = Off64T;
+type PidT = PidT;
+type IdT = IdT;
+type SsizeT = SsizeT;
+type DaddrT = DaddrT;
+type CaddrT = CaddrT;
+type KeyT = KeyT;
+type ClockT = ClockT;
+type ClockidT = ClockidT;
+type TimeT = TimeT;
+type TimerT = TimerT;
+type ULong = u64;
+type UShort = u16;
+type UInt = u32;
+type Int8T = i8;
+type Int16T = i16;
+type Int32T = i32;
+type Int64T = i64;
+type UInt8T = u8;
+type UInt16T = u16;
+type UInt32T = u32;
+type UInt64T = u64;
+
+#[inline(always)]
+fn uint16_identity(x: u16) -> u16 {
+    x
+}
