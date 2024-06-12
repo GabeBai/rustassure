@@ -1,4 +1,3 @@
-```rust
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_long, c_uchar, c_uint, c_ulong, c_void};
 use std::time::{Duration, SystemTime};

@@ -1,4 +1,3 @@
-```rust
 pub type ptrdiff_t = i64;
 pub type size_t = u64;
 pub type wchar_t = i32;

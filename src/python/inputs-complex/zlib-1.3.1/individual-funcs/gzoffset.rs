@@ -1,4 +1,3 @@
-```rust
 use std::ffi::VaList;
 
 type size_t = usize;

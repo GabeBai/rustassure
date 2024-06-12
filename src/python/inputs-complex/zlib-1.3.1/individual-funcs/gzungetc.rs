@@ -1,4 +1,3 @@
-```rust
 use std::os::raw::{c_char, c_int, c_long, c_ulong, c_void};
 
 type size_t = c_ulong;

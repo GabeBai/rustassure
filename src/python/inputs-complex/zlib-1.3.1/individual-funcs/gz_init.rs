@@ -1,4 +1,3 @@
-```rust
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr::null_mut;
 use std::ffi::CStr;

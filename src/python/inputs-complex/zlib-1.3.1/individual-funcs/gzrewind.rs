@@ -1,4 +1,3 @@
-```rust
 use std::ffi::CStr;
 use std::io;
 use std::os::raw::{c_char, c_int, c_long, c_ulong, c_void};

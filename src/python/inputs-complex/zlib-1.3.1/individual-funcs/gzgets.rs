@@ -1,4 +1,3 @@
-```rust
 type size_t = u64;
 type va_list = __gnuc_va_list;
 type __gnuc_va_list = *mut __builtin_va_list;

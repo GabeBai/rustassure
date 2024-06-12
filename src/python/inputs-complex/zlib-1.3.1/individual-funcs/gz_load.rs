@@ -1,4 +1,3 @@
-```rust
 use std::ffi::CString;
 use std::io::{self, Read};
 use std::os::unix::io::RawFd;

@@ -1,4 +1,3 @@
-```rust
 type PtrDiffT = isize;
 type SizeT = usize;
 type WcharT = i32;
