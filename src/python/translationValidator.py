@@ -65,6 +65,11 @@ class FunctionAndDepsExtractor:
             sys.exit(-1)
 
     def createRangeFromCtagsLine(self, line, allLines):
+        """ 
+        A ctags line is:
+        random_data     deflate.i       /^struct random_data$/;"        s       line:1167       file:   end:1176
+        In some cases end: field is missing, but those are one-liners
+        """
         tokens = line.split('\t')
         sym = tokens[0]
         start = tokens[4].split(":")[1]
@@ -139,7 +144,7 @@ class FunctionAndDepsExtractor:
         alwaysIncludeExtractCmd = "ctags --fields=+ne -o -  --language-force=C --c-kinds=-fLl " + filename
         result = subprocess.getoutput(alwaysIncludeExtractCmd)
         for line in result.splitlines():
-            r = self.createRangeFromCtagsLine(line)
+            r = self.createRangeFromCtagsLine(line, fileContents)
             fileRanges.addAlwaysIncludeRange(r)
         """
 
@@ -282,9 +287,10 @@ def emitLLVMBitcodes(rootPath, logger):
                     isBinary = True
                     break
         if isBinary:
-            emitBitcodeCmd = "rustc -emit=llvm-bc " + filename
+            emitBitcodeCmd = "rustc --emit=llvm-bc -o " + filename + ".bc " + filename
         else:
-            emitBitcodeCmd = "rustc --emit=llvm-bc --crate-type=lib " + filename
+            emitBitcodeCmd = "rustc --emit=llvm-bc --crate-type=lib -o " + filename + ".bc " + filename
+        logger.debug("Running command %s", emitBitcodeCmd)
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
@@ -292,7 +298,9 @@ def emitLLVMBitcodes(rootPath, logger):
             logger.debug ("Compilation succeeded for %s", filename)
     for filename in glob.iglob(cSrcPattern, recursive=True):
         logger.debug("Compiling C file %s ", filename)
-        emitBitcodeCmd = "clang -c -emit-llvm " + filename
+        emitBitcodeCmd = "clang -c -emit-llvm -o " + filename + ".bc " + filename
+        logger.debug("Running command %s", emitBitcodeCmd)
+
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
