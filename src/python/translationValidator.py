@@ -6,6 +6,10 @@ import glob
 from openai import OpenAI
 import subprocess
 
+
+TOKEN_TO_WORD_FACTOR = 0.75
+CONTINUATION_PROMPT_LEN = 200 # 200 chars
+
 class Range:
     """
     Represents a 0-indexed range of line numbers that span a definition (function, typedef, etc)
@@ -149,7 +153,6 @@ class FunctionAndDepsExtractor:
         """
 
         funcMap = {}
-
         # for each function, add everything before it in the AlwaysInclude map
         for funcSym in fileRanges.funcRangesMap:
             codeLines = []
@@ -171,12 +174,15 @@ class Translator:
     """
     https://platform.openai.com/docs/guides/text-generation/chat-completions-api
     """
-    def __init__(self, logger, baseUrl, apiKey,
+    def __init__(self, logger, baseUrl, apiKey, ctxWindow,
             srcLang, dstLang,
             model, systemPrompt):
         self.logger = logger
         self.baseUrl = baseUrl
         self.apiKey = apiKey
+        self.ctxWindow = ctxWindow
+        self.REQUEST_TOKEN_LIMIT = int((self.ctxWindow - 2048)/2)
+        self.MAX_CHUNK_SIZE_WORDS = int(self.REQUEST_TOKEN_LIMIT * TOKEN_TO_WORD_FACTOR)
         self.srcLang = srcLang
         self.dstLang = dstLang
         self.model = model
@@ -185,24 +191,92 @@ class Translator:
         # self.client = OpenAI(base_url=self.baseUrl, api_key=self.apiKey)
         self.client = OpenAI(api_key=self.apiKey)
 
-    def translate(self, funcSrc):
-        self.logger.debug("Translating: %s",funcSrc)
-        request = "Translate " + self.srcLang + " to " + self.dstLang + " and return ONLY the translated Rust code with NO explanation" +  "\n" + funcSrc
-        # self.logger.warn("Request: %s", request)
+    def estimateTokens(self, funcSrc):
+        words = funcSrc.split()
+        tokens = int(float(len(words))/TOKEN_TO_WORD_FACTOR)
+        return tokens
+
+    def isResponseTruncated(self, completion):
+        finish_reason = completion.choices[0].finish_reason
+        self.logger.debug("Finish reason: %s", finish_reason)
+        return finish_reason
+
+    def getResponse(self, request):
         completion = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.systemPrompt},
-                    {"role": "user", "content": request}], 
-                temperature=0.4,)
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.systemPrompt},
+                {"role": "user", "content": request}], 
+            max_tokens = maxTokens,
+            temperature = 0.2,
+            top_p = 0.1)
+        response = completion.choices[0].message.content
+        # This is OpenAI specific
+        # Try to remove the ```rust at the first line that I think indicates formatting
+        responseLines = response.split("\n")
+        if "rust" in responseLines[0]:
+            response = "\n".join(responseLines[1:])
+        return (completion, response)
+
+    def send(self, funcName, request): 
+        # Compute the maxTokens that the response can have
+        # with 1K tokens as a buffer in case we get the computation wrong
+        # and to leave room for the prompt
+        maxTokens = self.ctxWindow - self.estimateTokens(request) - 1024
+        (completion, response) = getResponse(request)
         # self.logger.debug("response = %s", completion)
-        result = completion.choices[0].message.content
-        parts = result.split("```")
-        if len (parts) > 2:
-            result = parts[1].strip()
-            resultLines = result.split("\n")
-            if "rust" in resultLines[0]:
-                result = "\n".join(resultLines[1:])            
+
+        # We might have to do continuation and chaining
+        # Though TBH, this would only work if for some reason
+        # the truncation happens because of other reasons than 
+        # overflowing the context window.
+        # If the context window overflows then it has lost the input C code
+        # sending it the last few generated response tokens wouldn't be of any use?
+        #
+        # What we _should_ do is that we should generate 
+        fullResponse = response
+
+        # Keep on telling it to continue till the response is no
+        # longer truncated
+        while self.isResponseTruncated(completion):
+            logger.warn("Response is truncated for function: %s", funcName)
+            continuationPrompt = response.split()[0-CONTINUATION_PROMPT_LEN:]
+            continuationPrompt = ' '.join(continuationPrompt)
+            (completion, response) = getResponse(continuationPrompt)
+            fullResponse = fullResponse + response
+        return fullResponse
+    
+    def chunkAndSend(self, funcName, request):
+        tokenEstimate = self.estimateTokens(request)
+        fullResponse = ""
+        numChunks = 0
+        if tokenEstimate > self.REQUEST_TOKEN_LIMIT:
+            lines = request.split("\n")
+            # Get the next chunk
+            nextLineIndex = 0
+            while nextLineIndex < len(lines):
+                # Build a chunk
+                numWordsSoFar = 0
+                chunk = ""
+                # Keep consuming the next line as long as consuming the next line wouldn't go over our
+                # computed MAX_CHUNK_SIZE_WORDS and we haven't consumed the entire file
+                nextLineWordCount = len(lines[nextLineIndex].split())
+                while numWordsSoFar + nextLineWordCount < self.MAX_CHUNK_SIZE_WORDS and nextLineIndex < len(lines):
+                    chunk = chunk + '\n' + lines[nextLineIndex]
+                    nextLineIndex = nextLineIndex + 1
+                    numWordsSoFar = numWordsSoFar + nextLineWordCount
+                # We've built a chunk! Let's send it
+                response = self.send(funcName, chunk)
+                numChunks = numChunks + 1
+        else:
+            fullResponse = self.send(request)
+        self.logger.info("Sent request in %d chunks", numChunks)
+        return fullResponse
+
+    def translate(self, funcName, funcSrc):
+        self.logger.debug("Translating: %s",funcSrc)
+        request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed." 
+        result = chunkAndSend(funcName, request)
         return result
 
 def getLogger(logPath):
@@ -235,9 +309,10 @@ def createTranslator(logger):
     translator = Translator(logger,
             "http://172.31.224.1:12345/v1",
             os.environ.get('OPENAI_KEY'),
+            16*1024,
             "C",
             "Rust",
-            "gpt-4o",
+            "gpt-3.5-turbo",
             "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
     return translator
 
@@ -255,7 +330,7 @@ def getFunctions(logger, extractor, binPath, srcPath):
 
 def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath):
     try:
-        translatedResult = translator.translate(funcs[key])
+        translatedResult = translator.translate(key, funcs[key])
         # logger.info(translatedResult)
         rs_path = os.path.join(individualFuncPath, f"{key}.rs")
         c_path = os.path.join(individualFuncPath, f"{key}.i")
@@ -295,7 +370,7 @@ def emitLLVMBitcodes(rootPath, logger):
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
         else:
-            logger.debug ("Compilation succeeded for %s", filename)
+            logger.info ("Compilation succeeded for %s", filename)
     for filename in glob.iglob(cSrcPattern, recursive=True):
         logger.debug("Compiling C file %s ", filename)
         emitBitcodeCmd = "clang -c -emit-llvm -o " + filename + ".bc " + filename
@@ -305,7 +380,7 @@ def emitLLVMBitcodes(rootPath, logger):
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
         else:
-            logger.debug ("Compilation succeeded for %s", filename)
+            logger.info ("Compilation succeeded for %s", filename)
 
 def processCodebase(codebasePath, execPath):
     logger = getLogger("./validator.log")
@@ -323,6 +398,13 @@ def processCodebase(codebasePath, execPath):
         for key in funcMap:
             translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath)
     emitLLVMBitcodes("./inputs-complex/zlib-1.3.1/", logger)
+    """
+    translator = createTranslator(logger)
+    with open("./inputs-complex/zlib-1.3.1/crc32.i") as f:
+        lines = f.read()
+    response = translator.chunkAndSend("dummy", lines)
+    """
+    
 
 if __name__ == "__main__":
     processCodebase("./inputs-complex/zlib-1.3.1/", "./inputs-complex/zlib-1.3.1/libz.so")
