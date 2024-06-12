@@ -5,6 +5,7 @@ import re
 import glob
 from openai import OpenAI
 import subprocess
+import traceback
 
 
 TOKEN_TO_WORD_FACTOR = 0.75
@@ -174,15 +175,16 @@ class Translator:
     """
     https://platform.openai.com/docs/guides/text-generation/chat-completions-api
     """
-    def __init__(self, logger, baseUrl, apiKey, ctxWindow,
+    def __init__(self, logger, baseUrl, apiKey, ctxWindow, maxCompletionTokens,
             srcLang, dstLang,
             model, systemPrompt):
         self.logger = logger
         self.baseUrl = baseUrl
         self.apiKey = apiKey
         self.ctxWindow = ctxWindow
-        self.REQUEST_TOKEN_LIMIT = int((self.ctxWindow - 2048)/2)
-        self.MAX_CHUNK_SIZE_WORDS = int(self.REQUEST_TOKEN_LIMIT * TOKEN_TO_WORD_FACTOR)
+        self.maxCompletionTokens = maxCompletionTokens
+        self.requestTokenLimit = self.ctxWindow - maxCompletionTokens - 2048
+        self.maxChunkSizeWords = int(self.requestTokenLimit * TOKEN_TO_WORD_FACTOR)
         self.srcLang = srcLang
         self.dstLang = dstLang
         self.model = model
@@ -196,10 +198,10 @@ class Translator:
         tokens = int(float(len(words))/TOKEN_TO_WORD_FACTOR)
         return tokens
 
-    def isResponseTruncated(self, completion):
-        finish_reason = completion.choices[0].finish_reason
-        self.logger.debug("Finish reason: %s", finish_reason)
-        return finish_reason
+    def isResponseTruncated(self, completion, funcName):
+        finishReason = completion.choices[0].finish_reason
+        self.logger.debug("Finish reason for function %s: %s", funcName, finishReason)
+        return finishReason == "length"
 
     def getResponse(self, request):
         completion = self.client.chat.completions.create(
@@ -207,50 +209,47 @@ class Translator:
             messages=[
                 {"role": "system", "content": self.systemPrompt},
                 {"role": "user", "content": request}], 
-            max_tokens = maxTokens,
+            max_tokens = self.maxCompletionTokens,
             temperature = 0.2,
             top_p = 0.1)
         response = completion.choices[0].message.content
         # This is OpenAI specific
-        # Try to remove the ```rust at the first line that I think indicates formatting
+        # Try to remove the ```rust at the first line and ``` at the last line that I think indicates formatting (markdown?)
         responseLines = response.split("\n")
         if "rust" in responseLines[0]:
-            response = "\n".join(responseLines[1:])
+            responseLines = responseLines[1:]
+        if "```" in responseLines[-1]:
+            responseLines = responseLines[:-1]
+        response = "\n".join(responseLines)
         return (completion, response)
 
     def send(self, funcName, request): 
-        # Compute the maxTokens that the response can have
-        # with 1K tokens as a buffer in case we get the computation wrong
-        # and to leave room for the prompt
-        maxTokens = self.ctxWindow - self.estimateTokens(request) - 1024
-        (completion, response) = getResponse(request)
+        (completion, response) = self.getResponse(request)
         # self.logger.debug("response = %s", completion)
 
         # We might have to do continuation and chaining
-        # Though TBH, this would only work if for some reason
-        # the truncation happens because of other reasons than 
-        # overflowing the context window.
-        # If the context window overflows then it has lost the input C code
-        # sending it the last few generated response tokens wouldn't be of any use?
-        #
-        # What we _should_ do is that we should generate 
-        fullResponse = response
+        # Note that the context window is different from the maximum
+        # number of output tokens GPT can return at one go
+        # The context window, for e.g., is 16K for GPT-3.5, but maximum 
+        # number of completion tokens is 4K.
+        # So it might still have the input in its context, when
+        # it truncated its output
+        chainedResponse = response
 
         # Keep on telling it to continue till the response is no
         # longer truncated
-        while self.isResponseTruncated(completion):
-            logger.warn("Response is truncated for function: %s", funcName)
+        while self.isResponseTruncated(completion, funcName):
             continuationPrompt = response.split()[0-CONTINUATION_PROMPT_LEN:]
             continuationPrompt = ' '.join(continuationPrompt)
-            (completion, response) = getResponse(continuationPrompt)
-            fullResponse = fullResponse + response
-        return fullResponse
+            (completion, response) = self.getResponse(continuationPrompt)
+            chainedResponse = chainedResponse + response
+        return chainedResponse
     
     def chunkAndSend(self, funcName, request):
         tokenEstimate = self.estimateTokens(request)
         fullResponse = ""
-        numChunks = 0
-        if tokenEstimate > self.REQUEST_TOKEN_LIMIT:
+        numChunks = 1
+        if tokenEstimate > self.requestTokenLimit:
             lines = request.split("\n")
             # Get the next chunk
             nextLineIndex = 0
@@ -259,24 +258,25 @@ class Translator:
                 numWordsSoFar = 0
                 chunk = ""
                 # Keep consuming the next line as long as consuming the next line wouldn't go over our
-                # computed MAX_CHUNK_SIZE_WORDS and we haven't consumed the entire file
+                # computed maxChunkSizeWords and we haven't consumed the entire file
                 nextLineWordCount = len(lines[nextLineIndex].split())
-                while numWordsSoFar + nextLineWordCount < self.MAX_CHUNK_SIZE_WORDS and nextLineIndex < len(lines):
+                while numWordsSoFar + nextLineWordCount < self.maxChunkSizeWords and nextLineIndex < len(lines):
                     chunk = chunk + '\n' + lines[nextLineIndex]
                     nextLineIndex = nextLineIndex + 1
                     numWordsSoFar = numWordsSoFar + nextLineWordCount
                 # We've built a chunk! Let's send it
                 response = self.send(funcName, chunk)
+                fullResponse = fullResponse + response
                 numChunks = numChunks + 1
         else:
-            fullResponse = self.send(request)
+            fullResponse = self.send(funcName, request)
         self.logger.info("Sent request in %d chunks", numChunks)
         return fullResponse
 
     def translate(self, funcName, funcSrc):
         self.logger.debug("Translating: %s",funcSrc)
         request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed." 
-        result = chunkAndSend(funcName, request)
+        result = self.chunkAndSend(funcName, request)
         return result
 
 def getLogger(logPath):
@@ -310,6 +310,7 @@ def createTranslator(logger):
             "http://172.31.224.1:12345/v1",
             os.environ.get('OPENAI_KEY'),
             16*1024,
+            4096, # This is the max value you can put for max_tokens: the max size of a response, https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4 and search for output tokens
             "C",
             "Rust",
             "gpt-3.5-turbo",
@@ -319,10 +320,8 @@ def createTranslator(logger):
 def getFunctions(logger, extractor, binPath, srcPath):
     fileFuncMap = {}
     for filename in glob.iglob(os.path.join(srcPath, "*.i"), recursive=True):
-        """
         if "deflate.i" not in filename:
             continue
-        """
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
@@ -340,7 +339,9 @@ def translateAndCreateIndividualFiles(translator, funcs, key, logger, individual
         with open(c_path, "w") as c_file:
             c_file.write(funcs[key])
         logger.info("Function %s successfully translated", key)
-    except:
+    except Exception as e:
+        traceback_str = traceback.format_exc()
+        logger.debug(f"Exception: {e}\nTraceback:\n{traceback_str}")
         logger.warn("Function %s failed to translate", key)
 
 def emitLLVMBitcodes(rootPath, logger):
