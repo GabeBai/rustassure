@@ -14,7 +14,7 @@ GPT_MODEL="gpt-3.5-turbo"
 CTX_WINDOW_LEN=16*1024
 MAX_COMPLETION_TOKENS=4096 # This is the max value you can put for max_tokens: the max size of a response, https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4 and search for output tokens
 
-CONTINUATION_PROMPT_LEN = 200 # 200 chars
+CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell it to continue
 
 class Range:
     """
@@ -283,6 +283,8 @@ def emitLLVMBitcodes(rootPath, logger):
 def processCodebase(codebasePath, execPath):
     logger = getLogger("./validator.log")
     extractor = FunctionAndDepsExtractor(logger)
+    translator = createTranslator(logger)
+
     # If the directory already exists, then just skip it
     if not os.path.isdir(os.path.join(codebasePath, "individual-funcs")):
         translator = createTranslator(logger) 
