@@ -30,6 +30,25 @@ class Translator:
         # self.client = OpenAI(base_url=self.baseUrl, api_key=self.apiKey)
         self.client = OpenAI(api_key=self.apiKey)
 
+    def preanalyze(self, funcMap, srcPath):
+        analysisFilePath = os.path.join(srcPath, "individual-funcs", "analysis.log")
+        totalFuncs = len(funcMap) 
+        fitsRequestTokenLimit = 0
+        fitsResponseTokenLimit = 0
+        with open(analysisFilePath, 'w') as f:
+            for func in funcMap:
+                tokens = self.countTokens(funcMap[func])
+                fitsInRequest = False
+                fitsInResponse = False
+                if tokens < self.requestTokenLimit:
+                    fitsRequestTokenLimit = fitsRequestTokenLimit + 1
+                    fitsInRequest = True
+                if tokens < self.maxCompletionTokens:
+                    fitsResponseTokenLimit = fitsResponseTokenLimit + 1
+                    fitsInResponse = True
+                f.write("%s: %d: %s : %s\n" % (func, tokens, fitsInRequest, fitsInResponse))
+            f.write("Of %d total functions, %d fits in the request limit (%d), %d fits in the response limit (%d)" % (totalFuncs, fitsRequestTokenLimit, self.requestTokenLimit, fitsResponseTokenLimit, self.maxCompletionTokens))
+
     def extractRustCode(self, multilineResponse):
         pattern = re.compile(r"```rust\n(.*?)```", re.DOTALL)
         matches = pattern.findall(multilineResponse)

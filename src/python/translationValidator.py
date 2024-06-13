@@ -7,6 +7,7 @@ from openai import OpenAI
 import subprocess
 import traceback
 import tiktoken
+import argparse
 
 from gptTranslation import Translator
 from functionAndDepsExtractor import FunctionAndDepsExtractor
@@ -67,6 +68,11 @@ def getFunctions(logger, extractor, srcPath):
         fileFuncMap.update(funcMap)
     return fileFuncMap
 
+def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
+    c_path = os.path.join(individualFuncPath, f"{key}.i")
+    with open(c_path, "w") as c_file:
+        c_file.write(funcs[key])
+
 def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath):
     try:
         translatedResult = translator.translate(key, funcs[key])
@@ -123,7 +129,7 @@ def emitLLVMBitcodes(rootPath, logger):
         else:
             logger.info ("Compilation succeeded for %s", filename)
 
-def processCodebase(codebasePath, execPath):
+def processCodebase(codebasePath, preanalysisOnly):
     logger = getLogger("./validator.log")
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger)
@@ -135,18 +141,22 @@ def processCodebase(codebasePath, execPath):
         logger.debug("Extracted %d functions", len(funcMap))
         individualFuncPath = codebasePath+"/individual-funcs/"
         os.mkdir(individualFuncPath)
-        for i, key in enumerate(funcMap):
-            translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath)
+        if not preanalysisOnly:
+            for i, key in enumerate(funcMap):
+                translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath)
+        else:
+            for i, key in enumerate(funcMap):
+                createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
+            translator.preanalyze(funcMap, codebasePath)
     else:
         logger.warn("Individual functions directory already exists, skipping regeneration")
-    emitLLVMBitcodes(codebasePath, logger)
-    """
-    translator = createTranslator(logger)
-    with open("./inputs-complex/zlib-1.3.1/crc32.i") as f:
-        lines = f.read()
-    response = translator.chunkAndSend("dummy", lines)
-    """
-    
+    if not preanalysisOnly:
+        emitLLVMBitcodes(codebasePath, logger)
 
 if __name__ == "__main__":
-    processCodebase("./inputs-complex/zlib-1.3.1/", "./inputs-complex/zlib-1.3.1/libz.so")
+    parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
+    parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
+    parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
+
+    args = parser.parse_args()
+    processCodebase(args.src, args.preanalysis_only) # ./inputs-complex/zlib-1.3.1/"
