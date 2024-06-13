@@ -204,6 +204,7 @@ class Translator:
         return finishReason == "length"
 
     def getResponse(self, request):
+        # self.logger.debug("Sending request: %s", request)
         completion = self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -274,8 +275,8 @@ class Translator:
         return fullResponse
 
     def translate(self, funcName, funcSrc):
-        self.logger.debug("Translating: %s",funcSrc)
-        request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed." 
+        # self.logger.debug("Translating: %s",funcSrc)
+        request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
         result = self.chunkAndSend(funcName, request)
         return result
 
