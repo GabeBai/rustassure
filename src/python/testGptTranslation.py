@@ -3,6 +3,7 @@ import os
 import logging
 
 from gptTranslation import Translator
+from functionAndDepsExtractor import FunctionAndDepsExtractor
 
 # Always use GPT-3.5 for tests, and not GPT-4
 GPT_MODEL="gpt-3.5-turbo"
@@ -74,7 +75,11 @@ class TestTranslator(unittest.TestCase):
                 """)
         self.assertTrue("Rust" not in response and "rust" not in response and "And" not in response)
 
+    """
+    def testCountTokens(self):
+        translator = self.createTranslator()
+    """
+
+
 if __name__ == '__main__':
     unittest.main()
-
-
