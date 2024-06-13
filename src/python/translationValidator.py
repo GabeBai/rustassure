@@ -8,7 +8,7 @@ import subprocess
 import traceback
 import tiktoken
 
-from translation import Translator
+from gpt_translation import Translator
 
 GPT_MODEL="gpt-3.5-turbo"
 CTX_WINDOW_LEN=16*1024
