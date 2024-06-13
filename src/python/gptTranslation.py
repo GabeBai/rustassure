@@ -30,6 +30,13 @@ class Translator:
         # self.client = OpenAI(base_url=self.baseUrl, api_key=self.apiKey)
         self.client = OpenAI(api_key=self.apiKey)
 
+    # utility function to check if a request fits in both the context window
+    # and the max output token count (actually, just the max output token count
+    # because that's always smaller than the context window (I think?)
+    def isFitInLimits(self, request):
+        tokens = self.countTokens(funcMap[func])
+        return (len(tokens) < self.requestTokenLimit and len(tokens) < self.maxCompletionTokens)
+
     def preanalyze(self, funcMap, srcPath):
         analysisFilePath = os.path.join(srcPath, "individual-funcs", "analysis.log")
         totalFuncs = len(funcMap) 
@@ -145,5 +152,3 @@ class Translator:
         request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
         result = self.chunkAndSend(funcName, request)
         return result
-
-
