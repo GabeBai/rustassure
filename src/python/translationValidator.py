@@ -62,8 +62,10 @@ def getFunctions(logger, extractor, srcPath):
     fileFuncMap = {}
     logger.info("srcPath = %s", srcPath)
     for filename in glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True):
+        """
         if "deflate.i" not in filename:
             continue
+        """
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
@@ -159,7 +161,7 @@ def getTranslatorMode(translatorModeStr):
     if translatorModeStr == "basic":
         return TranslatorModes.BASIC_CHUNK_CHAIN
     elif translatorModeStr == "repeat":
-        return TranslatorModes.REPEAT_DECLDEFS
+        return TranslatorModes.SPACED_REPITION
     else:
         printf("Invalid translator mode")
         sys.exit(-1)

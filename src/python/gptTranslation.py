@@ -14,11 +14,12 @@ from functionAndDeps import FunctionAndDependencies
 class TranslatorModes(Enum):
     BASIC_CHUNK_CHAIN = 0 
     """
-    Take the entire file, all the typedefs, 
+    Take the entire file generated for a single function,
+    all the typedefs, 
     declarations, definitions, and chunk them 
     to fit the window and chain the responses
     """
-    REPEAT_DECLDEFS = 1 
+    SPACED_REPITITION = 1 
     """
     First, feed the typedefs, decls, defns and 
     translate them. Then, send that information 
@@ -29,10 +30,10 @@ class TranslatorModes(Enum):
     Assumes that both the typedefs, etc. and the 
     function fit in the response limit
     """
-    REDUCED_DECLDEFS = 2
-    REDUCED_DECLDEFS_CALLERS = 3
-    REDUCED_DECLDEFS_CALLEES = 4
-    REDUCED_DECLDEFS_CALLERS_CALLEES = 5
+    REDUCED_WITH_SREP = 2
+    REDUCED_SREP_CALLERS = 3
+    REDUCED_SREP_CALLEES = 4
+    REDUCED_SREP_CALLERS_CALLEES = 5
 
 class Translator:
     """
@@ -65,22 +66,56 @@ class Translator:
     def preanalyze(self, funcMap, srcPath):
         analysisFilePath = os.path.join(srcPath, "individual-funcs", "analysis.log")
         totalFuncs = len(funcMap) 
-        fitsRequestTokenLimit = 0
-        fitsResponseTokenLimit = 0
+
+        cumulResultMatrix = {}
+        cumulResultMatrix['full'] = [0, 0]
+        cumulResultMatrix['func'] = [0, 0]
+        cumulResultMatrix['decl'] = [0, 0]
+
         with open(analysisFilePath, 'w') as f:
             for func in funcMap:
-                funcSrc = funcMap[func].typeDeclDefCodeLines + "\n" + funcMap[func].funcCodeLines
-                tokens = self.countTokens(funcSrc)
-                fitsInRequest = False
-                fitsInResponse = False
+                fullSrc = funcMap[func].typeDeclDefCodeLines + "\n" + funcMap[func].funcCodeLines
+
+                resultMatrix = {}
+                resultMatrix['full'] = [False, False]
+                resultMatrix['func'] = [False, False]
+                resultMatrix['decl'] = [False, False]
+
+                # The full source
+                tokens = self.countTokens(fullSrc)
                 if tokens < self.requestTokenLimit:
-                    fitsRequestTokenLimit = fitsRequestTokenLimit + 1
-                    fitsInRequest = True
+                    resultMatrix['full'][0] = True
+                    cumulResultMatrix['full'][0] = cumulResultMatrix['full'][0] + 1
                 if tokens < self.maxCompletionTokens:
-                    fitsResponseTokenLimit = fitsResponseTokenLimit + 1
-                    fitsInResponse = True
-                f.write("%s: %d: %s : %s\n" % (func, tokens, fitsInRequest, fitsInResponse))
-            f.write("Of %d total functions, %d fits in the request limit (%d), %d fits in the response limit (%d)" % (totalFuncs, fitsRequestTokenLimit, self.requestTokenLimit, fitsResponseTokenLimit, self.maxCompletionTokens))
+                    resultMatrix['full'][1] = True
+                    cumulResultMatrix['full'][1] = cumulResultMatrix['full'][1] + 1
+
+                # The function only
+                tokens = self.countTokens(funcMap[func].funcCodeLines)
+                if tokens < self.requestTokenLimit:
+                    resultMatrix['func'][0] = True
+                    cumulResultMatrix['func'][0] = cumulResultMatrix['func'][0] + 1
+                if tokens < self.maxCompletionTokens:
+                    resultMatrix['func'][1] = True
+                    cumulResultMatrix['func'][1] = cumulResultMatrix['func'][1] + 1
+
+                # Only the decls
+                tokens = self.countTokens(funcMap[func].typeDeclDefCodeLines)
+                if tokens < self.requestTokenLimit:
+                    resultMatrix['decl'][0] = True
+                    cumulResultMatrix['decl'][0] = cumulResultMatrix['decl'][0] + 1
+                if tokens < self.maxCompletionTokens:
+                    resultMatrix['decl'][1] = True
+                    cumulResultMatrix['decl'][1] = cumulResultMatrix['decl'][1] + 1
+
+                f.write("%s: %d -> %s : %s: %s: %s: %s: %s \n" % (func, tokens, resultMatrix['full'][0], resultMatrix['full'][1], resultMatrix['func'][0], resultMatrix['func'][1], resultMatrix['decl'][0], resultMatrix['decl'][1]))
+            f.write("Summary:\n")
+            f.write("Total function: %d\n" % totalFuncs)
+            f.write("Full function + decls -> %d fits in request limit, %d fits in response limit\n" % (cumulResultMatrix['full'][0], cumulResultMatrix['full'][1]))
+            f.write("Function only -> %d fits in request limit, % fits in response limit\n" % (cumulResultMatrix['func'][0], cumulResultMatrix['func'][1]))
+            f.write("Decls only -> %d fits in request limit, % fits in response limit\n" % (cumulResultMatrix['decl'][0], cumulResultMatrix['decl'][1]))
+
+
 
     def extractRustCode(self, multilineResponse):
         pattern = re.compile(r"```rust\n(.*?)```", re.DOTALL)
@@ -179,4 +214,6 @@ class Translator:
             self.logger.info("Translating: %s",funcSrc)
             request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
             result = self.chunkAndSend(funcName, request)
+        elif translatorMode == Translatormodes.SPACED_REPITITION:
+            pass
         return result
