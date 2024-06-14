@@ -58,7 +58,8 @@ def createTranslator(logger):
 
 def getFunctions(logger, extractor, srcPath):
     fileFuncMap = {}
-    for filename in glob.iglob(os.path.join(srcPath, "*.i"), recursive=True):
+    logger.info("srcPath = %s", srcPath)
+    for filename in glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True):
         """
         if "deflate.i" not in filename:
             continue

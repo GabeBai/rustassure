@@ -1,6 +1,6 @@
-CC=gcc
+CC=../../../clang-wrapper.sh
 
-CFLAGS+=-W -Werror -Wall -Wextra -std=c99 \
+CFLAGS+=-W -Wall -Wextra -std=c99 \
 	-D_FORTIFY_SOURCE=2 -fstack-protector -g \
 	-Wformat=2 -pedantic -pedantic-errors \
 	-D_GNU_SOURCE=1 -D_BSD_SOURCE=1 \
