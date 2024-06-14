@@ -7,6 +7,9 @@ from openai import OpenAI
 import subprocess
 import traceback
 
+
+from functionAndDeps import FunctionAndDependencies
+
 class Range:
     """
     Represents a 0-indexed range of line numbers that span a definition (function, typedef, etc)
@@ -20,11 +23,16 @@ class Range:
 class FileRanges:
     """
     Represents the ranges for the functions, and everything else that is useful
+    It has an alwaysInclude range: This will be stuff that is mandatory for that function
+    and will typically have the struct definitions, typedefs and so on.
+    Then, there is optional content to be included, only if it fits in the
+    context-window.
     """
     def __init__(self):
         self.funcRanges = []
         self.alwaysIncludeRanges = []
         self.funcRangesMap = {}
+        self.optionalRanges = []
         self.alwaysIncludeRangesMap = {} 
 
     def addFuncRange(self, funcRange):
@@ -34,7 +42,6 @@ class FileRanges:
     def addAlwaysIncludeRange(self, alwaysIncludeRange):
         self.alwaysIncludeRanges.append(alwaysIncludeRange)
         self.alwaysIncludeRangesMap[alwaysIncludeRange.sym] = alwaysIncludeRange
-
 
 class FunctionAndDepsExtractor:
     """
@@ -140,7 +147,6 @@ class FunctionAndDepsExtractor:
         if start < totalRange:
             r = Range("", start, totalRange)
             fileRanges.addAlwaysIncludeRange(r)
-        
         """
         alwaysIncludeExtractCmd = "ctags --fields=+ne -o -  --language-force=C --c-kinds=-fLl " + filename
         result = subprocess.getoutput(alwaysIncludeExtractCmd)
@@ -152,17 +158,20 @@ class FunctionAndDepsExtractor:
         funcMap = {}
         # for each function, add everything before it in the AlwaysInclude map
         for funcSym in fileRanges.funcRangesMap:
-            codeLines = []
+            # Get the function and its dependencies
+            functionAndDeps = FunctionAndDependencies()
             funcRange = fileRanges.funcRangesMap[funcSym]
             sortedAlwaysIncludedRanges = sorted(fileRanges.alwaysIncludeRanges, key = lambda x: x.start)
+            typeDeclDefCode = []
             for alwaysIncludeRange in sortedAlwaysIncludedRanges:
                 if alwaysIncludeRange.end < funcRange.start:
                     # This range was before the function in the file
                     # self.logger.info("For file %s, for function %s, with range %d - %d, appending ranges %d - %d", filename, funcSym, funcRange.start, funcRange.end + 1, alwaysIncludeRange.start, alwaysIncludeRange.end + 1)
-                    codeLines.extend(fileContents[alwaysIncludeRange.start : alwaysIncludeRange.end + 1])
-            codeLines.extend(fileContents[funcRange.start : funcRange.end + 1])
-            # self.logger.info(codeLines)
-            code = "".join(codeLines)
-            funcMap[funcSym] = code
-            # self.logger.info(code)
+
+                    typeDeclDefCode.extend(fileContents[alwaysIncludeRange.start : alwaysIncludeRange.end + 1])
+            functionAndDeps.setTypeDeclDefCodeLines("".join(typeDeclDefCode))
+            functionAndDeps.setFuncCodeLines("".join(fileContents[funcRange.start : funcRange.end + 1]))
+            funcMap[funcSym] = functionAndDeps
+            # self.logger.info(functionAndDeps.typeDeclDefCodeLines)
+            # self.logger.info(functionAndDeps.funcCodeLines)
         return funcMap

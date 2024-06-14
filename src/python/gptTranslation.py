@@ -8,6 +8,31 @@ import subprocess
 import traceback
 import tiktoken
 
+from enum import Enum
+from functionAndDeps import FunctionAndDependencies
+
+class TranslatorModes(Enum):
+    BASIC_CHUNK_CHAIN = 0 
+    """
+    Take the entire file, all the typedefs, 
+    declarations, definitions, and chunk them 
+    to fit the window and chain the responses
+    """
+    REPEAT_DECLDEFS = 1 
+    """
+    First, feed the typedefs, decls, defns and 
+    translate them. Then, send that information 
+    again to ensure its in the context window, 
+    but don't ask it to translate it (or the 
+    translated content stay in the context window
+    ?). Then, send the function. 
+    Assumes that both the typedefs, etc. and the 
+    function fit in the response limit
+    """
+    REDUCED_DECLDEFS = 2
+    REDUCED_DECLDEFS_CALLERS = 3
+    REDUCED_DECLDEFS_CALLEES = 4
+    REDUCED_DECLDEFS_CALLERS_CALLEES = 5
 
 class Translator:
     """
@@ -44,7 +69,8 @@ class Translator:
         fitsResponseTokenLimit = 0
         with open(analysisFilePath, 'w') as f:
             for func in funcMap:
-                tokens = self.countTokens(funcMap[func])
+                funcSrc = funcMap[func].typeDeclDefCodeLines + "\n" + funcMap[func].funcCodeLines
+                tokens = self.countTokens(funcSrc)
                 fitsInRequest = False
                 fitsInResponse = False
                 if tokens < self.requestTokenLimit:
@@ -147,8 +173,10 @@ class Translator:
         self.logger.info("Sent request in %d chunks", numChunks)
         return fullResponse
 
-    def translate(self, funcName, funcSrc):
-        # self.logger.debug("Translating: %s",funcSrc)
-        request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
-        result = self.chunkAndSend(funcName, request)
+    def translate(self, funcName, funcDepsObj, translatorMode):
+        if translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
+            funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
+            self.logger.info("Translating: %s",funcSrc)
+            request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
+            result = self.chunkAndSend(funcName, request)
         return result

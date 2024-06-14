@@ -10,6 +10,8 @@ import tiktoken
 import argparse
 
 from gptTranslation import Translator
+from gptTranslation import TranslatorModes
+
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 
 GPT_MODEL="gpt-3.5-turbo"
@@ -60,10 +62,8 @@ def getFunctions(logger, extractor, srcPath):
     fileFuncMap = {}
     logger.info("srcPath = %s", srcPath)
     for filename in glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True):
-        """
         if "deflate.i" not in filename:
             continue
-        """
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
@@ -72,11 +72,12 @@ def getFunctions(logger, extractor, srcPath):
 def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
     c_path = os.path.join(individualFuncPath, f"{key}.i")
     with open(c_path, "w") as c_file:
-        c_file.write(funcs[key])
+        c_file.write(funcs[key].typeDeclDefCodeLines + "\n" + funcs[key].funcCodeLines)
 
-def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath):
+def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath, translatorMode):
+    # funcs is a dict of funcName: FunctionAndDependencies object
     try:
-        translatedResult = translator.translate(key, funcs[key])
+        translatedResult = translator.translate(key, funcs[key], translatorMode)
         # logger.info(translatedResult)
         rs_path = os.path.join(individualFuncPath, f"{key}.rs")
         c_path = os.path.join(individualFuncPath, f"{key}.i")
@@ -84,7 +85,7 @@ def translateAndCreateIndividualFiles(translator, funcs, key, logger, individual
         with open(rs_path, "w") as rs_file:
             rs_file.write(translatedResult)
         with open(c_path, "w") as c_file:
-            c_file.write(funcs[key])
+            c_file.write(funcs[key].typeDeclDefCodeLines + "\n" + funcs[key].funcCodeLines)
         logger.info("Function %s successfully translated", key)
     except Exception as e:
         traceback_str = traceback.format_exc()
@@ -130,7 +131,7 @@ def emitLLVMBitcodes(rootPath, logger):
         else:
             logger.info ("Compilation succeeded for %s", filename)
 
-def processCodebase(codebasePath, preanalysisOnly):
+def processCodebase(codebasePath, preanalysisOnly, translatorMode):
     logger = getLogger("./validator.log")
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger)
@@ -144,7 +145,7 @@ def processCodebase(codebasePath, preanalysisOnly):
         os.mkdir(individualFuncPath)
         if not preanalysisOnly:
             for i, key in enumerate(funcMap):
-                translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath)
+                translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
         else:
             for i, key in enumerate(funcMap):
                 createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
@@ -154,10 +155,19 @@ def processCodebase(codebasePath, preanalysisOnly):
     if not preanalysisOnly:
         emitLLVMBitcodes(codebasePath, logger)
 
+def getTranslatorMode(translatorModeStr):
+    if translatorModeStr == "basic":
+        return TranslatorModes.BASIC_CHUNK_CHAIN
+    elif translatorModeStr == "repeat":
+        return TranslatorModes.REPEAT_DECLDEFS
+    else:
+        printf("Invalid translator mode")
+        sys.exit(-1)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
-
+    parser.add_argument("--translator-mode", type=str, default="basic", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     args = parser.parse_args()
-    processCodebase(args.src, args.preanalysis_only) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.preanalysis_only, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"
