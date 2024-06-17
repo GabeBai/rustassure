@@ -64,6 +64,7 @@ class Translator:
         return (len(tokens) < self.requestTokenLimit and len(tokens) < self.maxCompletionTokens)
 
     def preanalyze(self, funcMap, srcPath):
+
         analysisFilePath = os.path.join(srcPath, "individual-funcs", "analysis.log")
         totalFuncs = len(funcMap) 
 
@@ -112,9 +113,8 @@ class Translator:
             f.write("Summary:\n")
             f.write("Total function: %d\n" % totalFuncs)
             f.write("Full function + decls -> %d fits in request limit, %d fits in response limit\n" % (cumulResultMatrix['full'][0], cumulResultMatrix['full'][1]))
-            f.write("Function only -> %d fits in request limit, % fits in response limit\n" % (cumulResultMatrix['func'][0], cumulResultMatrix['func'][1]))
-            f.write("Decls only -> %d fits in request limit, % fits in response limit\n" % (cumulResultMatrix['decl'][0], cumulResultMatrix['decl'][1]))
-
+            f.write("Function only -> %d fits in request limit, %d fits in response limit\n" % (cumulResultMatrix['func'][0], cumulResultMatrix['func'][1]))
+            f.write("Decls only -> %d fits in request limit, %d fits in response limit\n" % (cumulResultMatrix['decl'][0], cumulResultMatrix['decl'][1]))
 
 
     def extractRustCode(self, multilineResponse):

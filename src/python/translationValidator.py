@@ -133,27 +133,29 @@ def emitLLVMBitcodes(rootPath, logger):
         else:
             logger.info ("Compilation succeeded for %s", filename)
 
-def processCodebase(codebasePath, preanalysisOnly, translatorMode):
+def processCodebase(codebasePath, preanalysisOnly, createIndFiles, translatorMode):
     logger = getLogger("./validator.log")
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger)
 
-    # If the directory already exists, then just skip it
-    if not os.path.isdir(os.path.join(codebasePath, "individual-funcs")):
-        translator = createTranslator(logger) 
-        funcMap = getFunctions(logger, extractor, codebasePath)
-        logger.debug("Extracted %d functions", len(funcMap))
-        individualFuncPath = codebasePath+"/individual-funcs/"
+    # If the directory already exists, then wait for confirmation
+    if os.path.isdir(os.path.join(codebasePath, "individual-funcs")):
+        logger.critical("Output directory already exists. Proceeding with overwrite contents.")
+        input("Press any key to continue, or Ctrl+C to exit...")
+    else:
         os.mkdir(individualFuncPath)
-        if not preanalysisOnly:
-            for i, key in enumerate(funcMap):
-                translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
-        else:
+    translator = createTranslator(logger) 
+    funcMap = getFunctions(logger, extractor, codebasePath)
+    logger.debug("Extracted %d functions", len(funcMap))
+    individualFuncPath = codebasePath+"/individual-funcs/"
+    translator.preanalyze(funcMap, codebasePath)
+    if not preanalysisOnly:
+        for i, key in enumerate(funcMap):
+            translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
+    else:
+        if createIndFiles:
             for i, key in enumerate(funcMap):
                 createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
-            translator.preanalyze(funcMap, codebasePath)
-    else:
-        logger.warn("Individual functions directory already exists, skipping regeneration")
     if not preanalysisOnly:
         emitLLVMBitcodes(codebasePath, logger)
 
@@ -170,6 +172,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
+    parser.add_argument("--create-ind-files", type=bool, default=False, help="Create the individual files")
     parser.add_argument("--translator-mode", type=str, default="basic", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     args = parser.parse_args()
-    processCodebase(args.src, args.preanalysis_only, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.preanalysis_only, args.create_ind_files, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"
