@@ -14,6 +14,8 @@ from gptTranslation import TranslatorModes
 
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 
+from typedefFilter import TypedefFilter
+
 GPT_MODEL="gpt-3.5-turbo"
 CTX_WINDOW_LEN=16*1024
 MAX_COMPLETION_TOKENS=4096 # This is the max value you can put for max_tokens: the max size of a response, https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4 and search for output tokens
@@ -63,7 +65,7 @@ def getFunctions(logger, extractor, srcPath):
     logger.info("srcPath = %s", srcPath)
     for filename in glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True):
         """
-        if "deflate.i" not in filename:
+        if "test46.i" not in filename:
             continue
         """
         logger.debug("Extracting function bodies for file: %s", filename)
@@ -73,8 +75,21 @@ def getFunctions(logger, extractor, srcPath):
 
 def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
     c_path = os.path.join(individualFuncPath, f"{key}.i")
+    # This is ugly
+    # But we write once, then filter
+    # then write again
+    # This is because the clang tool needs a 
+    # file and we need to reduce the typedefs
+    # per function and not per (full) C source file
     with open(c_path, "w") as c_file:
         c_file.write(funcs[key].typeDeclDefCodeLines + "\n" + funcs[key].funcCodeLines)
+
+    # Filter
+    typedefFilter = TypedefFilter(logger)
+    typedefFilter.filterUnusedTypedefs(c_path, funcs[key])
+    with open(c_path, "w") as c_file:
+        c_file.write(funcs[key].typeDeclDefCodeLines + "\n" + funcs[key].funcCodeLines)
+
 
 def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath, translatorMode):
     # funcs is a dict of funcName: FunctionAndDependencies object
@@ -82,12 +97,9 @@ def translateAndCreateIndividualFiles(translator, funcs, key, logger, individual
         translatedResult = translator.translate(key, funcs[key], translatorMode)
         # logger.info(translatedResult)
         rs_path = os.path.join(individualFuncPath, f"{key}.rs")
-        c_path = os.path.join(individualFuncPath, f"{key}.i")
 
         with open(rs_path, "w") as rs_file:
             rs_file.write(translatedResult)
-        with open(c_path, "w") as c_file:
-            c_file.write(funcs[key].typeDeclDefCodeLines + "\n" + funcs[key].funcCodeLines)
         logger.info("Function %s successfully translated", key)
     except Exception as e:
         traceback_str = traceback.format_exc()
@@ -138,6 +150,7 @@ def processCodebase(codebasePath, preanalysisOnly, createIndFiles, translatorMod
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger)
 
+    individualFuncPath = codebasePath+"/individual-funcs/"
     # If the directory already exists, then wait for confirmation
     if os.path.isdir(os.path.join(codebasePath, "individual-funcs")):
         logger.critical("Output directory already exists. Proceeding with overwrite contents.")
@@ -147,10 +160,12 @@ def processCodebase(codebasePath, preanalysisOnly, createIndFiles, translatorMod
     translator = createTranslator(logger) 
     funcMap = getFunctions(logger, extractor, codebasePath)
     logger.debug("Extracted %d functions", len(funcMap))
-    individualFuncPath = codebasePath+"/individual-funcs/"
     translator.preanalyze(funcMap, codebasePath)
+
+
     if not preanalysisOnly:
         for i, key in enumerate(funcMap):
+            createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
             translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
     else:
         if createIndFiles:

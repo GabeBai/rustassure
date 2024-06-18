@@ -9,7 +9,6 @@ import traceback
 
 
 from functionAndDeps import FunctionAndDependencies
-from typedefFilter import TypedefFilter
 
 class Range:
     """
@@ -158,7 +157,6 @@ class FunctionAndDepsExtractor:
 
         funcMap = {}
 
-        typedefFilter = TypedefFilter(self.logger)
         # for each function, add everything before it in the AlwaysInclude map
         for funcSym in fileRanges.funcRangesMap:
             # Get the function and its dependencies
@@ -173,8 +171,6 @@ class FunctionAndDepsExtractor:
 
                     typeDeclDefCode.extend(fileContents[alwaysIncludeRange.start : alwaysIncludeRange.end + 1])
             functionAndDeps.setTypeDeclDefCodeLines("".join(typeDeclDefCode))
-            # Filter!
-            typedefFilter.filterUnusedTypedefs(filename, functionAndDeps)
 
             functionAndDeps.setFuncCodeLines("".join(fileContents[funcRange.start : funcRange.end + 1]))
             funcMap[funcSym] = functionAndDeps
