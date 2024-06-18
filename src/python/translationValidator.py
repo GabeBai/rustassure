@@ -8,6 +8,7 @@ import subprocess
 import traceback
 import tiktoken
 import argparse
+import shutil
 
 from gptTranslation import Translator
 from gptTranslation import TranslatorModes
@@ -86,12 +87,10 @@ def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
 
     # Filter
     typedefFilter = TypedefFilter(logger)
-    typedefFilter.filterUnusedTypedefs(c_path, funcs[key])
-    with open(c_path, "w") as c_file:
-        c_file.write(funcs[key].typeDeclDefCodeLines + "\n" + funcs[key].funcCodeLines)
+    typedefFilter.filterUnusedTypedefs(c_path)
 
 
-def translateAndCreateIndividualFiles(translator, funcs, key, logger, individualFuncPath, translatorMode):
+def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPath, translatorMode):
     # funcs is a dict of funcName: FunctionAndDependencies object
     try:
         translatedResult = translator.translate(key, funcs[key], translatorMode)
@@ -153,26 +152,26 @@ def processCodebase(codebasePath, preanalysisOnly, createIndFiles, translatorMod
     individualFuncPath = codebasePath+"/individual-funcs/"
     # If the directory already exists, then wait for confirmation
     if os.path.isdir(os.path.join(codebasePath, "individual-funcs")):
-        logger.critical("Output directory already exists. Proceeding with overwrite contents.")
+        logger.critical("Output directory already exists. Will delete to continue")
         input("Press any key to continue, or Ctrl+C to exit...")
-    else:
-        os.mkdir(individualFuncPath)
+        shutil.rmtree(os.path.join(codebasePath, "individual-funcs"))
+    os.mkdir(individualFuncPath)
     translator = createTranslator(logger) 
     funcMap = getFunctions(logger, extractor, codebasePath)
     logger.debug("Extracted %d functions", len(funcMap))
+
+
+    # Create the individual function files
+    for i, key in enumerate(funcMap):
+        createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
+
+    # Refresh from the individual function files
+    funcMap = getFunctions(logger, extractor, individualFuncPath)
+
     translator.preanalyze(funcMap, codebasePath)
-
-
     if not preanalysisOnly:
-        for i, key in enumerate(funcMap):
-            createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
-            translateAndCreateIndividualFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
-    else:
-        if createIndFiles:
-            for i, key in enumerate(funcMap):
-                createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
-    if not preanalysisOnly:
-        emitLLVMBitcodes(codebasePath, logger)
+        translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
+    emitLLVMBitcodes(codebasePath, logger)
 
 def getTranslatorMode(translatorModeStr):
     if translatorModeStr == "basic":

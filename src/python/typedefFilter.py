@@ -4,7 +4,7 @@ import sys
 import re
 import subprocess
 
-from functionAndDeps import FunctionAndDependencies
+# from functionAndDeps import FunctionAndDependencies
 
 class Symbol:
     def __init__(self, sym, span):
@@ -15,6 +15,14 @@ class TypedefFilter:
     def __init__(self, logger):
         self.logger = logger
 
+
+    def filterUnusedTypedefs(self, srcFile):
+        cmd = "unused-typedef-extractor " + srcFile
+        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        cmd = f"sed -i '' 's/__extension__//g' "+srcFile
+        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
+"""
     def filterUnusedTypedefs(self, srcFile, functionAndDepsObj):
         cmd = ["unused-typedef-extractor", srcFile]
         unusedTypeDefs = []
@@ -81,3 +89,4 @@ class TypedefFilter:
         functionAndDepsObj.typeDeclDefCodeLines = "\n".join(usedTypeDeclDefLines)
         # self.logger.info("Filtered lines: %s", functionAndDepsObj.typeDeclDefCodeLines)
         # self.logger.info("After filtering: %d records", len(usedTypeDeclDefLines))
+"""
