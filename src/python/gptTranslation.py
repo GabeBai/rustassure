@@ -211,7 +211,6 @@ class Translator:
     def translate(self, funcName, funcDepsObj, translatorMode):
         if translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
-            self.logger.info("Translating: %s",funcSrc)
             request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
             result = self.chunkAndSend(funcName, request)
         elif translatorMode == Translatormodes.SPACED_REPITITION:
