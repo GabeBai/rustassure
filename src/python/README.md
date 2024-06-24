@@ -47,6 +47,7 @@ To change it to use GPT-4, you should update the constants GPT_MODEL, CTX_WINDOW
 
 The final files will be in the directory `<SRC_DIR>/individual-funcs`. This directory will contain the individual `.i` files, the Rust files for each function, and the compiled bitcodes for both the `.i` file and the `.rs` file (if successful).
 
+5. IMPORTANT: This will also generate an analysis.log file which reports how many functions and functions + dependent declarations fit in the request and response limits for the model. Keep an eye out for this because, from my experience, chunking requests or chaining responses, result in even worse quality results. This file will also contain this information for every function.
 
 ### Invoking only the GPT translation module
 
