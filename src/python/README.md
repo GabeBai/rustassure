@@ -42,6 +42,8 @@ To change it to use GPT-4, you should update the constants GPT_MODEL, CTX_WINDOW
 
 4. Automatically invoke both the Clang C compiler to compile the `.i` files for the individual functions and the `rustc` compiler for the individual functions for the `.rs` files. Any compilation failures will be displayed on screen, and also in the log file in `validator.log`.
 
+The final files will be in the directory `<SRC_DIR>/individual-funcs`. This directory will contain the individual `.i` files, the Rust files for each function, and the compiled bitcodes for both the `.i` file and the `.rs` file (if successful).
+
 
 ### Invoking only the GPT translation module
 
