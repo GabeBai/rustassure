@@ -11,6 +11,14 @@ import tiktoken
 from enum import Enum
 from functionAndDeps import FunctionAndDependencies
 
+GPT3_MODEL="gpt-3.5-turbo"
+GPT3_CTX_WINDOW_LEN=16*1024
+GPT3_MAX_COMPLETION_TOKENS=4096 # This is the max value you can put for max_tokens: the max size of a response, https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4 and search for output tokens
+
+GPT4_MODEL="gpt-4-turbo"
+GPT4_CTX_WINDOW_LEN=128*1024
+GPT4_MAX_COMPLETION_TOKENS=4096 
+
 class TranslatorModes(Enum):
     BASIC_CHUNK_CHAIN = 0 
     """
@@ -34,6 +42,7 @@ class TranslatorModes(Enum):
     REDUCED_SREP_CALLERS = 3
     REDUCED_SREP_CALLEES = 4
     REDUCED_SREP_CALLERS_CALLEES = 5
+
 
 class Translator:
     """
@@ -218,3 +227,14 @@ class Translator:
         elif translatorMode == Translatormodes.SPACED_REPITITION:
             pass
         return result
+
+
+class Gpt3Translator(Translator):
+    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt):
+        super().__init__(logger, "", apiKey, GPT3_CTX_WINDOW_LEN, GPT3_MAX_COMPLETION_TOKENS, 
+                srcLang, dstLang, GPT3_MODEL, systemPrompt) 
+
+class Gpt4Translator(Translator):
+    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt):
+        super().__init__(logger, "", apiKey, GPT4_CTX_WINDOW_LEN, GPT4_MAX_COMPLETION_TOKENS, 
+                srcLang, dstLang, GPT4_MODEL, systemPrompt) 

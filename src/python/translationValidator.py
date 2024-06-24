@@ -11,16 +11,15 @@ import argparse
 import shutil
 
 from datetime import datetime
-from gptTranslation import Translator
+from gptTranslation import Gpt3Translator
+from gptTranslation import Gpt4Translator
+
 from gptTranslation import TranslatorModes
 
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 
 from typedefFilter import TypedefFilter
 
-GPT_MODEL="gpt-3.5-turbo"
-CTX_WINDOW_LEN=16*1024
-MAX_COMPLETION_TOKENS=4096 # This is the max value you can put for max_tokens: the max size of a response, https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4 and search for output tokens
 
 CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell it to continue
 
@@ -50,16 +49,19 @@ def getLogger(logPath):
 
     return logger
 
-def createTranslator(logger):
+def createTranslator(logger, useGpt4):
     # url = http://172.31.224.1:12345/v1 for LMStudio
-    translator = Translator(logger,
-            "",
+    if useGpt4:
+        translator = Gpt4Translator(logger,
             os.environ.get('OPENAI_KEY'),
-            CTX_WINDOW_LEN,
-            MAX_COMPLETION_TOKENS, 
             "C",
             "Rust",
-            GPT_MODEL,
+            "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
+    else:
+        translator = Gpt3Translator(logger,
+            os.environ.get('OPENAI_KEY'),
+            "C",
+            "Rust",
             "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
     return translator
 
@@ -144,10 +146,10 @@ def emitLLVMBitcodes(individualFuncPath, logger):
         else:
             logger.info ("Compilation succeeded for %s", filename)
 
-def processCodebase(codebasePath, preanalysisOnly, translatorMode):
+def processCodebase(codebasePath, useGpt4, preanalysisOnly, translatorMode):
     logger = getLogger("./validator.log")
     extractor = FunctionAndDepsExtractor(logger)
-    translator = createTranslator(logger)
+    translator = createTranslator(logger, useGpt4)
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -161,7 +163,6 @@ def processCodebase(codebasePath, preanalysisOnly, translatorMode):
         input("Press any key to continue, or Ctrl+C to exit...")
         shutil.rmtree(individualFuncPath)
     os.mkdir(individualFuncPath)
-    translator = createTranslator(logger) 
     funcMap = getFunctions(logger, extractor, codebasePath)
     logger.debug("Extracted %d functions", len(funcMap))
 
@@ -192,6 +193,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
+    parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
+
     parser.add_argument("--translator-mode", type=str, default="basic", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     args = parser.parse_args()
-    processCodebase(args.src, args.preanalysis_only, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.use_gpt4, args.preanalysis_only, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"

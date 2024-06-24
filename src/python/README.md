@@ -37,9 +37,7 @@ This will:
 
 The script will automatically filter all unneeded dependencies from the preprocessor expansion by automatically invoking `unused-typedef-extractor`. The code to do this is in `typedefFilter.py`. 
 
-2. Then it will take each individual `.i` file and invoke the `gptTranslation.py` file. Currently, it uses GPT-3.5 (to prevent us from going bankrupt). 
-
-To change it to use GPT-4, you should update the constants GPT_MODEL, CTX_WINDOW_LEN and MAX_COMPLETION_TOKENS constants in translationValidator.py
+2. Then it will take each individual `.i` file and invoke the `gptTranslation.py` file. Currently, it uses GPT-3.5 by default (to prevent us from going bankrupt). To use GPT-4 pass `--use-gpt4` to the `translationValidator.py`.
 
 3. This will (hopefully) use GPT to create a corresponding `.rs` file for each `.i` file. 
 
