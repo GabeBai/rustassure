@@ -23,6 +23,8 @@ For an example, check out `compile.sh` in `inputs-complex/zlib-1.3.1`.
 
 This will generate a bunch of `.i` files in the source directory. We want those.
 
+NOTE: The clang wrapper assumes that the Makefile commands compile a single file at a time. This is the common case. But if you have something that tries to compile multiple files (and link) in the same command, such as `$(CC) a.c b.c -o a.out`, the wrapper won't work. Please let me know in case it's not easy to adjust the Makefile.
+
 ### Running the entire toolchain
 
 You can either run the entire toolchain
