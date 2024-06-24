@@ -11,10 +11,7 @@ import argparse
 import shutil
 
 from datetime import datetime
-from gptTranslation import Gpt3Translator
-from gptTranslation import Gpt4Translator
-
-from gptTranslation import TranslatorModes
+from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translator, TranslatorModes
 
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 
@@ -49,7 +46,7 @@ def getLogger(logPath):
 
     return logger
 
-def createTranslator(logger, useGpt4):
+def createTranslator(logger, useGpt4, fineTunedModel):
     # url = http://172.31.224.1:12345/v1 for LMStudio
     if useGpt4:
         translator = Gpt4Translator(logger,
@@ -58,11 +55,19 @@ def createTranslator(logger, useGpt4):
             "Rust",
             "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
     else:
-        translator = Gpt3Translator(logger,
-            os.environ.get('OPENAI_KEY'),
-            "C",
-            "Rust",
-            "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
+        if len(fineTunedModel) > 0:
+            translator = FineTunedGPT3Translator(logger,
+                os.environ.get('OPENAI_KEY'),
+                "C",
+                "Rust",
+                fineTunedModel,
+                "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
+        else: 
+            translator = Gpt3Translator(logger,
+                os.environ.get('OPENAI_KEY'),
+                "C",
+                "Rust",
+                "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
     return translator
 
 def getFunctions(logger, extractor, srcPath):
@@ -146,10 +151,10 @@ def emitLLVMBitcodes(individualFuncPath, logger):
         else:
             logger.info ("Compilation succeeded for %s", filename)
 
-def processCodebase(codebasePath, useGpt4, preanalysisOnly, translatorMode):
+def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode):
     logger = getLogger("./validator.log")
     extractor = FunctionAndDepsExtractor(logger)
-    translator = createTranslator(logger, useGpt4)
+    translator = createTranslator(logger, useGpt4, fineTunedModel)
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -196,5 +201,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
 
     parser.add_argument("--translator-mode", type=str, default="basic", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
+
     args = parser.parse_args()
-    processCodebase(args.src, args.use_gpt4, args.preanalysis_only, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"

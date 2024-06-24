@@ -238,3 +238,8 @@ class Gpt4Translator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt):
         super().__init__(logger, "", apiKey, GPT4_CTX_WINDOW_LEN, GPT4_MAX_COMPLETION_TOKENS, 
                 srcLang, dstLang, GPT4_MODEL, systemPrompt) 
+
+class FineTunedGPT3Translator(Translator):
+    def __init__(self, logger, apiKey, srcLang, dstLang, modelName, systemPrompt):
+        super().__init__(logger, "", apiKey, GPT3_CTX_WINDOW_LEN, GPT3_MAX_COMPLETION_TOKENS, 
+                srcLang, dstLang, modelName, systemPrompt) 

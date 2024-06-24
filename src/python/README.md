@@ -65,3 +65,15 @@ Look at `extractFuncAndDeps` function in `functionAndDepsExtractor.py` for an ex
 
 3. Invoke the `translate` function on the `Translator` object. This will return the translated Rust code.
 
+### Fine-tuning
+
+We can only fine-tune GPT 3.5 models, as of 6/24/2024.
+
+1. Place the fine-tuning training file in `./training` according to the existing formatting. 
+
+2. Run `python3 jsonifyTrainingData.py`. 
+
+3. Go to `https://platform.openai.com/finetune/` to check the progress. It should show the fine tuning job. When it finishes, grab the name of the model (TODO: provide it as a argument to the script)
+
+4. Then, pass --fine-tuned-model=<model_name> when invoking `translatorValidator.py`.
+
