@@ -28,7 +28,7 @@ def getLogger(logPath):
     if os.path.exists(logPath):
         os.remove(logPath)
     # Create a logger
-    logger = logging.getLogger('translationvalidator_logger')
+    logger = logging.getLogger('translator_logger')
     logger.setLevel(logging.DEBUG)
     
     # Create file handler which logs even debug messages
@@ -153,6 +153,8 @@ def processCodebase(codebasePath, preanalysisOnly, translatorMode):
 
 
     individualFuncPath = codebasePath+"/individual-funcs_" + translator.model + "_" + formattedDateTime
+    if preanalysisOnly:
+        individualFuncPath = individualFuncPath + "__preanalysis_only"
     # If the directory already exists, then wait for confirmation
     if os.path.isdir(individualFuncPath):
         logger.critical("Output directory already exists. Will delete to continue")
