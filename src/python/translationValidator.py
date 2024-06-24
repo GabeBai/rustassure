@@ -10,6 +10,7 @@ import tiktoken
 import argparse
 import shutil
 
+from datetime import datetime
 from gptTranslation import Translator
 from gptTranslation import TranslatorModes
 
@@ -107,12 +108,9 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
         logger.debug(f"Exception: {e}\nTraceback:\n{traceback_str}")
         logger.warn("Function %s failed to translate", key)
 
-def emitLLVMBitcodes(rootPath, logger):
-    """
-    rootPath is where the individual functions are at
-    """ 
-    rustSrcPattern = os.path.join(rootPath, "individual-funcs", "*.rs")
-    cSrcPattern = os.path.join(rootPath, "individual-funcs", "*.i")
+def emitLLVMBitcodes(individualFuncPath, logger):
+    rustSrcPattern = os.path.join(individualFuncPath, "*.rs")
+    cSrcPattern = os.path.join(individualFuncPath, "*.i")
     for filename in glob.iglob(rustSrcPattern, recursive=True):
         # Compile it and generate the bitcode file
         logger.debug("Compiling Rust file %s ", filename)
@@ -150,13 +148,16 @@ def processCodebase(codebasePath, preanalysisOnly, translatorMode):
     logger = getLogger("./validator.log")
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger)
+    currentDatetime = datetime.now()
+    formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
 
-    individualFuncPath = codebasePath+"/individual-funcs/"
+
+    individualFuncPath = codebasePath+"/individual-funcs_" + translator.model + "_" + formattedDateTime
     # If the directory already exists, then wait for confirmation
-    if os.path.isdir(os.path.join(codebasePath, "individual-funcs")):
+    if os.path.isdir(individualFuncPath):
         logger.critical("Output directory already exists. Will delete to continue")
         input("Press any key to continue, or Ctrl+C to exit...")
-        shutil.rmtree(os.path.join(codebasePath, "individual-funcs"))
+        shutil.rmtree(individualFuncPath)
     os.mkdir(individualFuncPath)
     translator = createTranslator(logger) 
     funcMap = getFunctions(logger, extractor, codebasePath)
@@ -174,7 +175,7 @@ def processCodebase(codebasePath, preanalysisOnly, translatorMode):
     if not preanalysisOnly:
         for i, key in enumerate(funcMap):
             translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
-    emitLLVMBitcodes(codebasePath, logger)
+    emitLLVMBitcodes(individualFuncPath, logger)
 
 def getTranslatorMode(translatorModeStr):
     if translatorModeStr == "basic":

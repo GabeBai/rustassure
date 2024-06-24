@@ -63,9 +63,9 @@ class Translator:
         tokens = self.countTokens(funcMap[func])
         return (len(tokens) < self.requestTokenLimit and len(tokens) < self.maxCompletionTokens)
 
-    def preanalyze(self, funcMap, srcPath):
+    def preanalyze(self, funcMap, individualFuncPath):
 
-        analysisFilePath = os.path.join(srcPath, "individual-funcs", "analysis.log")
+        analysisFilePath = os.path.join(individualFuncPath, "analysis.log")
         totalFuncs = len(funcMap) 
 
         cumulResultMatrix = {}
