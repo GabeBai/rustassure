@@ -14,6 +14,7 @@
 
 5. Install the Python modules `openai` and `tiktoken` using `pip3`.
 
+NOTE: When pulling, please make sure that you have the latest of the typedefextractor repo too.
 
 ### Generate the preprocessed files from the source directory
 
