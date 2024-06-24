@@ -74,6 +74,8 @@ class Translator:
         cumulResultMatrix['decl'] = [0, 0]
 
         with open(analysisFilePath, 'w') as f:
+            f.write("Function: Tokens -> Full-Fits-Request : Full-Fits-Response: Function-Fits-Request: Function-Fits-Response: Decls-Fit-Request: Decls-Fit-Response \n")
+
             for func in funcMap:
                 fullSrc = funcMap[func].typeDeclDefCodeLines + "\n" + funcMap[func].funcCodeLines
 

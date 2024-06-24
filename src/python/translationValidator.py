@@ -67,8 +67,10 @@ def getFunctions(logger, extractor, srcPath):
     allFiles = glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True)
 
     for filename in allFiles:
+        """
         if "test46.i" not in filename and "individual-funcs" not in srcPath:
             continue
+        """
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
