@@ -131,7 +131,10 @@ class Translator:
     def extractRustCode(self, multilineResponse):
         pattern = re.compile(r"```rust\n(.*?)```", re.DOTALL)
         matches = pattern.findall(multilineResponse)
-        return "\n".join(matches)
+        if len(matches) > 1:
+            return "\n".join(matches)
+        else:
+            return multilineResponse
 
     def isResponseTruncated(self, completion, funcName):
         finishReason = completion.choices[0].finish_reason
@@ -148,6 +151,8 @@ class Translator:
             max_tokens = self.maxCompletionTokens,
             temperature = 0.2,
             top_p = 0.1)
+        self.logger.debug("Raw response:")
+        self.logger.debug(completion)
         response = completion.choices[0].message.content
         # This is OpenAI specific
         # Try to remove the ```rust at the first line and ``` at the last line that I think indicates formatting (markdown?)
