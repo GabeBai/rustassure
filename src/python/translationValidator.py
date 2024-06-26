@@ -103,12 +103,13 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
     # funcs is a dict of funcName: FunctionAndDependencies object
     try:
         translatedResult = translator.translate(key, funcs[key], translatorMode)
-        # logger.info(translatedResult)
+        logger.debug("Translating function: " + key)
+        logger.debug(translatedResult)
         rs_path = os.path.join(individualFuncPath, f"{key}.rs")
 
         with open(rs_path, "w") as rs_file:
             rs_file.write(translatedResult)
-        logger.info("Function %s successfully translated", key)
+        logger.info("Translation for function %s generated", key)
     except Exception as e:
         traceback_str = traceback.format_exc()
         logger.debug(f"Exception: {e}\nTraceback:\n{traceback_str}")
@@ -154,7 +155,14 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
 
-    logger = getLogger("./" + formattedDateTime + "_validator.log")
+    if useGpt4:
+        loggerFileName = "./" + "GPT_4_" + formattedDateTime + "_validator.log"
+    elif len(fineTunedModel):
+        loggerFileName = "./" + fineTunedModel + formattedDateTime + "_validator.log"
+    else:
+        loggerFileName = "./" + "GPT_3_5_" + formattedDateTime + "_validator.log"
+
+    logger = getLogger(loggerFileName)
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger, useGpt4, fineTunedModel)
 
