@@ -48,12 +48,16 @@ def getLogger(logPath):
 
 def createTranslator(logger, useGpt4, fineTunedModel):
     # url = http://172.31.224.1:12345/v1 for LMStudio
+    with open("system.prompt") as f:
+        systemPrompt = f.read()
+    logger.info("Using system prompt: %s", systemPrompt)
+
     if useGpt4:
         translator = Gpt4Translator(logger,
             os.environ.get('OPENAI_KEY'),
             "C",
             "Rust",
-            "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
+            systemPrompt)
     else:
         if len(fineTunedModel) > 0:
             translator = FineTunedGPT3Translator(logger,
@@ -61,13 +65,13 @@ def createTranslator(logger, useGpt4, fineTunedModel):
                 "C",
                 "Rust",
                 fineTunedModel,
-                "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
+                systemPrompt) 
         else: 
             translator = Gpt3Translator(logger,
                 os.environ.get('OPENAI_KEY'),
                 "C",
                 "Rust",
-                "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
+                systemPrompt) 
     return translator
 
 def getFunctions(logger, extractor, srcPath, singleFileName):
@@ -191,6 +195,12 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
         for i, key in enumerate(funcMap):
             translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
     emitLLVMBitcodes(individualFuncPath, logger)
+
+    # Let's copy over the log file too to the individualFuncPath
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            shutil.copy(handler.baseFilename, individualFuncPath)
+
 
 def getTranslatorMode(translatorModeStr):
     if translatorModeStr == "basic":

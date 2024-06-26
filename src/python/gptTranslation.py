@@ -131,7 +131,7 @@ class Translator:
     def extractRustCode(self, multilineResponse):
         pattern = re.compile(r"```rust\n(.*?)```", re.DOTALL)
         matches = pattern.findall(multilineResponse)
-        if len(matches) > 1:
+        if len(matches) > 0:
             return "\n".join(matches)
         else:
             return multilineResponse
