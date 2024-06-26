@@ -176,4 +176,5 @@ class FunctionAndDepsExtractor:
             funcMap[funcSym] = functionAndDeps
             # self.logger.info(functionAndDeps.typeDeclDefCodeLines)
             # self.logger.info(functionAndDeps.funcCodeLines)
+
         return funcMap

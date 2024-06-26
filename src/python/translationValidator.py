@@ -76,7 +76,7 @@ def getFunctions(logger, extractor, srcPath):
 
     for filename in allFiles:
         """
-        if "test46.i" not in filename and "individual-funcs" not in srcPath:
+        if "test44.i" not in filename and "individual-funcs" not in srcPath:
             continue
         """
         logger.debug("Extracting function bodies for file: %s", filename)
