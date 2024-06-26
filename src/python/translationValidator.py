@@ -70,15 +70,14 @@ def createTranslator(logger, useGpt4, fineTunedModel):
                 "You are an expert programmer in C and Rust and are an expert in translating C to Rust code.")
     return translator
 
-def getFunctions(logger, extractor, srcPath):
+def getFunctions(logger, extractor, srcPath, singleFileName):
     fileFuncMap = {}
     allFiles = glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True)
 
     for filename in allFiles:
-        """
-        if "test44.i" not in filename and "individual-funcs" not in srcPath:
-            continue
-        """
+        if len(singleFileName) > 0:
+            if singleFileName not in filename and "individual-funcs" not in srcPath:
+                continue
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
@@ -151,13 +150,13 @@ def emitLLVMBitcodes(individualFuncPath, logger):
         else:
             logger.info ("Compilation succeeded for %s", filename)
 
-def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode):
-    logger = getLogger("./validator.log")
-    extractor = FunctionAndDepsExtractor(logger)
-    translator = createTranslator(logger, useGpt4, fineTunedModel)
+def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName):
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
 
+    logger = getLogger("./" + formattedDateTime + "_validator.log")
+    extractor = FunctionAndDepsExtractor(logger)
+    translator = createTranslator(logger, useGpt4, fineTunedModel)
 
     individualFuncPath = codebasePath+"/individual-funcs_" + translator.model + "_" + formattedDateTime
     if preanalysisOnly:
@@ -168,7 +167,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
         input("Press any key to continue, or Ctrl+C to exit...")
         shutil.rmtree(individualFuncPath)
     os.mkdir(individualFuncPath)
-    funcMap = getFunctions(logger, extractor, codebasePath)
+    funcMap = getFunctions(logger, extractor, codebasePath, singleFileName)
     logger.debug("Extracted %d functions", len(funcMap))
 
 
@@ -177,7 +176,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
         createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
 
     # Refresh from the individual function files
-    funcMap = getFunctions(logger, extractor, individualFuncPath)
+    funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName)
 
     translator.preanalyze(funcMap, codebasePath)
     if not preanalysisOnly:
@@ -202,6 +201,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--translator-mode", type=str, default="basic", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
+    parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
+
 
     args = parser.parse_args()
-    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode)) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name) # ./inputs-complex/zlib-1.3.1/"
