@@ -206,7 +206,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     # Refresh from the individual function files
     funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName)
 
-    translator.preanalyze(funcMap, codebasePath)
+    translator.preanalyze(funcMap, individualFuncPath)
     if not preanalysisOnly:
         for i, key in enumerate(funcMap):
             translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
