@@ -150,7 +150,8 @@ class Translator:
                 {"role": "user", "content": request}], 
             max_tokens = self.maxCompletionTokens,
             temperature = 0.2,
-            top_p = 0.1)
+            top_p = 0.1,
+            seed = 1000) # keeping seed same is supposed to improve determinism
         self.logger.debug("Raw response:")
         self.logger.debug(completion)
         response = completion.choices[0].message.content

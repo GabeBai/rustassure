@@ -37,8 +37,10 @@ class TypedefFilter:
             result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             retryCount = retryCount + 1
 
-        if result.returncode != 0:
+        if result.returncode == 0:
             self.logger.info("Succeeded %s", cmd)
+        else:
+            self.logger.info("Failed and bailing %s", cmd)
 
         cmd = f"sed -i 's/__extension__//g' "+srcFile
         result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

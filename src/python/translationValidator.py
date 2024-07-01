@@ -79,6 +79,11 @@ def getFunctions(logger, extractor, srcPath, singleFileName):
     allFiles = glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True)
 
     for filename in allFiles:
+        # Don't look at files inside the individual-funcs directories
+        # the first time we invoke getFunctions
+        # 
+        if "individual-funcs" not in srcPath and "individual-funcs" in filename:
+            continue
         if len(singleFileName) > 0:
             if singleFileName not in filename and "individual-funcs" not in srcPath:
                 continue
@@ -122,6 +127,10 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
 def emitLLVMBitcodes(individualFuncPath, logger):
     rustSrcPattern = os.path.join(individualFuncPath, "*.rs")
     cSrcPattern = os.path.join(individualFuncPath, "*.i")
+    totalCFiles = 0
+    successCFiles = 0
+    totalRustFiles = 0
+    successRustFiles = 0
     for filename in glob.iglob(rustSrcPattern, recursive=True):
         # Compile it and generate the bitcode file
         logger.debug("Compiling Rust file %s ", filename)
@@ -140,9 +149,11 @@ def emitLLVMBitcodes(individualFuncPath, logger):
             emitBitcodeCmd = "rustc --emit=llvm-bc --crate-type=lib -o " + filename + ".bc " + filename
         logger.debug("Running command %s", emitBitcodeCmd)
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        totalRustFiles = totalRustFiles + 1
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
         else:
+            successRustFiles = successRustFiles + 1
             logger.info ("Compilation succeeded for %s", filename)
     for filename in glob.iglob(cSrcPattern, recursive=True):
         logger.debug("Compiling C file %s ", filename)
@@ -150,10 +161,15 @@ def emitLLVMBitcodes(individualFuncPath, logger):
         logger.debug("Running command %s", emitBitcodeCmd)
 
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        totalCFiles = totalCFiles + 1
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
         else:
+            successCFiles = successCFiles + 1
             logger.info ("Compilation succeeded for %s", filename)
+
+    logger.info("Out of %d total Rust files %d compiled", totalRustFiles, successRustFiles)
+    logger.info("Out of %d total C files %d compiled", totalCFiles, successCFiles)
 
 def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName):
     currentDatetime = datetime.now()
