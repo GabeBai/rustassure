@@ -1,3 +1,6 @@
 [submodule "src/python/python-utils"]
 	path = src/python/python-utils
 	url = git@github.com:shamedgh/python-utils.git
+[submodule "src/SVF"]
+	path = src/SVF
+	url = https://github.com/SVF-tools/SVF.git
