@@ -175,12 +175,15 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
 
+    """
     if useGpt4:
         loggerFileName = "./" + "GPT_4_" + formattedDateTime + "_validator.log"
     elif len(fineTunedModel):
         loggerFileName = "./" + fineTunedModel + formattedDateTime + "_validator.log"
     else:
         loggerFileName = "./" + "GPT_3_5_" + formattedDateTime + "_validator.log"
+    """
+    loggerFileName = "./validator.log"
 
     logger = getLogger(loggerFileName)
     extractor = FunctionAndDepsExtractor(logger)
@@ -210,8 +213,8 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     if not preanalysisOnly:
         for i, key in enumerate(funcMap):
             translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
-    emitLLVMBitcodes(individualFuncPath, logger)
 
+    emitLLVMBitcodes(individualFuncPath, logger)
     # Let's copy over the log file too to the individualFuncPath
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
@@ -223,6 +226,8 @@ def getTranslatorMode(translatorModeStr):
         return TranslatorModes.BASIC_CHUNK_CHAIN
     elif translatorModeStr == "repeat":
         return TranslatorModes.SPACED_REPITION
+    elif translatorModeStr == "feedback":
+        return TranslatorModes.COMPILATION_FEEDBACK
     else:
         printf("Invalid translator mode")
         sys.exit(-1)
@@ -233,7 +238,7 @@ if __name__ == "__main__":
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
 
-    parser.add_argument("--translator-mode", type=str, default="basic", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--translator-mode", type=str, default="feedback", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
 

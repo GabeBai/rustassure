@@ -19,15 +19,24 @@ GPT4_MODEL="gpt-4-turbo"
 GPT4_CTX_WINDOW_LEN=128*1024
 GPT4_MAX_COMPLETION_TOKENS=4096 
 
+COMPILATION_RETRIES=10
+
 class TranslatorModes(Enum):
-    BASIC_CHUNK_CHAIN = 0 
+    """
+    Do basic chunking and chaining of requests
+    """
+    BASIC_CHUNK_CHAIN = 0
+    """ 
+    If the compilation fails, then send the compilation error
+    """
+    COMPILATION_FEEDBACK = 1
     """
     Take the entire file generated for a single function,
     all the typedefs, 
     declarations, definitions, and chunk them 
     to fit the window and chain the responses
     """
-    SPACED_REPITITION = 1 
+    SPACED_REPITITION = 2
     """
     First, feed the typedefs, decls, defns and 
     translate them. Then, send that information 
@@ -38,11 +47,10 @@ class TranslatorModes(Enum):
     Assumes that both the typedefs, etc. and the 
     function fit in the response limit
     """
-    REDUCED_WITH_SREP = 2
-    REDUCED_SREP_CALLERS = 3
-    REDUCED_SREP_CALLEES = 4
-    REDUCED_SREP_CALLERS_CALLEES = 5
-
+    REDUCED_WITH_SREP = 3
+    REDUCED_SREP_CALLERS = 4
+    REDUCED_SREP_CALLEES = 5
+    REDUCED_SREP_CALLERS_CALLEES = 6
 
 class Translator:
     """
@@ -142,7 +150,7 @@ class Translator:
         return finishReason == "length"
 
     def getResponse(self, request):
-        # self.logger.debug("Sending request: %s", request)
+        self.logger.debug("Sending request: %s", request)
         completion = self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -225,15 +233,60 @@ class Translator:
         self.logger.info("Sent request in %d chunks", numChunks)
         return fullResponse
 
+    def compile(self, codeSnippet):
+        isBinary = False
+        if "fn main(" in codeSnippet:
+            emitBitcodeCmd = "cat << EOF | rustc --cap-lints=allow --emit=llvm-bc -o temp.bc - \n" + codeSnippet + "\nEOF"
+        else:
+            emitBitcodeCmd = "cat << EOF | rustc --cap-lints=allow --emit=llvm-bc --crate-type=lib -o temp.bc - \n" + codeSnippet + "\nEOF"
+        self.logger.debug("Checking translation compiles: command %s", emitBitcodeCmd)
+        result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            return (False, result.stderr)
+        else:
+            return (True, "")
+ 
+    def extractError(self, errStr):
+        lines = errStr.split("\n")
+        if len(lines) > 20:
+            extractedErr = "\n".join(lines[0:20])
+        else:
+            extractedErr = errStr
+        self.logger.debug("Full compilation error: " + errStr)
+        self.logger.debug("Extracted error: " + extractedErr)
+        return extractedErr
+
     def translate(self, funcName, funcDepsObj, translatorMode):
         if translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
             result = self.chunkAndSend(funcName, request)
-        elif translatorMode == Translatormodes.SPACED_REPITITION:
+        elif translatorMode == TranslatorModes.SPACED_REPITITION:
             pass
-        return result
+        elif translatorMode == TranslatorModes.COMPILATION_FEEDBACK:
+            funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
+            request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
+            result = self.chunkAndSend(funcName, request)
+            if "extern \"C\"" in result:
+                successFlag = False
+            (successFlag, err) = self.compile(result)
+            attempts = 0
+            while not successFlag and attempts < COMPILATION_RETRIES:
+                self.logger.info("Trying to recompile translated function %s", funcName)
+                if "extern \"C\"" in result:
+                    request = "Please avoid using extern C and translate those functions to Rust too.\n The original function was " + funcSrc
+                    result = self.chunkAndSend(funcName, request)
+                    (successFlag, err) = self.compile(result)
+                else:
+                    errorStr = self.extractError(err)
+                    request = "I got compilation error.\n" + str(errorStr) + "\n The original function was " + funcSrc
+                    result = self.chunkAndSend(funcName, request)
+                    (successFlag, err) = self.compile(result)
+                attempts = attempts + 1
+            if attempts != 0:
+                self.logger.debug("After %d retranslation attempts result: %s", attempts, result)
 
+        return result
 
 class Gpt3Translator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt):

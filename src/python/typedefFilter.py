@@ -33,14 +33,14 @@ class TypedefFilter:
 
         retryCount = 0
         while result.returncode != 0 and retryCount < 10:
-            self.logger.warn("Retrying %s", cmd)
+            self.logger.warn("Retrying command: %s", cmd)
             result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             retryCount = retryCount + 1
 
         if result.returncode == 0:
-            self.logger.info("Succeeded %s", cmd)
+            self.logger.info("Succeeded command: %s", cmd)
         else:
-            self.logger.info("Failed and bailing %s", cmd)
+            self.logger.info("Failed and bailing command: %s", cmd)
 
         cmd = f"sed -i 's/__extension__//g' "+srcFile
         result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

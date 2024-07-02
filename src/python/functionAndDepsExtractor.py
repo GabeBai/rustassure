@@ -117,7 +117,7 @@ class FunctionAndDepsExtractor:
             self.logger.critical("Can handle only preprocessed files")
             sys.exit(-1)
 
-        self.logger.info("Processing file %s", filename)
+        self.logger.info("(Re-)extracting functions from file %s", filename)
         fileRanges = FileRanges()
 
         funcExtractCmd = "ctags --fields=+ne -o -  --language-force=C --c-kinds=f " + filename
