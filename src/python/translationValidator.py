@@ -11,40 +11,16 @@ import argparse
 import shutil
 
 from datetime import datetime
+
+from loggerFactory import getLogger
 from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translator, TranslatorModes
-
 from functionAndDepsExtractor import FunctionAndDepsExtractor
-
 from typedefFilter import TypedefFilter
+from progPropertyEvaluator import ProgPropertyEvaluator
 
 
 CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell it to continue
 
-def getLogger(logPath):
-    if os.path.exists(logPath):
-        os.remove(logPath)
-    # Create a logger
-    logger = logging.getLogger('translator_logger')
-    logger.setLevel(logging.DEBUG)
-    
-    # Create file handler which logs even debug messages
-    fh = logging.FileHandler(logPath)
-    fh.setLevel(logging.DEBUG)
-    
-    # Create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-
-    # Create formatter and add it to the handlers
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-
-    # Add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-
-    return logger
 
 def createTranslator(logger, useGpt4, fineTunedModel):
     # url = http://172.31.224.1:12345/v1 for LMStudio
@@ -144,9 +120,9 @@ def emitLLVMBitcodes(individualFuncPath, logger):
                     isBinary = True
                     break
         if isBinary:
-            emitBitcodeCmd = "rustc --emit=llvm-bc -o " + filename + ".bc " + filename
+            emitBitcodeCmd = "rustc -A dead_code --emit=llvm-bc -o " + filename + ".bc " + filename
         else:
-            emitBitcodeCmd = "rustc --emit=llvm-bc --crate-type=lib -o " + filename + ".bc " + filename
+            emitBitcodeCmd = "rustc -A dead_code --emit=llvm-bc --crate-type=lib -o " + filename + ".bc " + filename
         logger.debug("Running command %s", emitBitcodeCmd)
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         totalRustFiles = totalRustFiles + 1
@@ -157,7 +133,7 @@ def emitLLVMBitcodes(individualFuncPath, logger):
             logger.info ("Compilation succeeded for %s", filename)
     for filename in glob.iglob(cSrcPattern, recursive=True):
         logger.debug("Compiling C file %s ", filename)
-        emitBitcodeCmd = "clang -c -emit-llvm -o " + filename + ".bc " + filename
+        emitBitcodeCmd = "clang -c -femit-all-decls -emit-llvm -o " + filename + ".bc " + filename
         logger.debug("Running command %s", emitBitcodeCmd)
 
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -215,10 +191,18 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
             translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
 
     emitLLVMBitcodes(individualFuncPath, logger)
+
+    # Invoke the Program Property Evaluator (commented for now)
+    # PPE = ProgPropertyEvaluator(logger, individualFuncPath)
+    # PPE.compareAll()
+
     # Let's copy over the log file too to the individualFuncPath
     for handler in logger.handlers:
         if isinstance(handler, logging.FileHandler):
             shutil.copy(handler.baseFilename, individualFuncPath)
+
+    # Mark the directory as complete
+    shutil.move(individualFuncPath, individualFuncPath+"__complete")
 
 
 def getTranslatorMode(translatorModeStr):

@@ -2,18 +2,26 @@
 
 ### Dependencies
 
-1. Please clone `git@github.com:taptipalit/typedefextractor.git` and build it. Make sure it builds the `clang` project.
+1. Run `git submodule update --init --recursive`. Inside `src/SVF` execute `./build.sh` and then inside `Release-Build` invoke `sudo make install`.
 
-2. Add the build directory to your `$PATH`. Make sure you can run `unused-typedef-extractor <src-dir>` from the terminal. 
+2. Install `rust` using `rustup`. Then, downgrade to version 1.64.0 which uses LLVM 14 backend, which we use.
 
-3. Make sure you have `universal-ctags` installed.
+		`rustup install 1.64.0`
+		`rustup default 1.64.0`
+
+3. Please clone `git@github.com:taptipalit/typedefextractor.git` and build it. Make sure it builds the `clang` project.
+
+4. Add the build directory to your `$PATH`. Make sure you can run `unused-typedef-extractor <src-dir>` from the terminal. 
+
+5. Make sure you have `universal-ctags` installed.
 
 `sudo apt purge ctags && sudo apt install universal-ctags`.
 
-4. Make sure you have a GPT key stored in the environment variable `$OPENAI_KEY`.
+6. Make sure you have a GPT key stored in the environment variable `$OPENAI_KEY`.
 
-5. Install the Python modules `openai` and `tiktoken` using `pip3`.
+7. Install the Python modules `openai` and `tiktoken` using `pip3`. By default, it will also invoke the validator. So, also install `numpy`, `scipy`, `pygraphviz` and `networkx`.
 
+ 
 NOTE: When pulling, please make sure that you have the latest of the typedefextractor repo too.
 
 ### Generate the preprocessed files from the source directory

@@ -44,6 +44,27 @@ class TypedefFilter:
 
         cmd = f"sed -i 's/__extension__//g' "+srcFile
         result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        # Remove all static and inline attributes, these attributes result in dead code removal in bitcode
+        cmd = f"sed -i 's/\\binline\\b//g' "+srcFile
+        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        cmd = f"sed -i 's/\\b__inline\\b//g' "+srcFile
+        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        cmd = f"sed -i 's/\\b__inline__\\b//g' "+srcFile
+        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        cmd = f"sed -i 's/\\bstatic\\b//g' "+srcFile
+        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+        """
+        print(cmd)
+        print(result.stderr)
+        print(result.stdout)
+        """
+
         # Remove the lines that have nothing but ;
         cmd = "empty-decl-remover " + srcFile
         result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
