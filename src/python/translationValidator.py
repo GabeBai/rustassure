@@ -17,6 +17,7 @@ from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translat
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 from typedefFilter import TypedefFilter
 from progPropertyEvaluator import ProgPropertyEvaluator
+from llvmBitcodeEmitter import emitLLVMBitcodes
 
 
 CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell it to continue
@@ -99,53 +100,6 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
         traceback_str = traceback.format_exc()
         logger.debug(f"Exception: {e}\nTraceback:\n{traceback_str}")
         logger.warn("Function %s failed to translate", key)
-
-def emitLLVMBitcodes(individualFuncPath, logger):
-    rustSrcPattern = os.path.join(individualFuncPath, "*.rs")
-    cSrcPattern = os.path.join(individualFuncPath, "*.i")
-    totalCFiles = 0
-    successCFiles = 0
-    totalRustFiles = 0
-    successRustFiles = 0
-    for filename in glob.iglob(rustSrcPattern, recursive=True):
-        # Compile it and generate the bitcode file
-        logger.debug("Compiling Rust file %s ", filename)
-        # Check if the file has a fn main() 
-        # If not, try to compile as a library (or it complains that there's no main)
-        # rustc doesn't seem to have a -c option
-        isBinary = False
-        with open(filename) as f:
-            for line in f:
-                if "fn main(" in line:
-                    isBinary = True
-                    break
-        if isBinary:
-            emitBitcodeCmd = "rustc -A dead_code --emit=llvm-bc -o " + filename + ".bc " + filename
-        else:
-            emitBitcodeCmd = "rustc -A dead_code --emit=llvm-bc --crate-type=lib -o " + filename + ".bc " + filename
-        logger.debug("Running command %s", emitBitcodeCmd)
-        result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        totalRustFiles = totalRustFiles + 1
-        if (result.returncode != 0):
-            logger.warn ("Compilation failed for %s", filename)
-        else:
-            successRustFiles = successRustFiles + 1
-            logger.info ("Compilation succeeded for %s", filename)
-    for filename in glob.iglob(cSrcPattern, recursive=True):
-        logger.debug("Compiling C file %s ", filename)
-        emitBitcodeCmd = "clang -c -femit-all-decls -emit-llvm -o " + filename + ".bc " + filename
-        logger.debug("Running command %s", emitBitcodeCmd)
-
-        result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        totalCFiles = totalCFiles + 1
-        if (result.returncode != 0):
-            logger.warn ("Compilation failed for %s", filename)
-        else:
-            successCFiles = successCFiles + 1
-            logger.info ("Compilation succeeded for %s", filename)
-
-    logger.info("Out of %d total Rust files %d compiled", totalRustFiles, successRustFiles)
-    logger.info("Out of %d total C files %d compiled", totalCFiles, successCFiles)
 
 def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName):
     currentDatetime = datetime.now()

@@ -1,6 +1,7 @@
 import os
 import logging
 import sys
+sys.path.append("./networkx")
 import glob
 import subprocess
 from pathlib import Path
@@ -18,16 +19,20 @@ class ProgPropertyEvaluator:
     def __init__(self, logger, indFilePath):
         self.logger = logger
         self.indFilePath = indFilePath
+        """
         self.commands = ["wpa -ander -svfg -dump-vfg %s",
-                         "wpa -ander -dump-constraint-graph %s",
+                         "wpa -ander -dump-constraint-graph -brief-constraint-graph=false %s",
                          "opt -dot-cfg %s -o o.bc"]
+        """
+        self.commands = ["wpa -ander -dump-constraint-graph -brief-constraint-graph=false %s"]
+
 
     def compareAll(self):
         allFiles = glob.iglob(os.path.join(self.indFilePath, "*.i"), recursive=False)
         # The comparison output file
         comparisonFile = os.path.join(self.indFilePath, "comparison.dat")
         with open(comparisonFile, "w") as compFile:
-            compFile.write("FileNameBase, Cmd, Similarity_Score")
+            compFile.write("FileNameBase, Cmd, Similarity_Score\n")
             for filePath in allFiles:
                 fileBase = Path(filePath).stem
                 dirPath = os.path.dirname(filePath)
@@ -66,21 +71,48 @@ class ProgPropertyEvaluator:
     def compareNodeEdgeOverlap(self, G1, G2):
         GM = isomorphism.GraphMatcher(G1, G2, node_match=isomorphism.categorical_node_match([], []))
         subgraph_isomorphisms = list(GM.subgraph_isomorphisms_iter())
+        if len(subgraph_isomorphisms) == 0:
+            return 0
         largestCommonSubGraphSize = max(len(iso) for iso in subgraph_isomorphisms)
         # self.logger.info("Largest common subgraph size = %d", largestCommonSubGraphSize)
         score = largestCommonSubGraphSize / max(G1.number_of_nodes(), G2.number_of_nodes())
         return score
 
+    def filterGraph(self, G):
+        # We filter out connected components or islands where the number of connections are < 3
+        # These are usually extraneous data
+        minSize = 3
+        connectedComponents = list(nx.weakly_connected_components(G))
+        filteredComponents = [component for component in connectedComponents if len(component) >= minSize]
+        # Create a subgraph with the filtered components
+        filteredNodes = set().union(*filteredComponents)
+        filteredGraph = G.subgraph(filteredNodes).copy()
+        self.logger.info("Initial graph had %d nodes, filtered graph has %d nodes", len(G), len(filteredGraph))
+        return filteredGraph
+
+
     def compare(self, cmd, fileNameBase, cDotFileName, rustDotFileName, compFile):
-        self.logger.info("Comparing graph similarity for original and translation for %s", fileNameBase)
+        self.logger.info("Comparing graph similarity for original and translation for %s for %s", fileNameBase, cmd)
         G1 = nx.nx_agraph.read_dot(cDotFileName)
         G2 = nx.nx_agraph.read_dot(rustDotFileName)
-        editDistance = self.compareGraphEditDistance(G1, G2)
-        # specSim = self.compareSpectralSimilarity(G1, G2)
-        overlap = self.compareNodeEdgeOverlap(G1, G2)
-        self.logger.info("Norm. edit distance = %f, overlap = %f", editDistance, overlap)
 
-        compFile.write("%s, %s, %f, %f" % (fileNameBase, cmd, editDistance, overlap))
+        G1 = self.filterGraph(G1)
+        G2 = self.filterGraph(G2)
+
+        # Dump the number of nodes and edges
+        self.logger.debug("Graph1: number of nodes: %d, edges: %d", len(G1), len(G1.edges()))
+        self.logger.debug("Graph2: number of nodes: %d, edges: %d", len(G2), len(G2.edges()))
+
+        if len(G1) > 0 and len(G2) > 0:
+            editDistance = self.compareGraphEditDistance(G1, G2)
+            # specSim = self.compareSpectralSimilarity(G1, G2)
+            # overlap = self.compareNodeEdgeOverlap(G1, G2)
+            self.logger.info("Edit distance = %f", editDistance)
+
+            compFile.write("%s, %s, %f\n" % (fileNameBase, cmd, editDistance))
+        else:
+            compFile.write("%s, %s, 0.0 (graph empty)\n" % (fileNameBase, cmd ))
+
 
 
     def generateAndCompare(self, fileNameBase, cBitCodeFile, rustBitCodeFile, compFile):
@@ -127,6 +159,6 @@ class ProgPropertyEvaluator:
             self.compare(cmd, fileNameBase, cDotFile, rustDotFile, compFile)
 
 if __name__ == "__main__":
-    logger = getLogger("test_logger.log")
+    logger = getLogger("test_prog_property_logger.log")
     PPE = ProgPropertyEvaluator(logger, "/home/tpalit/rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2024-07-04_10-16-12")
     PPE.compareAll()
