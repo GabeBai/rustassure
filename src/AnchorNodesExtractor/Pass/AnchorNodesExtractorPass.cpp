@@ -44,11 +44,18 @@ namespace {
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
 			for (Function& F: M.functions()) {
 				// Dump the name of the function and its arguments
-				llvm::errs() << F.getName() << ", ";
 				for (Argument& arg: F.args()) {
-					llvm::errs() << arg.getName() << ", ";
+					arg.setName(F.getName() + "__" + arg.getName());
 				}
-				llvm::errs() << "\n";
+			}
+
+			for (Function& F: M.functions()) {
+				// Dump the name of the function and its arguments
+				llvm::outs() << F.getName() << ", ";
+				for (Argument& arg: F.args()) {
+					llvm::outs() << arg.getName() << ", ";
+				}
+				llvm::outs() << "\n";
 			}
 			return PreservedAnalyses::none();
 		}
