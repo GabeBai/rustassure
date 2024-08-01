@@ -64,4 +64,3 @@ def emitLLVMBitcodes(individualFuncPath, logger):
 if __name__ == "__main__":
     logger = getLogger("test_llvm_bitcode_emitter_logger.log")
     emitLLVMBitcodes("/home/tpalit/rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2024-07-04_10-16-12", logger)
-
