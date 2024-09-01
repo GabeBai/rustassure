@@ -135,14 +135,21 @@ class ProgPropertyEvaluator:
         # self.logger.info("%s, %s, %s, %s", N1ArgIndex, N1FunctionName, N2ArgIndex, N2FunctionName)
 
         if len(N1FunctionName) > 0 or len(N2FunctionName) > 0:
-            return N1FunctionName == N2FunctionName and N1ArgIndex == N2ArgIndex
+            if N1FunctionName == N2FunctionName and N1ArgIndex == N2ArgIndex:
+                return True
+            else:
+                self.logger.info("Returning false")
+                return False
         else:
             return True
 
 
     def compareGraphEditDistance(self, G1, G2):
         self.logger.info("Node size G1 = %d, G2 = %d", G1.number_of_nodes(), G2.number_of_nodes())
-        ged = nx.graph_edit_distance(G1, G2, node_match=self.matchNodes)
+        ged_generator = nx.optimize_graph_edit_distance(G1, G2, node_match=self.matchNodes) # 
+        for g in ged_generator:
+            self.logger.warn("ged = %f", g)
+            ged = g
         normGed = ged / max (G1.number_of_nodes() + G1.number_of_edges(), G2.number_of_nodes() + G2.number_of_edges())
         return normGed
 

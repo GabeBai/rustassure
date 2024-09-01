@@ -4,3 +4,6 @@
 [submodule "src/SVF"]
 	path = src/SVF
 	url = https://github.com/SVF-tools/SVF.git
+[submodule "src/python/networkx"]
+	path = src/python/networkx
+	url = git@github.com:taptipalit/networkx.git
