@@ -7,6 +7,13 @@ from openai import OpenAI
 import subprocess
 import traceback
 
+# sys.path.append("/home/tpalit/clang-llvm/llvm-project-14.0.0.src/clang/bindings/python/")
+# 
+# import clang.cindex
+# 
+# clang.cindex.Config.set_library_file('/usr/lib/libclang.so')  # Adjust path if necessary
+# index = clang.cindex.Index.create()
+
 
 from functionAndDeps import FunctionAndDependencies
 
@@ -29,11 +36,14 @@ class FileRanges:
     context-window.
     """
     def __init__(self):
+        # The ranges for the functions
         self.funcRanges = []
-        self.alwaysIncludeRanges = []
         self.funcRangesMap = {}
-        self.optionalRanges = []
+
+        # Any header file information that is necessarily included
+        self.alwaysIncludeRanges = []
         self.alwaysIncludeRangesMap = {} 
+
 
     def addFuncRange(self, funcRange):
         self.funcRanges.append(funcRange)
@@ -104,6 +114,70 @@ class FunctionAndDepsExtractor:
         r = Range(sym, startIndex, endIndex)
         return r
 
+    def extractGlobalTypeUsageDetails(self, srcPath, funcMap):
+        # This information doesn't have to be completely 
+        # syntactically accurate.
+        # So, we can get by doing text-level processing
+        # and don't need a clang tool or anything
+        
+        for funcSym in funcMap:
+            # 1. collect all struct types that have void* or char* pointers
+            # 2. gather their uses in other functions
+            fullFileName = os.path.join(srcPath, funcSym+".i")
+
+            cmd = "struct-with-generic-pointer-printer " + fullFileName
+
+            self.logger.info("Extracting char*/void* pointer usage from structs for file %s", funcSym)
+
+            result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            if result.returncode != 0:
+                self.logger.info("Failed command and bailing: %s", cmd)
+                self.logger.info("Stderr: %s", result.stderr)
+                continue
+
+
+            structNames = set()
+            for line in result.stdout.split("\n"):
+                if len(line) > 0:
+                    structNames.add(line)
+
+            # Didn't find any problematic struct
+            if len(structNames) == 0:
+                continue
+
+            functionAndDeps = funcMap[funcSym]
+            # Then go over every other function
+            for otherFunc in funcMap:
+                # We will use the python-clang bindings
+                # It is read-only so it shouldn't cause much of a trouble
+                otherFullFileName = os.path.join(srcPath, otherFunc+".i")
+                # self.logger.info("Testing file %s", otherFullFileName)
+                # Run the command
+                otherCmd = "struct-field-use-printer " + otherFullFileName
+                result = subprocess.run(otherCmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                if result.returncode != 0:
+                    self.logger.info("Failed command and bailing: %s", cmd)
+                    continue
+                # Let's parse
+                # output looks like this
+                # <Struct name> : <field name> : <use> 
+                for outputLine in result.stdout.split("\n"):
+                    tokens = outputLine.split(":")
+                    structName = tokens[0].strip()
+                    if structName not in structNames:
+                        continue
+                    fieldName = tokens[1].strip()
+                    # self.logger.info("Field name: %s", fieldName)
+                    use = tokens[2].strip()
+                    # self.logger.info("Use: %s", use)
+                    if ';' in use:
+                        # Multiple statements
+                        useTokens = use.split(";")
+                        for useToken in useTokens:
+                            if fieldName in useToken:
+                                # Add it to the functionAndDeps
+                                functionAndDeps.addTypeUsage(structName, useToken)
+
     def extractFuncsAndDeps(self, filename):
         """
         Use Universal ctags to get the start and end line numbers for
@@ -135,6 +209,14 @@ class FunctionAndDepsExtractor:
             fileRanges.addFuncRange(r)
 
         # Compute the always include range
+        # The logic here is that everything that comes _before_ this function
+        # will be treated as "always included" in case there is a dependency
+
+        # When this python function is invoked for an entire C file, this will
+        # contain everything include in the header files
+        # When this python function is invoked for the individual C files, this
+        # will contain only the necessary dependencies. A clang tool (or many) 
+        # will remove the unnecessary dependencies.
         sortedFileRanges = sorted(fileRanges.funcRanges, key = lambda x: x.start)
 
         start = 0
@@ -160,7 +242,7 @@ class FunctionAndDepsExtractor:
         # for each function, add everything before it in the AlwaysInclude map
         for funcSym in fileRanges.funcRangesMap:
             # Get the function and its dependencies
-            functionAndDeps = FunctionAndDependencies()
+            functionAndDeps = FunctionAndDependencies(funcSym)
             funcRange = fileRanges.funcRangesMap[funcSym]
             sortedAlwaysIncludedRanges = sorted(fileRanges.alwaysIncludeRanges, key = lambda x: x.start)
             typeDeclDefCode = []
@@ -177,4 +259,5 @@ class FunctionAndDepsExtractor:
             # self.logger.info(functionAndDeps.typeDeclDefCodeLines)
             # self.logger.info(functionAndDeps.funcCodeLines)
 
+        
         return funcMap

@@ -67,6 +67,11 @@ def getFunctions(logger, extractor, srcPath, singleFileName):
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
+    # For each struct type used in each function, extract _all_ uses of the same type
+    # from other functions
+    # TODO: Consider if refactoring the toolchain helps?
+    extractor.extractGlobalTypeUsageDetails(srcPath, funcMap)
+
     return fileFuncMap
 
 def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):

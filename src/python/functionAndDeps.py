@@ -9,9 +9,11 @@ class FunctionAndDependencies:
     Right now only 1 works.
 
     """
-    def __init__(self):
+    def __init__(self, funcSym):
+        self.funcSym = funcSym
+        self.funcCodeLines = ""
         self.typeDeclDefCodeLines = ""
-        self.dependentFuncCodeLines = {} # dict of name: code
+        self.typeUsageCodeLinesMap = {} # dict of typename: usage
 
     def setFuncCodeLines(self, funcCodeLines):
         self.funcCodeLines = funcCodeLines
@@ -19,7 +21,7 @@ class FunctionAndDependencies:
     def setTypeDeclDefCodeLines(self, typeDeclDefCodeLines):
         self.typeDeclDefCodeLines = typeDeclDefCodeLines
 
-    def addDependentFuncAndCode(self, depFuncName, depFuncCodeLines):
-        self.dependentFuncCodeLines[depFuncName] = depFuncCodeLines
-
-
+    def addTypeUsage(self, typeName, typeUsageCodeLine):
+        if typeName not in self.typeUsageCodeLinesMap:
+            self.typeUsageCodeLinesMap[typeName] = set()
+        self.typeUsageCodeLinesMap[typeName].add(typeUsageCodeLine)
