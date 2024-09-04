@@ -25,3 +25,15 @@ class FunctionAndDependencies:
         if typeName not in self.typeUsageCodeLinesMap:
             self.typeUsageCodeLinesMap[typeName] = set()
         self.typeUsageCodeLinesMap[typeName].add(typeUsageCodeLine)
+
+    def stringifyExtraInfo(self):
+        if len(self.typeUsageCodeLinesMap) == 0:
+            return ""
+
+        extra = "Also consider the following usages of the following struct.\n"
+        for typeName in self.typeUsageCodeLinesMap:
+            extra = extra + "struct " + typeName + ":\n"
+            for use in self.typeUsageCodeLinesMap[typeName]:
+                extra = extra + use + "\n"
+        return extra
+

@@ -260,12 +260,17 @@ class Translator:
         if translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
+            extra = funcDepsObj.stringifyExtraInfo()
+            request = request + extra
             result = self.chunkAndSend(funcName, request)
         elif translatorMode == TranslatorModes.SPACED_REPITITION:
             pass
         elif translatorMode == TranslatorModes.COMPILATION_FEEDBACK:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
-            request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
+            request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+            extra = funcDepsObj.stringifyExtraInfo()
+            request = request + extra
+            request = request + funcSrc
             result = self.chunkAndSend(funcName, request)
             if "extern \"C\"" in result:
                 successFlag = False
@@ -274,12 +279,19 @@ class Translator:
             while not successFlag and attempts < COMPILATION_RETRIES:
                 self.logger.info("Trying to recompile translated function %s", funcName)
                 if "extern \"C\"" in result:
-                    request = "Please avoid using extern C and translate those functions to Rust too.\n The original function was " + funcSrc
+                    request = "Please avoid using extern C and translate those functions to Rust too.\n The original function was "
+                    extra = funcDepsObj.stringifyExtraInfo()
+                    request = request + extra
+                    request = request + funcSrc
+
                     result = self.chunkAndSend(funcName, request)
                     (successFlag, err) = self.compile(result)
                 else:
                     errorStr = self.extractError(err)
-                    request = "I got compilation error.\n" + str(errorStr) + "\n The original function was " + funcSrc
+                    request = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
+                    extra = funcDepsObj.stringifyExtraInfo()
+                    request = request + extra
+                    request = request + funcSrc
                     result = self.chunkAndSend(funcName, request)
                     (successFlag, err) = self.compile(result)
                 attempts = attempts + 1

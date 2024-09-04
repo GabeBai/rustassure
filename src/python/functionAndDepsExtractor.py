@@ -120,6 +120,7 @@ class FunctionAndDepsExtractor:
         # So, we can get by doing text-level processing
         # and don't need a clang tool or anything
         
+        self.logger.info("Extracting char*/void* fields from %d functions", len(funcMap))
         for funcSym in funcMap:
             # 1. collect all struct types that have void* or char* pointers
             # 2. gather their uses in other functions
@@ -127,13 +128,16 @@ class FunctionAndDepsExtractor:
 
             cmd = "struct-with-generic-pointer-printer " + fullFileName
 
-            self.logger.info("Extracting char*/void* pointer usage from structs for file %s", funcSym)
+            self.logger.info("Extracting char*/void* field pointers from structs for file %s", funcSym)
 
             result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             if result.returncode != 0:
                 self.logger.info("Failed command and bailing: %s", cmd)
                 self.logger.info("Stderr: %s", result.stderr)
                 continue
+            else:
+                self.logger.debug("Output of %s", cmd)
+                self.logger.debug("%s", result.stdout)
 
 
             structNames = set()
@@ -158,6 +162,10 @@ class FunctionAndDepsExtractor:
                 if result.returncode != 0:
                     self.logger.info("Failed command and bailing: %s", cmd)
                     continue
+                else:
+                    self.logger.debug("Output of %s", otherCmd)
+                    self.logger.debug("%s", result.stdout)
+
                 # Let's parse
                 # output looks like this
                 # <Struct name> : <field name> : <use> 

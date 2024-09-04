@@ -67,10 +67,15 @@ def getFunctions(logger, extractor, srcPath, singleFileName):
         logger.debug("Extracting function bodies for file: %s", filename)
         funcMap = extractor.extractFuncsAndDeps(filename)
         fileFuncMap.update(funcMap)
+
+    # The second time we refresh the funcMap with the individual
+    # files, we also extract additional meta-data.
     # For each struct type used in each function, extract _all_ uses of the same type
     # from other functions
     # TODO: Consider if refactoring the toolchain helps?
-    extractor.extractGlobalTypeUsageDetails(srcPath, funcMap)
+    if "individual-funcs" in srcPath:
+        logger.info("Going to extract type usage")
+        extractor.extractGlobalTypeUsageDetails(srcPath, fileFuncMap)
 
     return fileFuncMap
 
@@ -106,7 +111,7 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
         logger.debug(f"Exception: {e}\nTraceback:\n{traceback_str}")
         logger.warn("Function %s failed to translate", key)
 
-def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName):
+def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix):
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -124,7 +129,11 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger, useGpt4, fineTunedModel)
 
-    individualFuncPath = codebasePath+"/individual-funcs_" + translator.model + "_" + formattedDateTime
+    if len (dirPrefix) > 0:
+        individualFuncPath = codebasePath + "/individual-funcs_" + dirPrefix + "_" + translator.model + "_" + formattedDateTime
+    else:
+        individualFuncPath = codebasePath + "/individual-funcs_" + translator.model + "_" + formattedDateTime
+
     if preanalysisOnly:
         individualFuncPath = individualFuncPath + "__preanalysis_only"
     # If the directory already exists, then wait for confirmation
@@ -184,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--translator-mode", type=str, default="feedback", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
-
+    parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")
 
     args = parser.parse_args()
-    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix) # ./inputs-complex/zlib-1.3.1/"
