@@ -114,6 +114,7 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
 def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix):
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
+    baseDir = os.path.basename(os.path.normpath(codebasePath))
 
     """
     if useGpt4:
@@ -123,7 +124,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     else:
         loggerFileName = "./" + "GPT_3_5_" + formattedDateTime + "_validator.log"
     """
-    loggerFileName = "./validator.log"
+    loggerFileName = "./" + baseDir + "_validator.log"
 
     logger = getLogger(loggerFileName)
     extractor = FunctionAndDepsExtractor(logger)
