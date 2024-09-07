@@ -7,3 +7,9 @@
 [submodule "src/python/networkx"]
 	path = src/python/networkx
 	url = git@github.com:taptipalit/networkx.git
+[submodule "src/python/inputs-complex/coreutils"]
+	path = src/python/inputs-complex/coreutils
+	url = git@github.com:taptipalit/rustify-core-utils.git
+[submodule "src/python/inputs-complex/minutils"]
+	path = src/python/inputs-complex/minutils
+	url = https://github.com/emmiegit/minutils.git
