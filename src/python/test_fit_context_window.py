@@ -7,6 +7,7 @@ from openai import OpenAI
 import subprocess
 import traceback
 import tiktoken
+import math
 
 
 from tabulate import tabulate
@@ -49,17 +50,17 @@ if __name__ == "__main__":
 #    dirs.append("/home/tpalit/rustify/src/python/inputs-complex/uthash")
 #    dirs.append("/home/tpalit/rustify/src/python/inputs-complex/zlib-1.3.1")
     print("Assuming the request occupies 100% of the context window (As the response is populated, the request context is lost")
-    headers = ["Directory", "Total Tokens", "Num. Requests (GPT3)", "Num. Requests (GPT4)", "Num. Requests (CLAUDE)"]
+    headers = ["Directory", "Total Tokens (K)", "Num. Requests (GPT3)", "Num. Requests (GPT4)", "Num. Requests (CLAUDE)"]
     data = []
     for directory in dirs:
         token_count = count_tokens(directory)
-        data.append([directory, token_count, str(token_count/GPT3_CTX_WINDOW_LEN), str(token_count/GPT4_CTX_WINDOW_LEN), str(token_count/CLAUDE3_CTX_WINDOW_LEN)])
-    print(tabulate(data, headers=headers, tablefmt="grid"))
+        data.append([os.path.basename(directory), "{:.2f}".format(token_count/1000), str(math.ceil(token_count/GPT3_CTX_WINDOW_LEN)), str(math.ceil(token_count/GPT4_CTX_WINDOW_LEN)), str(math.ceil(token_count/CLAUDE3_CTX_WINDOW_LEN))])
+    print(tabulate(data, headers=headers, tablefmt="latex"))
 
-    print("Assuming the request occupies 100% of the context window (As the response is populated, the hope is that the request and response use 50% of the context window.)")
-    headers = ["Directory", "Total Tokens", "Num. Requests (GPT3)", "Num. Requests (GPT4)", "Num. Requests (CLAUDE)"]
+    print("Assuming the request occupies 50% of the context window (As the response is populated, the hope is that the request and response use 50% of the context window.)")
+    headers = ["Directory", "Total Tokens (K)", "Num. Requests (GPT3)", "Num. Requests (GPT4)", "Num. Requests (CLAUDE)"]
     data = []
     for directory in dirs:
         token_count = count_tokens(directory)
-        data.append([directory, token_count, str(token_count/GPT3_CTX_WINDOW_LEN*2), str(token_count/GPT4_CTX_WINDOW_LEN*2), str(token_count/CLAUDE3_CTX_WINDOW_LEN*2)])
-    print(tabulate(data, headers=headers, tablefmt="grid"))
+        data.append([os.path.basename(directory), "{:.2f}".format(token_count/1000), str(math.ceil(token_count/GPT3_CTX_WINDOW_LEN*2)), str(math.ceil(token_count/GPT4_CTX_WINDOW_LEN*2)), str(math.ceil(token_count/CLAUDE3_CTX_WINDOW_LEN*2))])
+    print(tabulate(data, headers=headers, tablefmt="latex"))
