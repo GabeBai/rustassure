@@ -9,6 +9,8 @@ import traceback
 import tiktoken
 import argparse
 import shutil
+import threading
+import time
 
 from datetime import datetime
 
@@ -22,6 +24,7 @@ from merger import Merger
 
 
 CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell it to continue
+MAX_THREADS=40
 
 
 def createTranslator(logger, useGpt4, fineTunedModel):
@@ -118,7 +121,7 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
 
 
 
-def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile):
+def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile, multiThreading):
     fileList = []
     if fileListFile is not None:
         with open(fileListFile) as f:
@@ -148,20 +151,49 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     logger.debug("Extracted %d functions", len(funcMap))
 
 
-    # Create the individual function files
-    for i, key in enumerate(funcMap):
-        # We try to avoid tests here
-        if "_test" in key or "test_" in key:
-            continue
-        createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
+    if multiThreading:
+        threads = []
+        for (i, key) in enumerate(funcMap):
+            # We try to avoid tests here
+            if "_test" in key or "test_" in key:
+                continue
+            t = threading.Thread(target=createIndividualPreprocessedFiles, args=(funcMap, key, logger, individualFuncPath))
+            threads.append(t)
+            if len(threads) > MAX_THREADS:
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join()
+                threads = []
+    else:
+        # Create the individual function files
+        for i, key in enumerate(funcMap):
+            # We try to avoid tests here
+            if "_test" in key or "test_" in key:
+                continue
+            createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
 
     # Refresh from the individual function files
     funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, []) # No filtering using file-list this time because we have already filtered
 
     translator.preanalyze(funcMap, individualFuncPath)
     if not preanalysisOnly:
-        for i, key in enumerate(funcMap):
-            translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
+        if multiThreading:
+            # launch 10 threads at a time
+            threads = []
+            for i, key in enumerate(funcMap):
+                t = threading.Thread(target=translateAndCreateRustFiles, args=(translator, funcMap, key, logger, individualFuncPath, translatorMode))
+                threads.append(t)
+                if len(threads) == MAX_THREADS:
+                    for thread in threads:
+                        thread.start()
+                    for thread in threads:
+                        thread.join()
+                    threads = []
+        else:
+            # Do sequential stuff
+            for i, key in enumerate(funcMap):
+                translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
 
     emitLLVMBitcodes(individualFuncPath, logger)
 
@@ -200,6 +232,8 @@ if __name__ == "__main__":
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")
     parser.add_argument("--file-list-file", type=str, default="", help="File containing list of files to consider in the source directory")
+    parser.add_argument("--multithreading", type=bool, default=False, help="Multithreading with 10 threads when sending OpenAI requests")
+
 
 
     args = parser.parse_args()
@@ -211,4 +245,4 @@ if __name__ == "__main__":
 
     logger.info("Command line options: %s", sys.argv)
 
-    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"
