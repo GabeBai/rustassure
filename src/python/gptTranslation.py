@@ -272,28 +272,32 @@ class Translator:
             request = request + extra
             request = request + funcSrc
             result = self.chunkAndSend(funcName, request)
+            (successFlag, err) = self.compile(result)
             if "extern \"C\"" in result:
                 successFlag = False
-            (successFlag, err) = self.compile(result)
+            if "fn " not in result:
+                successFlag = False
             attempts = 0
             while not successFlag and attempts < COMPILATION_RETRIES:
                 self.logger.info("Trying to recompile translated function %s", funcName)
+                if "fn " not in result:
+                    request = "Please translate all provided struct definitions and functions completely."
                 if "extern \"C\"" in result:
                     request = "Please avoid using extern C and translate those functions to Rust too.\n The original function was "
-                    extra = funcDepsObj.stringifyExtraInfo()
-                    request = request + extra
-                    request = request + funcSrc
-
-                    result = self.chunkAndSend(funcName, request)
-                    (successFlag, err) = self.compile(result)
+                    
                 else:
                     errorStr = self.extractError(err)
                     request = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
-                    extra = funcDepsObj.stringifyExtraInfo()
-                    request = request + extra
-                    request = request + funcSrc
-                    result = self.chunkAndSend(funcName, request)
-                    (successFlag, err) = self.compile(result)
+                extra = funcDepsObj.stringifyExtraInfo()
+                request = request + extra
+                request = request + funcSrc
+                result = self.chunkAndSend(funcName, request)
+                (successFlag, err) = self.compile(result)
+                if "extern \"C\"" in result:
+                    successFlag = False
+                if "fn " not in result:
+                    successFlag = False
+
                 attempts = attempts + 1
             if attempts != 0:
                 self.logger.debug("After %d retranslation attempts result: %s", attempts, result)
