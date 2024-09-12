@@ -280,17 +280,18 @@ class Translator:
             attempts = 0
             while not successFlag and attempts < COMPILATION_RETRIES:
                 self.logger.info("Trying to recompile translated function %s", funcName)
+                request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+
                 if "fn " not in result:
-                    request = "Please translate all provided struct definitions and functions completely."
+                    request = "Please translate all provided struct definitions and functions completely. The original function was "
                 if "extern \"C\"" in result:
                     request = "Please avoid using extern C and translate those functions to Rust too.\n The original function was "
-                    
                 else:
                     errorStr = self.extractError(err)
                     request = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
+                request = request + funcSrc
                 extra = funcDepsObj.stringifyExtraInfo()
                 request = request + extra
-                request = request + funcSrc
                 result = self.chunkAndSend(funcName, request)
                 (successFlag, err) = self.compile(result)
                 if "extern \"C\"" in result:

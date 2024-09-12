@@ -151,20 +151,20 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     logger.debug("Extracted %d functions", len(funcMap))
 
 
-    if multiThreading:
-        threads = []
-        for (i, key) in enumerate(funcMap):
-            # We try to avoid tests here
-            if "_test" in key or "test_" in key:
-                continue
-            t = threading.Thread(target=createIndividualPreprocessedFiles, args=(funcMap, key, logger, individualFuncPath))
-            threads.append(t)
-            if len(threads) > MAX_THREADS:
-                for thread in threads:
-                    thread.start()
-                for thread in threads:
-                    thread.join()
-                threads = []
+    threads = []
+    for (i, key) in enumerate(funcMap):
+        # We try to avoid tests here
+        if "_test" in key or "test_" in key:
+            continue
+        t = threading.Thread(target=createIndividualPreprocessedFiles, args=(funcMap, key, logger, individualFuncPath))
+        threads.append(t)
+        if len(threads) > MAX_THREADS:
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+            threads = []
+    """
     else:
         # Create the individual function files
         for i, key in enumerate(funcMap):
@@ -172,6 +172,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
             if "_test" in key or "test_" in key:
                 continue
             createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
+    """
 
     # Refresh from the individual function files
     funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, []) # No filtering using file-list this time because we have already filtered
