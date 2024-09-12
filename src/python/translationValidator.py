@@ -52,7 +52,7 @@ def createTranslator(logger, useGpt4, fineTunedModel):
                 systemPrompt) 
     return translator
 
-def getFunctions(logger, extractor, srcPath, singleFileName):
+def getFunctions(logger, extractor, srcPath, singleFileName, fileList): # The second time getFunctions is called fileList is empty
     fileFuncMap = {}
     allFiles = glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True)
 
@@ -61,6 +61,8 @@ def getFunctions(logger, extractor, srcPath, singleFileName):
         # the first time we invoke getFunctions
         # 
         if "individual-funcs" not in srcPath and "individual-funcs" in filename:
+            continue
+        if len(fileList) > 0 and os.path.splitext(os.path.basename(filename))[0] not in fileList:
             continue
         if len(singleFileName) > 0:
             if singleFileName not in filename and "individual-funcs" not in srcPath:
@@ -116,22 +118,16 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
 
 
 
-def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix):
+def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile):
+    fileList = []
+    if fileListFile is not None:
+        with open(fileListFile) as f:
+            for line in f.readlines():
+                fileList.append(os.path.splitext(line.strip())[0])
+
     currentDatetime = datetime.now()
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
-    baseDir = os.path.basename(os.path.normpath(codebasePath))
-
-    """
-    if useGpt4:
-        loggerFileName = "./" + "GPT_4_" + formattedDateTime + "_validator.log"
-    elif len(fineTunedModel):
-        loggerFileName = "./" + fineTunedModel + formattedDateTime + "_validator.log"
-    else:
-        loggerFileName = "./" + "GPT_3_5_" + formattedDateTime + "_validator.log"
-    """
-    loggerFileName = "./" + baseDir + "_validator.log"
-
-    logger = getLogger(loggerFileName)
+    
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger, useGpt4, fineTunedModel)
 
@@ -148,7 +144,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
         input("Press any key to continue, or Ctrl+C to exit...")
         shutil.rmtree(individualFuncPath)
     os.mkdir(individualFuncPath)
-    funcMap = getFunctions(logger, extractor, codebasePath, singleFileName)
+    funcMap = getFunctions(logger, extractor, codebasePath, singleFileName, fileList)
     logger.debug("Extracted %d functions", len(funcMap))
 
 
@@ -160,7 +156,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
         createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
 
     # Refresh from the individual function files
-    funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName)
+    funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, []) # No filtering using file-list this time because we have already filtered
 
     translator.preanalyze(funcMap, individualFuncPath)
     if not preanalysisOnly:
@@ -203,7 +199,16 @@ if __name__ == "__main__":
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")
+    parser.add_argument("--file-list-file", type=str, default="", help="File containing list of files to consider in the source directory")
+
 
     args = parser.parse_args()
     args.src = os.path.expanduser(args.src)
-    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix) # ./inputs-complex/zlib-1.3.1/"
+
+    baseDir = os.path.basename(os.path.normpath(args.src))
+    loggerFileName = "./" + baseDir + "_validator.log"
+    logger = getLogger(loggerFileName)
+
+    logger.info("Command line options: %s", sys.argv)
+
+    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file) # ./inputs-complex/zlib-1.3.1/"
