@@ -25,13 +25,20 @@ class TypedefFilter:
         self.logger = logger
 
     def filterUnusedTypedefs(self, srcFile):
-        cmd = "unused-typedef-extractor " + srcFile
+        srcFile = os.path.abspath(srcFile)
+        cmd = "unused-typedef-extractor " + srcFile # + " 2>/dev/null"
 
-        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.logger.debug("Running: %s", cmd)
+        result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Try to run it once again if there's an error. For some reason, the first time many of the files in uthash get SIGBUS error
 
         retryCount = 0
+        if result.returncode != 0 and ("error generated" in result.stderr or "errors generated" in result.stderr):
+            self.logger.warn(result.stdout)
+            self.logger.warn(result.stderr)
+            self.logger.warn("Broke something during removing unused dependencies, but will continue...")
+
         while result.returncode != 0 and retryCount < 10:
             self.logger.warn("Retrying command: %s", cmd)
             result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

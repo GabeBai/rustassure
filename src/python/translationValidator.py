@@ -75,8 +75,9 @@ def getFunctions(logger, extractor, srcPath, singleFileName):
     # from other functions
     # TODO: Consider if refactoring the toolchain helps?
     if "individual-funcs" in srcPath:
-        logger.info("Going to extract type usage")
-        extractor.extractGlobalTypeUsageDetails(srcPath, fileFuncMap)
+        pass
+        # logger.info("Going to extract type usage")
+        # extractor.extractGlobalTypeUsageDetails(srcPath, fileFuncMap)
 
     return fileFuncMap
 
@@ -113,22 +114,6 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
         logger.warn("Function %s failed to translate", key)
 
 
-def merge_and_process_single_file(codebase_path, use_gpt_4, preanalysis_only, translator_mode, dir_prefix, include_headers):
-
-    logger_file_name = "./" + os.path.basename(codebase_path) + "_validator.log"
-    logger = getLogger(logger_file_name)
- 
-    # We combine all the C files into 1 file, then we preprocess it using any include paths provided
-    # in the command line
-    # Note that we cannot combine all .i files __after__ the preprocessing phase because then
-    # all the struct definitions etc are repeated causing compiler errors.
-
-    # We maintain a buffer which contains the combined C source code
-    merger = Merger(logger, codebase_path, include_headers)
-    merger.merge()
-    sys.exit(0)
-
- 
 
 
 def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix):
@@ -169,6 +154,9 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
 
     # Create the individual function files
     for i, key in enumerate(funcMap):
+        # We try to avoid tests here
+        if "_test" in key or "test_" in key:
+            continue
         createIndividualPreprocessedFiles(funcMap, key, logger, individualFuncPath)
 
     # Refresh from the individual function files
@@ -205,12 +193,6 @@ def getTranslatorMode(translatorModeStr):
         printf("Invalid translator mode")
         sys.exit(-1)
 
-"""
-Sample invocations:
-
-python3 translationValidator.py --merged-mode=True --src=~/rustify/src/python/inputs-complex/mbedtls/library --include-dirs="../include,./"
-"""
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
@@ -221,11 +203,7 @@ if __name__ == "__main__":
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")
-    parser.add_argument("--merged-mode", type=bool, default=False, help="Combine into a single C source and then partition it into sub-files that can be individually translated.")
-    parser.add_argument("--include-dirs", type=str, default="./", help="Comma-separated header directories, relative to the src. This is relevant only in the merged-mode")
 
     args = parser.parse_args()
-    if args.merged_mode:
-        merge_and_process_single_file(args.src, args.use_gpt4, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.dir_prefix, args.include_dirs)
-    else:
-        processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix) # ./inputs-complex/zlib-1.3.1/"
+    args.src = os.path.expanduser(args.src)
+    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix) # ./inputs-complex/zlib-1.3.1/"

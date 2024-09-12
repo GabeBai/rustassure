@@ -126,7 +126,7 @@ class FunctionAndDepsExtractor:
             # 2. gather their uses in other functions
             fullFileName = os.path.join(srcPath, funcSym+".i")
 
-            cmd = "struct-with-generic-pointer-printer " + fullFileName
+            cmd = "struct-with-generic-pointer-printer " + fullFileName + " 2>/dev/null"
 
             self.logger.info("Extracting char*/void* field pointers from structs for file %s", funcSym)
 
