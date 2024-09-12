@@ -123,7 +123,7 @@ def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPa
 
 def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile, multiThreading):
     fileList = []
-    if fileListFile is not None:
+    if fileListFile is not None and len(fileListFile) > 0:
         with open(fileListFile) as f:
             for line in f.readlines():
                 fileList.append(os.path.splitext(line.strip())[0])
@@ -164,6 +164,11 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
             for thread in threads:
                 thread.join()
             threads = []
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+        threads = []
     """
     else:
         # Create the individual function files
@@ -191,6 +196,12 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
                     for thread in threads:
                         thread.join()
                     threads = []
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+                threads = []
+
         else:
             # Do sequential stuff
             for i, key in enumerate(funcMap):
