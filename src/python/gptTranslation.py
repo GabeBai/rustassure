@@ -330,13 +330,16 @@ class Translator:
         while not successFlag and attempts < COMPILATION_RETRIES:
             self.logger.info("Trying to recompile translated function %s, %d time", funcName, attempts)
             feedback = ""
+            # These checks lead to colliding translations
+            """
             if "fn " not in result:
                 feedback = "Please translate all provided struct definitions and functions completely. The original function was "
             if "extern \"C\"" in result:
                 feedback = "Please avoid using extern C and translate those functions to Rust too.\n The original function was "
             else:
-                errorStr = self.extractError(err)
-                feedback = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
+            """
+            errorStr = self.extractError(err)
+            feedback = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
             request = feedback + funcSrc + additionalContext
             result = self.chunkAndSend(funcName, request)
             (successFlag, err) = self.compile(result)
