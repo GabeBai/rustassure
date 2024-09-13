@@ -80,9 +80,9 @@ def getFunctions(logger, extractor, srcPath, singleFileName, fileList): # The se
     # from other functions
     # TODO: Consider if refactoring the toolchain helps?
     if "individual-funcs" in srcPath:
-        pass
-        # logger.info("Going to extract type usage")
-        # extractor.extractGlobalTypeUsageDetails(srcPath, fileFuncMap)
+        # pass
+        logger.info("Going to extract type usage")
+        extractor.extractGlobalTypeUsageDetails(srcPath, fileFuncMap)
 
     return fileFuncMap
 

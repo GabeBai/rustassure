@@ -260,16 +260,12 @@ class Translator:
         if translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
-            extra = funcDepsObj.stringifyExtraInfo()
-            request = request + extra
             result = self.chunkAndSend(funcName, request)
         elif translatorMode == TranslatorModes.SPACED_REPITITION:
             pass
         elif translatorMode == TranslatorModes.COMPILATION_FEEDBACK:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
-            extra = funcDepsObj.stringifyExtraInfo()
-            request = request + extra
             request = request + funcSrc
             result = self.chunkAndSend(funcName, request)
             (successFlag, err) = self.compile(result)
@@ -290,8 +286,6 @@ class Translator:
                     errorStr = self.extractError(err)
                     request = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
                 request = request + funcSrc
-                extra = funcDepsObj.stringifyExtraInfo()
-                request = request + extra
                 result = self.chunkAndSend(funcName, request)
                 (successFlag, err) = self.compile(result)
                 if "extern \"C\"" in result:

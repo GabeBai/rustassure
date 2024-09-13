@@ -6,6 +6,7 @@ import glob
 from openai import OpenAI
 import subprocess
 import traceback
+import util
 
 # sys.path.append("/home/tpalit/clang-llvm/llvm-project-14.0.0.src/clang/bindings/python/")
 # 
@@ -14,8 +15,8 @@ import traceback
 # clang.cindex.Config.set_library_file('/usr/lib/libclang.so')  # Adjust path if necessary
 # index = clang.cindex.Index.create()
 
-
 from functionAndDeps import FunctionAndDependencies
+from functionAndDeps import StructWithUsageInfo
 
 class Range:
     """
@@ -141,15 +142,30 @@ class FunctionAndDepsExtractor:
 
 
             structNames = set()
+
+            functionAndDeps = funcMap[funcSym]
             for line in result.stdout.split("\n"):
                 if len(line) > 0:
                     structNames.add(line)
+                    # Extract the source line
+                    (startIndex, endIndex, cStructDefinition) = util.extractStructDefinition(self.logger, fullFileName, line)
+                    structWithUsageInfo = StructWithUsageInfo(line, cStructDefinition)
+                    # Add the struct definition source code
+                    # to the class-level variable
+                    FunctionAndDependencies.structsWithUsageInfoMap[line] = structWithUsageInfo
+                    # Add the function definition ranges to
+                    # the per-function object
+                    # Note: Because
+                    # we are expanding the header files
+                    # EVERY file that uses that struct will have
+                    # the definition
+                    functionAndDeps.structsWithUsageInfo[line] = (startIndex, endIndex)
+
 
             # Didn't find any problematic struct
             if len(structNames) == 0:
                 continue
 
-            functionAndDeps = funcMap[funcSym]
             # Then go over every other function
             for otherFunc in funcMap:
                 # We will use the python-clang bindings
@@ -183,8 +199,8 @@ class FunctionAndDepsExtractor:
                         useTokens = use.split(";")
                         for useToken in useTokens:
                             if fieldName in useToken:
-                                # Add it to the functionAndDeps
-                                functionAndDeps.addTypeUsage(structName, useToken)
+                                # Add it
+                                FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.append(useToken)
 
     def extractFuncsAndDeps(self, filename):
         """
