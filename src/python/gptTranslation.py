@@ -8,6 +8,7 @@ import subprocess
 import traceback
 import tiktoken
 
+from functionAndDeps import FunctionAndDependencies
 from enum import Enum
 from functionAndDeps import FunctionAndDependencies
 
@@ -15,7 +16,7 @@ GPT3_MODEL="gpt-3.5-turbo"
 GPT3_CTX_WINDOW_LEN=16*1024
 GPT3_MAX_COMPLETION_TOKENS=4096 # This is the max value you can put for max_tokens: the max size of a response, https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4 and search for output tokens
 
-GPT4_MODEL="gpt-4-turbo"
+GPT4_MODEL="gpt-4o"
 GPT4_CTX_WINDOW_LEN=128*1024
 GPT4_MAX_COMPLETION_TOKENS=4096 
 
@@ -31,12 +32,16 @@ class TranslatorModes(Enum):
     """
     COMPILATION_FEEDBACK = 1
     """
+    Special handling for structs with void*/char* pointers
+    """
+    COMPILATION_FEEDBACK_WITH_STRUCT_USAGE = 2
+    """
     Take the entire file generated for a single function,
     all the typedefs, 
     declarations, definitions, and chunk them 
     to fit the window and chain the responses
     """
-    SPACED_REPITITION = 2
+    SPACED_REPITITION = 3
     """
     First, feed the typedefs, decls, defns and 
     translate them. Then, send that information 
@@ -47,10 +52,10 @@ class TranslatorModes(Enum):
     Assumes that both the typedefs, etc. and the 
     function fit in the response limit
     """
-    REDUCED_WITH_SREP = 3
-    REDUCED_SREP_CALLERS = 4
-    REDUCED_SREP_CALLEES = 5
-    REDUCED_SREP_CALLERS_CALLEES = 6
+    REDUCED_WITH_SREP = 4
+    REDUCED_SREP_CALLERS = 5
+    REDUCED_SREP_CALLEES = 6
+    REDUCED_SREP_CALLERS_CALLEES = 7
 
 class Translator:
     """
@@ -58,7 +63,7 @@ class Translator:
     """
     def __init__(self, logger, baseUrl, apiKey, ctxWindow, maxCompletionTokens,
             srcLang, dstLang,
-            model, systemPrompt):
+            model, systemPrompt, translatorMode):
         self.logger = logger
         self.baseUrl = baseUrl
         self.apiKey = apiKey
@@ -69,6 +74,7 @@ class Translator:
         self.dstLang = dstLang
         self.model = model
         self.systemPrompt = systemPrompt
+        self.translatorMode = translatorMode
         # If we're using LLAMA then we need to provide self.baseUrl
         # self.client = OpenAI(base_url=self.baseUrl, api_key=self.apiKey)
         self.client = OpenAI(api_key=self.apiKey)
@@ -144,9 +150,9 @@ class Translator:
         else:
             return multilineResponse
 
-    def isResponseTruncated(self, completion, funcName):
+    def isResponseTruncated(self, completion, funcOrStructName):
         finishReason = completion.choices[0].finish_reason
-        self.logger.debug("Finish reason for function %s: %s", funcName, finishReason)
+        self.logger.debug("Finish reason for function/struct %s: %s", funcOrStructName, finishReason)
         return finishReason == "length"
 
     def getResponse(self, request):
@@ -176,7 +182,7 @@ class Translator:
         """
         return (completion, response)
 
-    def send(self, funcName, request): 
+    def send(self, funcOrStructName, request): 
         (completion, response) = self.getResponse(request)
         # self.logger.debug("response = %s", completion)
 
@@ -191,7 +197,7 @@ class Translator:
 
         # Keep on telling it to continue till the response is no
         # longer truncated
-        while self.isResponseTruncated(completion, funcName):
+        while self.isResponseTruncated(completion, funcOrStructName):
             """
             continuationPrompt = response.split()[0-CONTINUATION_PROMPT_LEN:]
             continuationPrompt = ' '.join(continuationPrompt)
@@ -206,7 +212,7 @@ class Translator:
         tokens = tokenizer.encode(line)
         return len(tokens)
     
-    def chunkAndSend(self, funcName, request):
+    def chunkAndSend(self, funcOrStructName, request):
         totalTokens = self.countTokens(request)
         fullResponse = ""
         numChunks = 1
@@ -225,11 +231,11 @@ class Translator:
                     nextLineIndex = nextLineIndex + 1
                     numTokensSoFar = numTokensSoFar + nextLineTokenCount
                 # We've built a chunk! Let's send it
-                response = self.send(funcName, chunk)
+                response = self.send(funcOrStructName, chunk)
                 fullResponse = fullResponse + response
                 numChunks = numChunks + 1
         else:
-            fullResponse = self.send(funcName, request)
+            fullResponse = self.send(funcOrStructName, request)
         self.logger.info("Sent request in %d chunks", numChunks)
         return fullResponse
 
@@ -256,60 +262,120 @@ class Translator:
         self.logger.debug("Extracted error: " + extractedErr)
         return extractedErr
 
-    def translate(self, funcName, funcDepsObj, translatorMode):
-        if translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
-            funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
-            request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
-            result = self.chunkAndSend(funcName, request)
-        elif translatorMode == TranslatorModes.SPACED_REPITITION:
-            pass
-        elif translatorMode == TranslatorModes.COMPILATION_FEEDBACK:
-            funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
-            request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
-            request = request + funcSrc
+    def preTranslateComplexStructs(self):
+        if self.translatorMode != TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
+            return
+        for structName in FunctionAndDependencies.structsWithUsageInfoMap:
+            structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[structName]
+            trialCount = 0
+            err = ""
+            while True:
+                request = "Please translate the struct in " + self.srcLang + " to " + self.dstLang + ". Please try to use safe and idiomatic Rust. After the struct definition, I will provide some sample uses of the struct enclosed in /* and */. Please consider them when translating. Reply only with the Rust code, no English words needed.\n"
+                request = request + "\n".join(structWithUsageInfo.cCode)
+                request = request + "/*\n"
+                for usage in structWithUsageInfo.usageList:
+                    request = request + usage + "\n"
+                request = request + "*/\n"
+                request = "Previous translation gave error \n" + err
+                result = self.chunkAndSend(structName, request)
+                trialCount = trialCount + 1
+                (successFlag, err) = self.compile(result)
+                # We pray this will never fail
+                structWithUsageInfo.rustCode = result
+                if successFlag or trialCount > 5:
+                    break
+                
+    def compileWithFeedbackAndStructUsage(self, funcName, funcDepsObj):
+        rustTranslatedStructs = ""
+        promt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+        funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
+
+        for structWithUsageInfo in FunctionAndDependencies.structsWithUsageInfoMap:
+            if structWithUsageInfo.name in funcDepsObj.structsWithUsageInfo: 
+                # This function uses it, so record its rust translation
+                # We will add it to the request later
+                if len(rustTranslatedStructs) == 0:
+                    rustTranslatedStructs = "Please use the following Rust translations of struct definitions enclosed in /* Rust struct definitions ... */ /*\n"
+                rustTranslatedStructs = rustTranslatedStructs + structWithUsageInfo.rustCode + "\n"
+
+                # Remove the definition of this struct from the 
+                # function's C source code
+                funcDepsObj.typeDeclDefCodeLines = funcDepsObj.typeDeclDefCodeLines.replace(structWithUsageInfo.cCode, "")
+
+        if len(rustTranslatedStructs) > 0:
+            rustTranslatedStructs = rustTranslatedStructs + "*/\n"
+
+
+        self.logger.debug("Rust translated struct: %s", rustTranslatedStructs)
+        self.logger.debug("Function code after removing already-translated structs: %s", funcSrc)
+
+        # Now we enter the compile + feedback loop
+        self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructs, funcSrc)
+
+
+    def compileAndRetryLoop(self, funcName, prompt, additionalContext, funcSrc):
+        """
+        prompt: contains the initial prompt "Translate C to Rust... " 
+        additionalContext: contains any extra information such as already translated structs, etc.
+        funcSrc: the source code of the function and all headers expanded
+        """
+        request = prompt + funcSrc + additionalContext
+        result = self.chunkAndSend(funcName, request)
+        (successFlag, err) = self.compile(result)
+        if "extern \"C\"" in result:
+            successFlag = False
+        if "fn " not in result:
+            successFlag = False
+        attempts = 0
+        while not successFlag and attempts < COMPILATION_RETRIES:
+            self.logger.info("Trying to recompile translated function %s, %d time", funcName, attempts)
+            feedback = ""
+            if "fn " not in result:
+                feedback = "Please translate all provided struct definitions and functions completely. The original function was "
+            if "extern \"C\"" in result:
+                feedback = "Please avoid using extern C and translate those functions to Rust too.\n The original function was "
+            else:
+                errorStr = self.extractError(err)
+                feedback = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
+            request = feedback + funcSrc + additionalContext
             result = self.chunkAndSend(funcName, request)
             (successFlag, err) = self.compile(result)
             if "extern \"C\"" in result:
                 successFlag = False
             if "fn " not in result:
                 successFlag = False
-            attempts = 0
-            while not successFlag and attempts < COMPILATION_RETRIES:
-                self.logger.info("Trying to recompile translated function %s", funcName)
-                request = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
-
-                if "fn " not in result:
-                    request = "Please translate all provided struct definitions and functions completely. The original function was "
-                if "extern \"C\"" in result:
-                    request = "Please avoid using extern C and translate those functions to Rust too.\n The original function was "
-                else:
-                    errorStr = self.extractError(err)
-                    request = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
-                request = request + funcSrc
-                result = self.chunkAndSend(funcName, request)
-                (successFlag, err) = self.compile(result)
-                if "extern \"C\"" in result:
-                    successFlag = False
-                if "fn " not in result:
-                    successFlag = False
-
-                attempts = attempts + 1
-            if attempts != 0:
-                self.logger.debug("After %d retranslation attempts result: %s", attempts, result)
+            attempts = attempts + 1
+        if attempts != 0:
+            self.logger.debug("After %d retranslation attempts result: %s", attempts, result)
 
         return result
 
+    def translate(self, funcName, funcDepsObj):
+        if self.translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
+            funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
+            request = "Please translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
+            result = self.chunkAndSend(funcName, request)
+        elif self.translatorMode == TranslatorModes.SPACED_REPITITION:
+            pass
+        elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
+            result = self.compileWithFeedbackAndStructUsage(fucnName, funcDepsObj)
+        elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK: 
+            funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
+            prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+            result = self.compileAndRetryLoop(funcName, prompt, "", funcSrc)
+        return result
+
 class Gpt3Translator(Translator):
-    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt):
+    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
         super().__init__(logger, "", apiKey, GPT3_CTX_WINDOW_LEN, GPT3_MAX_COMPLETION_TOKENS, 
-                srcLang, dstLang, GPT3_MODEL, systemPrompt) 
+                srcLang, dstLang, GPT3_MODEL, systemPrompt, translatorMode) 
 
 class Gpt4Translator(Translator):
-    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt):
+    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
         super().__init__(logger, "", apiKey, GPT4_CTX_WINDOW_LEN, GPT4_MAX_COMPLETION_TOKENS, 
-                srcLang, dstLang, GPT4_MODEL, systemPrompt) 
+                srcLang, dstLang, GPT4_MODEL, systemPrompt, translatorMode) 
 
 class FineTunedGPT3Translator(Translator):
-    def __init__(self, logger, apiKey, srcLang, dstLang, modelName, systemPrompt):
+    def __init__(self, logger, apiKey, srcLang, dstLang, modelName, systemPrompt, translatorMode):
         super().__init__(logger, "", apiKey, GPT3_CTX_WINDOW_LEN, GPT3_MAX_COMPLETION_TOKENS, 
-                srcLang, dstLang, modelName, systemPrompt) 
+                srcLang, dstLang, modelName, systemPrompt, translatorMode) 

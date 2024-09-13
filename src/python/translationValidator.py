@@ -27,7 +27,7 @@ CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell
 MAX_THREADS=40
 
 
-def createTranslator(logger, useGpt4, fineTunedModel):
+def createTranslator(logger, useGpt4, translatorMode, fineTunedModel):
     # url = http://172.31.224.1:12345/v1 for LMStudio
     with open("system.prompt") as f:
         systemPrompt = f.read()
@@ -38,7 +38,7 @@ def createTranslator(logger, useGpt4, fineTunedModel):
             os.environ.get('OPENAI_KEY'),
             "C",
             "Rust",
-            systemPrompt)
+            systemPrompt, translatorMode)
     else:
         if len(fineTunedModel) > 0:
             translator = FineTunedGPT3Translator(logger,
@@ -46,13 +46,13 @@ def createTranslator(logger, useGpt4, fineTunedModel):
                 "C",
                 "Rust",
                 fineTunedModel,
-                systemPrompt) 
+                systemPrompt, translatorMode) 
         else: 
             translator = Gpt3Translator(logger,
                 os.environ.get('OPENAI_KEY'),
                 "C",
                 "Rust",
-                systemPrompt) 
+                systemPrompt, translatorMode) 
     return translator
 
 def getFunctions(logger, extractor, srcPath, singleFileName, fileList): # The second time getFunctions is called fileList is empty
@@ -102,10 +102,10 @@ def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
     typedefFilter.filterUnusedTypedefs(c_path)
 
 
-def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPath, translatorMode):
+def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPath):
     # funcs is a dict of funcName: FunctionAndDependencies object
     try:
-        translatedResult = translator.translate(key, funcs[key], translatorMode)
+        translatedResult = translator.translate(key, funcs[key])
         logger.debug("Translating function: " + key)
         logger.debug(translatedResult)
         rs_path = os.path.join(individualFuncPath, f"{key}.rs")
@@ -132,7 +132,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
     
     extractor = FunctionAndDepsExtractor(logger)
-    translator = createTranslator(logger, useGpt4, fineTunedModel)
+    translator = createTranslator(logger, useGpt4, translatorMode, fineTunedModel)
 
     if len (dirPrefix) > 0:
         individualFuncPath = codebasePath + "/individual-funcs_" + dirPrefix + "_" + translator.model + "_" + formattedDateTime
@@ -183,12 +183,13 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, []) # No filtering using file-list this time because we have already filtered
 
     translator.preanalyze(funcMap, individualFuncPath)
+    translator.preTranslateComplexStructs()
     if not preanalysisOnly:
         if multiThreading:
             # launch 10 threads at a time
             threads = []
             for i, key in enumerate(funcMap):
-                t = threading.Thread(target=translateAndCreateRustFiles, args=(translator, funcMap, key, logger, individualFuncPath, translatorMode))
+                t = threading.Thread(target=translateAndCreateRustFiles, args=(translator, funcMap, key, logger, individualFuncPath))
                 threads.append(t)
                 if len(threads) == MAX_THREADS:
                     for thread in threads:
@@ -205,7 +206,7 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
         else:
             # Do sequential stuff
             for i, key in enumerate(funcMap):
-                translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath, translatorMode)
+                translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath)
 
     emitLLVMBitcodes(individualFuncPath, logger)
 
@@ -229,6 +230,8 @@ def getTranslatorMode(translatorModeStr):
         return TranslatorModes.SPACED_REPITION
     elif translatorModeStr == "feedback":
         return TranslatorModes.COMPILATION_FEEDBACK
+    elif translatorModeStr == "feedback-with-struct":
+        return TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE
     else:
         printf("Invalid translator mode")
         sys.exit(-1)
@@ -244,9 +247,7 @@ if __name__ == "__main__":
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")
     parser.add_argument("--file-list-file", type=str, default="", help="File containing list of files to consider in the source directory")
-    parser.add_argument("--multithreading", type=bool, default=False, help="Multithreading with 10 threads when sending OpenAI requests")
-
-
+    parser.add_argument("--multithreading", type=bool, default=True, help="Multithreading with 10 threads when sending OpenAI requests")
 
     args = parser.parse_args()
     args.src = os.path.expanduser(args.src)
@@ -255,6 +256,6 @@ if __name__ == "__main__":
     loggerFileName = "./" + baseDir + "_validator.log"
     logger = getLogger(loggerFileName)
 
-    logger.info("Command line options: %s", sys.argv)
+    logger.info("Command line options: %s", args)
 
     processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"

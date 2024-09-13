@@ -200,7 +200,7 @@ class FunctionAndDepsExtractor:
                         for useToken in useTokens:
                             if fieldName in useToken:
                                 # Add it
-                                FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.append(useToken)
+                                FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.add(useToken)
 
     def extractFuncsAndDeps(self, filename):
         """

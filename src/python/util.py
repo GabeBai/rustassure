@@ -12,6 +12,8 @@ from enum import Enum
 
 from loggerFactory import getLogger
 
+def replaceStructDef(logger, cSourceCode, structDef):
+    pass
 
 def extractStructDefRange(logger, cFileName, structName):
     # Get the start and end line numbers for all structs
@@ -44,4 +46,3 @@ if __name__ == "__main__":
     loggerFileName = "./util_tester.log"
     logger = getLogger(loggerFileName)
     extractStructDefinition(logger, "/home/tpalit/rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2024-09-12_21-44-58__complete/csv_get_buffer_size.i", "csv_parser")
-
