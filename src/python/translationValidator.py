@@ -242,7 +242,7 @@ if __name__ == "__main__":
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
 
-    parser.add_argument("--translator-mode", type=str, default="feedback", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--translator-mode", type=str, default="feedback-with-struct", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")

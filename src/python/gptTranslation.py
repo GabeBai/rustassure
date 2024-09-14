@@ -276,9 +276,11 @@ class Translator:
                 for usage in structWithUsageInfo.usageList:
                     request = request + usage + "\n"
                 request = request + "*/\n"
-                request = "Previous translation gave error \n" + err
+                if len(err):
+                    request = request + "Previous translation gave error \n" + err
                 result = self.chunkAndSend(structName, request)
                 trialCount = trialCount + 1
+                self.logger.info("Translated struct \n: %s", result)
                 (successFlag, err) = self.compile(result)
                 # We pray this will never fail
                 structWithUsageInfo.rustCode = result
@@ -287,31 +289,38 @@ class Translator:
                 
     def compileWithFeedbackAndStructUsage(self, funcName, funcDepsObj):
         rustTranslatedStructs = ""
-        promt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+        prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
         funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
 
-        for structWithUsageInfo in FunctionAndDependencies.structsWithUsageInfoMap:
-            if structWithUsageInfo.name in funcDepsObj.structsWithUsageInfo: 
+        exitNow = False
+        for structName in FunctionAndDependencies.structsWithUsageInfoMap:
+            if structName in funcDepsObj.structsWithUsageInfo: 
+                exitNow = True
+                structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[structName]
                 # This function uses it, so record its rust translation
                 # We will add it to the request later
                 if len(rustTranslatedStructs) == 0:
                     rustTranslatedStructs = "Please use the following Rust translations of struct definitions enclosed in /* Rust struct definitions ... */ /*\n"
                 rustTranslatedStructs = rustTranslatedStructs + structWithUsageInfo.rustCode + "\n"
+                self.logger.info("Rust translated structs: %s", rustTranslatedStructs)
 
                 # Remove the definition of this struct from the 
                 # function's C source code
-                funcDepsObj.typeDeclDefCodeLines = funcDepsObj.typeDeclDefCodeLines.replace(structWithUsageInfo.cCode, "")
+                funcDepsObj.typeDeclDefCodeLines = funcDepsObj.typeDeclDefCodeLines.replace("\n".join(structWithUsageInfo.cCode), "")
 
         if len(rustTranslatedStructs) > 0:
             rustTranslatedStructs = rustTranslatedStructs + "*/\n"
-
 
         self.logger.debug("Rust translated struct: %s", rustTranslatedStructs)
         self.logger.debug("Function code after removing already-translated structs: %s", funcSrc)
 
         # Now we enter the compile + feedback loop
-        self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructs, funcSrc)
-
+        result = self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructs, funcSrc)
+        """
+        if exitNow:
+            sys.exit(-1)
+        """
+        return result
 
     def compileAndRetryLoop(self, funcName, prompt, additionalContext, funcSrc):
         """
@@ -319,7 +328,9 @@ class Translator:
         additionalContext: contains any extra information such as already translated structs, etc.
         funcSrc: the source code of the function and all headers expanded
         """
-        request = prompt + funcSrc + additionalContext
+        request = prompt + "\n" + funcSrc + "\n" + additionalContext
+        if len(additionalContext) > 0:
+            self.logger.info("The request with additional context :\n %s", request)
         result = self.chunkAndSend(funcName, request)
         (successFlag, err) = self.compile(result)
         if "extern \"C\"" in result:
@@ -361,7 +372,7 @@ class Translator:
         elif self.translatorMode == TranslatorModes.SPACED_REPITITION:
             pass
         elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
-            result = self.compileWithFeedbackAndStructUsage(fucnName, funcDepsObj)
+            result = self.compileWithFeedbackAndStructUsage(funcName, funcDepsObj)
         elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK: 
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
