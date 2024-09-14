@@ -155,6 +155,20 @@ class Translator:
         self.logger.debug("Finish reason for function/struct %s: %s", funcOrStructName, finishReason)
         return finishReason == "length"
 
+    def getFingerPrint(self):
+        self.logger.debug("Sending fingerprint request.")
+        completion = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "user", "content": "Hello, my favorite LLM!"}], 
+            max_tokens = self.maxCompletionTokens,
+            temperature = 0.0,
+            top_p = 0.1,
+            seed = 1000) # keeping seed same is supposed to improve determinism
+        return (completion.model, completion.system_fingerprint)
+
+
+
     def getResponse(self, request):
         self.logger.debug("Sending request: %s", request)
         completion = self.client.chat.completions.create(
@@ -163,7 +177,7 @@ class Translator:
                 {"role": "system", "content": self.systemPrompt},
                 {"role": "user", "content": request}], 
             max_tokens = self.maxCompletionTokens,
-            temperature = 0.2,
+            temperature = 0.0,
             top_p = 0.1,
             seed = 1000) # keeping seed same is supposed to improve determinism
         self.logger.debug("Raw response:")

@@ -134,6 +134,8 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     extractor = FunctionAndDepsExtractor(logger)
     translator = createTranslator(logger, useGpt4, translatorMode, fineTunedModel)
 
+    fingerPrintModel(logger, codebasePath, translator)
+
     if len (dirPrefix) > 0:
         individualFuncPath = codebasePath + "/individual-funcs_" + dirPrefix + "_" + translator.model + "_" + formattedDateTime
     else:
@@ -235,6 +237,35 @@ def getTranslatorMode(translatorModeStr):
     else:
         printf("Invalid translator mode")
         sys.exit(-1)
+
+def fingerPrintModel(logger, srcDir, translator):
+    # We check both the full model name and the fingerprint
+    fingerPrintFileName = os.path.join(srcDir, "finger.print__" + translator.model + ".txt")
+    oldFingerPrint = ""
+    oldModelName = ""
+    if os.path.exists(fingerPrintFileName):
+        with open(fingerPrintFileName) as f:
+            oldModelName = f.readline().strip()
+            oldFingerPrint = f.readline().strip()
+    else:
+        logger.info("No previous fingerprint found...")
+
+    (newModelName, newFingerPrint) = translator.getFingerPrint()
+    logger.info("Fingerprinting details: model name: %s, finger print: %s", newModelName, newFingerPrint)
+    if len(oldFingerPrint) == 0:
+        with open(fingerPrintFileName, 'w') as f:
+            f.write(newModelName+"\n")
+            f.write(newFingerPrint+"\n")
+    else:
+        # Compare!!
+        if oldFingerPrint == newFingerPrint and oldModelName == newModelName:
+            logger.info("Finger print check succeeded...")
+        else:
+            if oldModelName != newModelName:
+                logger.warning("The model aliases have diverged. You should try to run with the older model's full name, if it's still available.")
+                input("Enter any key to continue...")
+            logger.info("Finger print check mismatched (%s, %s) and (%s, %s). The results can potentially be very different from the previous run. Or it could just be that a different hardware was used to run the request!", oldModelName, oldFingerPrint, newModelName, newFingerPrint)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
