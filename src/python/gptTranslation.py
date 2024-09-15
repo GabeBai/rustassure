@@ -29,38 +29,56 @@ class TranslatorModes(Enum):
     BASIC_CHUNK_CHAIN = 0
     """ 
     If the compilation fails, then send the compilation error
+    Single function per request.
     """
     COMPILATION_FEEDBACK = 1
     """
     Special handling for structs with void*/char* pointers
+    First translate these structs along with their uses.
+    Then replay the translation for other requests.
+    Single function per request.
     """
     COMPILATION_FEEDBACK_WITH_STRUCT_USAGE = 2
     """
-    Take the entire file generated for a single function,
-    all the typedefs, 
-    declarations, definitions, and chunk them 
-    to fit the window and chain the responses
+    Send multiple functions in the same request.
+    In file order.
+    We try to compile all functions accessible
+    from an API together as a whole.
+    We rename static and other similarly defined structs to avoid
+    name collisions.
+    The CF_SU stands for Compilation Feedback with Struct Usage.
     """
-    SPACED_REPITITION = 3
+    CF_SU_API_MERGED_FILE_ORDER = 3
     """
-    First, feed the typedefs, decls, defns and 
-    translate them. Then, send that information 
-    again to ensure its in the context window, 
-    but don't ask it to translate it (or the 
-    translated content stay in the context window
-    ?). Then, send the function. 
-    Assumes that both the typedefs, etc. and the 
-    function fit in the response limit
+    Same as above, but only merge the functions accessible 
+    from an API, in file order
     """
-    REDUCED_WITH_SREP = 4
-    REDUCED_SREP_CALLERS = 5
-    REDUCED_SREP_CALLEES = 6
-    REDUCED_SREP_CALLERS_CALLEES = 7
+    CF_SU_API_MERGED_CALL_GRAPH_ORDER = 4
+
+    
+
+
 
 class Translator:
     """
     https://platform.openai.com/docs/guides/text-generation/chat-completions-api
     """
+
+    def getTranslatorMode(translatorModeStr):
+        if translatorModeStr == "basic":
+            return TranslatorModes.BASIC_CHUNK_CHAIN
+        elif translatorModeStr == "repeat":
+            return TranslatorModes.SPACED_REPITION
+        elif translatorModeStr == "feedback":
+            return TranslatorModes.COMPILATION_FEEDBACK
+        elif translatorModeStr == "feedback-with-struct":
+            return TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE
+        elif translatorModeStr == "merged-file-order":
+            return TranslatorModes.CF_SU_API_MERGED_FILE_ORDER
+        else:
+            printf("Invalid translator mode")
+            sys.exit(-1)
+
     def __init__(self, logger, baseUrl, apiKey, ctxWindow, maxCompletionTokens,
             srcLang, dstLang,
             model, systemPrompt, translatorMode):

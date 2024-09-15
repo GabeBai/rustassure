@@ -202,7 +202,7 @@ class FunctionAndDepsExtractor:
                                 # Add it
                                 FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.add(useToken)
 
-    def extractFuncsAndDeps(self, filename):
+    def extractFuncsAndDeps(self, filename, functionListOrder):
         """
         Use Universal ctags to get the start and end line numbers for
         1. function definitions [f]
@@ -231,6 +231,7 @@ class FunctionAndDepsExtractor:
         for line in result.splitlines():
             r = self.createRangeFromCtagsLine(line, fileContents)
             fileRanges.addFuncRange(r)
+            functionListOrder.append(r.sym)
 
         # Compute the always include range
         # The logic here is that everything that comes _before_ this function

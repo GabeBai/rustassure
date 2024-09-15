@@ -34,6 +34,9 @@ if [ -z "$preprocessed_file" ]; then
     preprocessed_file="${input_file%.c}.i"
 fi
 
+# Generate the name for the bitcode file
+bitcode_file="${input_file%.c}.ll"
+
 # Remove any -o option from preprocess_args
 for arg in "${args[@]}"; do
     if [[ "$arg" != "-o" && "$arg" != "$output_file" ]]; then
@@ -46,6 +49,10 @@ clang "${args[@]}"
 
 # Also generate the preprocessed file without the -o option
 clang -E -P "${preprocess_args[@]}" -o "$preprocessed_file"
+
+# Also generate the bitcode file without the -o option
+clang -c -emit-llvm -S "${preprocess_args[@]}" -o "$bitcode_file"
+
 
 # echo "Preprocessed file saved as $preprocessed_file"
 

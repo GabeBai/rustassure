@@ -55,7 +55,7 @@ def createTranslator(logger, useGpt4, translatorMode, fineTunedModel):
                 systemPrompt, translatorMode) 
     return translator
 
-def getFunctions(logger, extractor, srcPath, singleFileName, fileList): # The second time getFunctions is called fileList is empty
+def getFunctions(logger, extractor, srcPath, singleFileName, fileList, functionOrderList = []): # The second time getFunctions is called fileList is empty
     fileFuncMap = {}
     allFiles = glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True)
 
@@ -71,7 +71,7 @@ def getFunctions(logger, extractor, srcPath, singleFileName, fileList): # The se
             if singleFileName not in filename and "individual-funcs" not in srcPath:
                 continue
         logger.debug("Extracting function bodies for file: %s", filename)
-        funcMap = extractor.extractFuncsAndDeps(filename)
+        funcMap = extractor.extractFuncsAndDeps(filename, functionOrderList)
         fileFuncMap.update(funcMap)
 
     # The second time we refresh the funcMap with the individual
@@ -149,7 +149,12 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
         input("Press any key to continue, or Ctrl+C to exit...")
         shutil.rmtree(individualFuncPath)
     os.mkdir(individualFuncPath)
-    funcMap = getFunctions(logger, extractor, codebasePath, singleFileName, fileList)
+    functionOrderList = []
+    funcMap = getFunctions(logger, extractor, codebasePath, singleFileName, fileList, functionOrderList)
+    # Just save it in the directory
+    with open(os.path.join(individualFuncPath, "file_order.txt"), 'w') as f:
+        for func in functionOrderList:
+            f.write(func + "\n")
     logger.debug("Extracted %d functions", len(funcMap))
 
 
@@ -225,18 +230,6 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     shutil.move(individualFuncPath, individualFuncPath+"__complete")
 
 
-def getTranslatorMode(translatorModeStr):
-    if translatorModeStr == "basic":
-        return TranslatorModes.BASIC_CHUNK_CHAIN
-    elif translatorModeStr == "repeat":
-        return TranslatorModes.SPACED_REPITION
-    elif translatorModeStr == "feedback":
-        return TranslatorModes.COMPILATION_FEEDBACK
-    elif translatorModeStr == "feedback-with-struct":
-        return TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE
-    else:
-        printf("Invalid translator mode")
-        sys.exit(-1)
 
 def fingerPrintModel(logger, srcDir, translator):
     # We check both the full model name and the fingerprint
@@ -251,6 +244,8 @@ def fingerPrintModel(logger, srcDir, translator):
         logger.info("No previous fingerprint found...")
 
     (newModelName, newFingerPrint) = translator.getFingerPrint()
+    newModelName = str(newModelName)
+    newFingerPrint = str(newFingerPrint)
     logger.info("Fingerprinting details: model name: %s, finger print: %s", newModelName, newFingerPrint)
     if len(oldFingerPrint) == 0:
         with open(fingerPrintFileName, 'w') as f:
@@ -289,4 +284,4 @@ if __name__ == "__main__":
 
     logger.info("Command line options: %s", args)
 
-    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.use_gpt4, args.fine_tuned_model, args.preanalysis_only, Translator.getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"
