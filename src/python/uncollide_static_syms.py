@@ -14,7 +14,7 @@ from datetime import datetime
 
 from loggerFactory import getLogger
 
-class Merger:
+class Uncollider:
     def __init__(self, logger, source_code_path, file_list, include_dirs):
         self.logger = logger
         self.root = os.path.expanduser(source_code_path)
@@ -24,7 +24,7 @@ class Merger:
             self.include_dirs.append(os.path.join(self.root, include_dir))
         self.combined_c_code = ""
         self.usedSymSet = set()
-        self.count = 0 # The current number of C files merged
+        self.count = 0 # The current number of C files cleaned
         
     def run_filter(self, c_file):
         cmd = "static-and-struct-def " + c_file 
@@ -80,7 +80,7 @@ class Merger:
         for renamed_sym in per_file_renamed_syms:
             self.usedSymSet.add(renamed_sym)
 
-    def merge(self):
+    def uncollide(self):
         all_c_files = glob.iglob(os.path.join(self.root, "**/*.c"), recursive=True)
 
         struct_name_map = {} # The map for 
@@ -99,7 +99,7 @@ class Merger:
             sys.exit(-1)
 
 
-def merge_and_process_single_file(codebase_path, use_gpt_4, preanalysis_only, translator_mode, dir_prefix, file_list_file, include_headers):
+def uncollidify_codebase(codebase_path, file_list_file, include_headers):
 
     logger_file_name = "./" + os.path.basename(codebase_path) + "_validator.log"
     logger = getLogger(logger_file_name)
@@ -120,11 +120,8 @@ def merge_and_process_single_file(codebase_path, use_gpt_4, preanalysis_only, tr
     # Note that we cannot combine all .i files __after__ the preprocessing phase because then
     # all the struct definitions etc are repeated causing compiler errors.
 
-    # We maintain a buffer which contains the combined C source code
-    merger = Merger(logger, codebase_path, file_list, include_headers)
-    merger.merge()
-
+    uncollider = Uncollider(logger, codebase_path, file_list, include_headers)
+    uncollider.uncollide()
 
 if __name__ == "__main__":
-    merge_and_process_single_file("~/rustify/src/python/inputs-complex/mbedtls/library", False, False, getTranslatorMode("feedback"), "", "/home/tpalit/rustify/src/python/inputs-complex/mbedtls/library/file_list_tls.txt", "../include,./")
-
+    uncollidify_codebase("~/rustify/src/python/inputs-complex/mbedtls/library", "./mbedtls_ssl_lib_files.txt", "../include,./")
