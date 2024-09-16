@@ -15,12 +15,11 @@ import time
 from datetime import datetime
 
 from loggerFactory import getLogger
-from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translator, TranslatorModes
+from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translator, TranslatorModes, Translator
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 from typedefFilter import TypedefFilter
 from progPropertyEvaluator import ProgPropertyEvaluator
 from llvmBitcodeEmitter import emitLLVMBitcodes
-from merger import Merger
 
 
 CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell it to continue
@@ -102,25 +101,6 @@ def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
     typedefFilter.filterUnusedTypedefs(c_path)
 
 
-def translateAndCreateRustFiles(translator, funcs, key, logger, individualFuncPath):
-    # funcs is a dict of funcName: FunctionAndDependencies object
-    try:
-        translatedResult = translator.translate(key, funcs[key])
-        logger.debug("Translating function: " + key)
-        logger.debug(translatedResult)
-        rs_path = os.path.join(individualFuncPath, f"{key}.rs")
-
-        with open(rs_path, "w") as rs_file:
-            rs_file.write(translatedResult)
-        logger.info("Translation for function %s generated", key)
-    except Exception as e:
-        traceback_str = traceback.format_exc()
-        logger.debug(f"Exception: {e}\nTraceback:\n{traceback_str}")
-        logger.warn("Function %s failed to translate", key)
-
-
-
-
 def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile, multiThreading):
     fileList = []
     if fileListFile is not None and len(fileListFile) > 0:
@@ -190,30 +170,8 @@ def processCodebase(codebasePath, useGpt4, fineTunedModel, preanalysisOnly, tran
     funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, []) # No filtering using file-list this time because we have already filtered
 
     translator.preanalyze(funcMap, individualFuncPath)
-    translator.preTranslateComplexStructs()
     if not preanalysisOnly:
-        if multiThreading:
-            # launch 10 threads at a time
-            threads = []
-            for i, key in enumerate(funcMap):
-                t = threading.Thread(target=translateAndCreateRustFiles, args=(translator, funcMap, key, logger, individualFuncPath))
-                threads.append(t)
-                if len(threads) == MAX_THREADS:
-                    for thread in threads:
-                        thread.start()
-                    for thread in threads:
-                        thread.join()
-                    threads = []
-            for thread in threads:
-                thread.start()
-            for thread in threads:
-                thread.join()
-                threads = []
-
-        else:
-            # Do sequential stuff
-            for i, key in enumerate(funcMap):
-                translateAndCreateRustFiles(translator, funcMap, key, logger, individualFuncPath)
+        translator.translateAll(funcMap, individualFuncPath, multiThreading)
 
     emitLLVMBitcodes(individualFuncPath, logger)
 
@@ -266,9 +224,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
-    parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
+    parser.add_argument("--use-gpt4", type=bool, default=True, help="Use GPT4 instead of GPT3")
 
-    parser.add_argument("--translator-mode", type=str, default="feedback-with-struct", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--translator-mode", type=str, default="random-merged-order", help="Controls how the input file and its dependencies are chunked to fit into the GPT model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")

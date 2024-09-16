@@ -30,7 +30,6 @@ def extractStructDefRange(logger, cFileName, structName):
             end = int(tokens[-1].split(":")[1])
             return (start, end)
     logger.warning("Could not extract struct definition range for %s from file %s. Exiting", structName, cFileName)
-    sys.exit(-1)
 
 
 def extractStructDefinition(logger, cFileName, structName):
@@ -42,7 +41,10 @@ def extractStructDefinition(logger, cFileName, structName):
         extractedDefinition = lines[start-1:end] # ctags index is 1-based
         return (start-1, end, extractedDefinition) # ctags index is 1-based
     
+
 if __name__ == "__main__":
     loggerFileName = "./util_tester.log"
     logger = getLogger(loggerFileName)
-    extractStructDefinition(logger, "/home/tpalit/rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2024-09-12_21-44-58__complete/csv_get_buffer_size.i", "csv_parser")
+    # extractStructDefinition(logger, "/home/tpalit/rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2024-09-12_21-44-58__complete/csv_get_buffer_size.i", "csv_parser")
+    apis = getExportedAPI(logger, "/home/tpalit/rustify/src/python/inputs-complex/libcsv/")
+    logger.info(apis)

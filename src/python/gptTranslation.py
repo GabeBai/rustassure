@@ -7,10 +7,14 @@ from openai import OpenAI
 import subprocess
 import traceback
 import tiktoken
+import threading
+
+from more_itertools import unique_everseen
 
 from functionAndDeps import FunctionAndDependencies
 from enum import Enum
 from functionAndDeps import FunctionAndDependencies
+from staticAnalyzer import StaticAnalyzer
 
 GPT3_MODEL="gpt-3.5-turbo"
 GPT3_CTX_WINDOW_LEN=16*1024
@@ -21,6 +25,8 @@ GPT4_CTX_WINDOW_LEN=128*1024
 GPT4_MAX_COMPLETION_TOKENS=4096 
 
 COMPILATION_RETRIES=10
+MAX_THREADS=40
+
 
 class TranslatorModes(Enum):
     """
@@ -42,22 +48,18 @@ class TranslatorModes(Enum):
     """
     Send multiple functions in the same request.
     In file order.
-    We try to compile all functions accessible
-    from an API together as a whole.
-    We rename static and other similarly defined structs to avoid
-    name collisions.
     The CF_SU stands for Compilation Feedback with Struct Usage.
     """
-    CF_SU_API_MERGED_FILE_ORDER = 3
+    CF_SU_MERGED_FILE_ORDER = 3
     """
     Same as above, but only merge the functions accessible 
     from an API, in file order
     """
-    CF_SU_API_MERGED_CALL_GRAPH_ORDER = 4
-
-    
-
-
+    CF_SU_MERGED_CALL_GRAPH_ORDER = 4
+    """
+    Random order all files
+    """
+    CF_SU_RANDOM_MERGED_ORDER = 5
 
 class Translator:
     """
@@ -67,14 +69,16 @@ class Translator:
     def getTranslatorMode(translatorModeStr):
         if translatorModeStr == "basic":
             return TranslatorModes.BASIC_CHUNK_CHAIN
-        elif translatorModeStr == "repeat":
-            return TranslatorModes.SPACED_REPITION
         elif translatorModeStr == "feedback":
             return TranslatorModes.COMPILATION_FEEDBACK
         elif translatorModeStr == "feedback-with-struct":
             return TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE
         elif translatorModeStr == "merged-file-order":
-            return TranslatorModes.CF_SU_API_MERGED_FILE_ORDER
+            return TranslatorModes.CF_SU_MERGED_FILE_ORDER
+        elif translatorModeStr == "merged-call-graph-order":
+            return TranslatorModes.CF_SU_MERGED_CALL_GRAPH_ORDER
+        elif translatorModeStr == "random-merged-order":
+            return TranslatorModes.CF_SU_RANDOM_MERGED_ORDER
         else:
             printf("Invalid translator mode")
             sys.exit(-1)
@@ -312,7 +316,7 @@ class Translator:
                     request = request + "Previous translation gave error \n" + err
                 result = self.chunkAndSend(structName, request)
                 trialCount = trialCount + 1
-                self.logger.info("Translated struct \n: %s", result)
+                self.logger.debug("Translated struct \n: %s", result)
                 (successFlag, err) = self.compile(result)
                 # We pray this will never fail
                 structWithUsageInfo.rustCode = result
@@ -322,7 +326,6 @@ class Translator:
     def compileWithFeedbackAndStructUsage(self, funcName, funcDepsObj):
         rustTranslatedStructs = ""
         prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
-        funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
 
         exitNow = False
         for structName in FunctionAndDependencies.structsWithUsageInfoMap:
@@ -340,11 +343,14 @@ class Translator:
                 # function's C source code
                 funcDepsObj.typeDeclDefCodeLines = funcDepsObj.typeDeclDefCodeLines.replace("\n".join(structWithUsageInfo.cCode), "")
 
+
+        funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
         if len(rustTranslatedStructs) > 0:
             rustTranslatedStructs = rustTranslatedStructs + "*/\n"
 
         self.logger.debug("Rust translated struct: %s", rustTranslatedStructs)
         self.logger.debug("Function code after removing already-translated structs: %s", funcSrc)
+        sys.exit(-1)
 
         # Now we enter the compile + feedback loop
         result = self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructs, funcSrc)
@@ -396,20 +402,141 @@ class Translator:
 
         return result
 
+    def getUniqueCode(self, visitor):
+        """Generate cleaned C code from unique definitions."""
+        code = []
+        
+        # Rebuild structs
+        for struct_name, struct_node in visitor.structs.items():
+            code.append(f"/* Struct {struct_name} */")
+            code.append(struct_node.show())  # 'show' method prints the AST
+    
+        # Rebuild typedefs
+        for typedef_name, typedef_node in visitor.typedefs.items():
+            code.append(f"/* Typedef {typedef_name} */")
+            code.append(typedef_node.show())
+    
+        # Rebuild functions
+        for func_name, func_node in visitor.functions.items():
+            code.append(f"/* Function {func_name} */")
+            code.append(func_node.show())
+    
+        return "\n".join(code)
+
+
+    def mergeFuncDepsObjects(self, funcsMap):
+        mergedFuncDepObj = FunctionAndDependencies("merged")
+        if self.translatorMode == TranslatorModes.CF_SU_RANDOM_MERGED_ORDER:
+            for funcSym in funcsMap:
+                funcObj = funcsMap[funcSym]
+                mergedFuncDepObj.funcCodeLines = mergedFuncDepObj.funcCodeLines + "\n\n" + funcObj.funcCodeLines
+                mergedFuncDepObj.typeDeclDefCodeLines = mergedFuncDepObj.typeDeclDefCodeLines + "\n" + funcObj.typeDeclDefCodeLines
+                mergedFuncDepObj.structsWithUsageInfo.update(funcObj.structsWithUsageInfo)
+        else:
+            self.logger.warning("Unimplemented translator mode.")
+            sys.exit(-1)
+
+
+		# Hack to remove duplicates in the header content
+        with open("./merged_file.c", 'w') as outFile:
+            outFile.write(mergedFuncDepObj.typeDeclDefCodeLines)
+
+        # duplicate-struct-remover test_dummy.c
+        dupStructRemoverCmd = "duplicate-struct-remover ./merged_file.c"
+        result = subprocess.run(dupStructRemoverCmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        if result.returncode != 0:
+            self.logger.warning("Failed to run command %s, exiting.", dupStructRemoverCmd)
+
+        mergedFuncDepObj.typeDeclDefCodeLines = result.stdout
+
+        self.logger.debug("Merged func dep obj content:\n %s \n %s", mergedFuncDepObj.typeDeclDefCodeLines, mergedFuncDepObj.funcCodeLines)
+        """
+        self.logger.info(mergedFuncDepObj.typeDeclDefCodeLines)
+
+        ast = parser.parse(mergedFuncDepObj.typeDeclDefCodeLines)
+        # Create and run the visitor to extract unique code elements
+        visitor = DeduplicationVisitor()
+        visitor.visit(ast)
+
+        # Get the cleaned code
+        cleanedCode = getUniqueCode(visitor)
+        self.logger.warn(cleanedCode)
+        sys.exit(-1)
+        """
+
+
+
+        headerStatements = mergedFuncDepObj.typeDeclDefCodeLines.split(';')
+        uniqueStatements = list(unique_everseen(headerStatements))
+        mergedFuncDepObj.typeDeclDefCodeLines = ";".join(uniqueStatements) 
+        self.logger.debug("Merged header information:\n%s", mergedFuncDepObj.typeDeclDefCodeLines)
+        self.logger.debug("Merged source code:\n%s", mergedFuncDepObj.funcCodeLines)
+        return mergedFuncDepObj
+
+
     def translate(self, funcName, funcDepsObj):
         if self.translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             request = "Please translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
             result = self.chunkAndSend(funcName, request)
-        elif self.translatorMode == TranslatorModes.SPACED_REPITITION:
-            pass
-        elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
-            result = self.compileWithFeedbackAndStructUsage(funcName, funcDepsObj)
         elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK: 
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
             result = self.compileAndRetryLoop(funcName, prompt, "", funcSrc)
+        elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
+            result = self.compileWithFeedbackAndStructUsage(funcName, funcDepsObj)
+        
         return result
+
+    def translateAndCreateRustFiles(self, funcs, key, individualFuncPath):
+        # funcs is a dict of funcName: FunctionAndDependencies object
+        try:
+            translatedResult = self.translate(key, funcs[key])
+            self.logger.debug("Translating function: " + key)
+            self.logger.debug(translatedResult)
+            rs_path = os.path.join(individualFuncPath, f"{key}.rs")
+            with open(rs_path, "w") as rs_file:
+                rs_file.write(translatedResult)
+            self.logger.info("Translation for function %s generated", key)
+        except Exception as e:
+            traceback_str = traceback.format_exc()
+            self.logger.debug(f"Exception: {e}\nTraceback:\n{traceback_str}")
+            self.logger.warn("Function %s failed to translate", key)
+
+
+    def translateAll(self, funcMap, individualFuncPath, multiThreading):
+        self.preTranslateComplexStructs()
+        # If the translatorMode is per-function then
+        if self.translatorMode in [TranslatorModes.BASIC_CHUNK_CHAIN, TranslatorModes.COMPILATION_FEEDBACK, TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE]:
+            if multiThreading:
+                # launch 10 threads at a time
+                threads = []
+                for i, key in enumerate(funcMap):
+                    t = threading.Thread(target=self.translateAndCreateRustFiles, args=(funcMap, key, individualFuncPath))
+                    threads.append(t)
+                    if len(threads) == MAX_THREADS:
+                        for thread in threads:
+                            thread.start()
+                        for thread in threads:
+                            thread.join()
+                        threads = []
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join()
+                    threads = []
+    
+            else:
+                # Do sequential stuff
+                for i, key in enumerate(funcMap):
+                    self.translateAndCreateRustFiles(funcMap, key, individualFuncPath)
+        else:
+            mergedFuncDepsObj = self.mergeFuncDepsObjects(funcMap)
+            translatedResult = self.compileWithFeedbackAndStructUsage("merged_files", mergedFuncDepsObj)
+            self.logger.debug("Translated entire library:")
+            self.logger.debug(translatedResult)
+
 
 class Gpt3Translator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
