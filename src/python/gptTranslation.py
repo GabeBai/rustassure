@@ -299,7 +299,7 @@ class Translator:
         return extractedErr
 
     def preTranslateComplexStructs(self):
-        if self.translatorMode != TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
+        if self.translatorMode not in [TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE, TranslatorModes.CF_SU_MERGED_FILE_ORDER, TranslatorModes.CF_SU_MERGED_CALL_GRAPH_ORDER, TranslatorModes.CF_SU_RANDOM_MERGED_ORDER]:
             return
         for structName in FunctionAndDependencies.structsWithUsageInfoMap:
             structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[structName]
@@ -350,7 +350,6 @@ class Translator:
 
         self.logger.debug("Rust translated struct: %s", rustTranslatedStructs)
         self.logger.debug("Function code after removing already-translated structs: %s", funcSrc)
-        sys.exit(-1)
 
         # Now we enter the compile + feedback loop
         result = self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructs, funcSrc)
@@ -377,7 +376,7 @@ class Translator:
             successFlag = False
         attempts = 0
         while not successFlag and attempts < COMPILATION_RETRIES:
-            self.logger.info("Trying to recompile translated function %s, %d time", funcName, attempts)
+            self.logger.info("Trying to recompile translated function %s, attempt # %d", funcName, attempts + 1)
             feedback = ""
             # These checks lead to colliding translations
             """
@@ -536,6 +535,11 @@ class Translator:
             translatedResult = self.compileWithFeedbackAndStructUsage("merged_files", mergedFuncDepsObj)
             self.logger.debug("Translated entire library:")
             self.logger.debug(translatedResult)
+            rs_path = os.path.join(individualFuncPath, "merged_funcs.rs")
+            with open(rs_path, "w") as rs_file:
+                rs_file.write(translatedResult)
+            self.logger.info("Translation for merged_funcs generated")
+
 
 
 class Gpt3Translator(Translator):
