@@ -247,6 +247,9 @@ if __name__ == "__main__":
     loggerFileName = "./" + baseDir + "_validator.log"
     logger = getLogger(loggerFileName)
 
+    if args.use_claude:
+        args.multithreading = False
+
     logger.info("Command line options: %s", args)
 
     processCodebase(args.src, args.use_gpt4, args.use_claude, args.fine_tuned_model, args.preanalysis_only, Translator.getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"
