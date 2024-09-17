@@ -4,6 +4,7 @@ import sys
 import re
 import glob
 from openai import OpenAI
+import anthropic
 import subprocess
 import traceback
 import tiktoken
@@ -27,6 +28,10 @@ GPT4_MAX_COMPLETION_TOKENS=4096
 COMPILATION_RETRIES=10
 MAX_THREADS=40
 
+# https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table
+CLAUDE_3_5_MODEL="claude-3-5-sonnet-20240620"
+CLAUDE_CTX_WINDOW_LEN=200*1000
+CLAUDE_MAX_COMPLETION_TOKENS=8192
 
 class TranslatorModes(Enum):
     """
@@ -165,8 +170,10 @@ class Translator:
 
 
     def extractRustCode(self, multilineResponse):
+        # self.logger.warn("Going to extract Rust code from %s", multilineResponse)
         pattern = re.compile(r"```rust\n(.*?)```", re.DOTALL)
         matches = pattern.findall(multilineResponse)
+        # self.logger.warn(matches)
         if len(matches) > 0:
             return "\n".join(matches)
         else:
@@ -244,7 +251,11 @@ class Translator:
         return chainedResponse
 
     def countTokens(self, line):
-        tokenizer = tiktoken.get_encoding(tiktoken.encoding_name_for_model(self.model))
+        try:
+            tokenizer = tiktoken.get_encoding(tiktoken.encoding_name_for_model(self.model))
+        except:
+            tokenizer = tiktoken.get_encoding(tiktoken.encoding_name_for_model(GPT3_MODEL))
+
         tokens = tokenizer.encode(line)
         return len(tokens)
     
@@ -387,7 +398,11 @@ class Translator:
             else:
             """
             errorStr = self.extractError(err)
-            feedback = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
+            # Hack! We should probably use the messages API for both 
+            if "claude" in self.model:
+                feedback = "I got compilation error. Please do NOT reply with anything other than the Rust code. No English words needed.\n" + str(errorStr) + "\n The original function was "
+            else:
+                feedback = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
             request = feedback + funcSrc + additionalContext
             result = self.chunkAndSend(funcName, request)
             (successFlag, err) = self.compile(result)
@@ -450,21 +465,6 @@ class Translator:
         mergedFuncDepObj.typeDeclDefCodeLines = result.stdout
 
         self.logger.debug("Merged func dep obj content:\n %s \n %s", mergedFuncDepObj.typeDeclDefCodeLines, mergedFuncDepObj.funcCodeLines)
-        """
-        self.logger.info(mergedFuncDepObj.typeDeclDefCodeLines)
-
-        ast = parser.parse(mergedFuncDepObj.typeDeclDefCodeLines)
-        # Create and run the visitor to extract unique code elements
-        visitor = DeduplicationVisitor()
-        visitor.visit(ast)
-
-        # Get the cleaned code
-        cleanedCode = getUniqueCode(visitor)
-        self.logger.warn(cleanedCode)
-        sys.exit(-1)
-        """
-
-
 
         headerStatements = mergedFuncDepObj.typeDeclDefCodeLines.split(';')
         uniqueStatements = list(unique_everseen(headerStatements))
@@ -556,3 +556,55 @@ class FineTunedGPT3Translator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, modelName, systemPrompt, translatorMode):
         super().__init__(logger, "", apiKey, GPT3_CTX_WINDOW_LEN, GPT3_MAX_COMPLETION_TOKENS, 
                 srcLang, dstLang, modelName, systemPrompt, translatorMode) 
+
+class Claude_3_5_Translator(Translator):
+    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
+        self.logger = logger
+        self.baseUrl = ""
+        self.apiKey = apiKey
+        self.ctxWindow = CLAUDE_CTX_WINDOW_LEN
+        self.maxCompletionTokens = CLAUDE_MAX_COMPLETION_TOKENS
+        self.requestTokenLimit = self.ctxWindow - self.maxCompletionTokens # Should this only be the ctxWindow?
+        self.srcLang = srcLang
+        self.dstLang = dstLang
+        self.model = "claude-3-5-sonnet-20240620"
+        self.systemPrompt = systemPrompt
+        self.translatorMode = translatorMode
+        # If we're using LLAMA then we need to provide self.baseUrl
+        # self.client = OpenAI(base_url=self.baseUrl, api_key=self.apiKey)
+        self.client = anthropic.Anthropic(api_key=self.apiKey)
+
+    def getFingerPrint(self):
+        self.logger.debug("Cannot fingerprint Anthropic models.")
+        return ("", "")
+
+    def isResponseTruncated(self, completion, funcOrStructName):
+        finishReason = completion.stop_reason
+        self.logger.debug("Finish reason for function/struct %s: %s", funcOrStructName, finishReason)
+        return finishReason == "length"
+
+
+    def getResponse(self, request):
+        self.logger.debug("Sending request: %s", request)
+        completion = self.client.messages.create(
+            model=self.model,
+            system=self.systemPrompt,
+            messages=[
+                {
+                    "role": "user", 
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": request
+                        }
+                    ]
+                }
+            ], 
+            max_tokens = self.maxCompletionTokens,
+            temperature = 0.0,
+            top_p = 0.1) # Anthropic doesn't support seed
+        self.logger.debug("Raw response:")
+        self.logger.debug(completion)
+        response = self.extractRustCode(completion.content[0].text)
+        self.logger.debug("Raw response: %s", response)
+        return (completion, response)
