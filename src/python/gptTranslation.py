@@ -346,7 +346,7 @@ class Translator:
                 # This function uses it, so record its rust translation
                 # We will add it to the request later
                 if len(rustTranslatedStructs) == 0:
-                    rustTranslatedStructs = "Please use the following Rust translations of struct definitions enclosed in /* Rust struct definitions ... */ /*\n"
+                    rustTranslatedStructs = "Please use the following Rust translations of struct definitions enclosed in /* Rust struct definitions ... */. The response should include the same Rust struct in addition to the translated C function. \n/*\n"
                 rustTranslatedStructs = rustTranslatedStructs + structWithUsageInfo.rustCode + "\n"
                 self.logger.info("Rust translated structs: %s", rustTranslatedStructs)
 
