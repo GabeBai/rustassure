@@ -49,24 +49,17 @@ class TranslatorModes(Enum):
     Then replay the translation for other requests.
     Single function per request.
     """
-    COMPILATION_FEEDBACK_WITH_STRUCT_USAGE = 2
+    CF_STRUCT_REPLAY = 2
     """
-    Send multiple functions in the same request.
-    In file order.
-    The CF_SU stands for Compilation Feedback with Struct Usage.
+    Incrementally add the translated functions to the same compilation unit.
+    Replay the already translated functions.
     """
-    CF_SU_MERGED_FILE_ORDER = 3
+    CF_STRUCT_FN_REPLAY = 3
     """
-    Same as above, but only merge the functions accessible 
-    from an API, in file order
+    Try to stick all the functions in a single request and merge them
     """
-    CF_SU_MERGED_CALL_GRAPH_ORDER = 4
-    """
-    Random order all files
-    """
-    CF_SU_RANDOM_MERGED_ORDER = 5
+    CF_SINGLE_REQUEST_MERGE = 4
 
-    CF_SU_RANDOM_MERGED_ORDER_COMPLETE = 6
 
 class Translator:
     """
@@ -78,18 +71,12 @@ class Translator:
             return TranslatorModes.BASIC_CHUNK_CHAIN
         elif translatorModeStr == "feedback":
             return TranslatorModes.COMPILATION_FEEDBACK
-        elif translatorModeStr == "feedback-with-struct":
-            return TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE
-        elif translatorModeStr == "merged-file-order":
-            return TranslatorModes.CF_SU_MERGED_FILE_ORDER
-        elif translatorModeStr == "merged-call-graph-order":
-            return TranslatorModes.CF_SU_MERGED_CALL_GRAPH_ORDER
-        elif translatorModeStr == "merged-file-order":
-            return TranslatorModes.CF_SU_MERGED_FILE_ORDER
-        elif translatorModeStr == "random-merged-order":
-            return TranslatorModes.CF_SU_RANDOM_MERGED_ORDER
-        elif translatorModeStr == "random-merged-order-complete":
-            return TranslatorModes.CF_SU_RANDOM_MERGED_ORDER_COMPLETE
+        elif translatorModeStr == "cf_struct_replay":
+            return TranslatorModes.CF_STRUCT_REPLAY
+        elif translatorModeStr == "struct-fn-replay":
+            return TranslatorModes.CF_STRUCT_FN_REPLAY
+        elif translatorModeStr == "single-request-merge":
+            return TranslatorModes.CF_SINGLE_REQUEST_MERGE 
         else:
             printf("Invalid translator mode")
             sys.exit(-1)
@@ -345,7 +332,7 @@ class Translator:
         return extractedErr
 
     def preTranslateComplexStructs(self):
-        if self.translatorMode not in [TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE, TranslatorModes.CF_SU_MERGED_FILE_ORDER, TranslatorModes.CF_SU_MERGED_CALL_GRAPH_ORDER, TranslatorModes.CF_SU_RANDOM_MERGED_ORDER, TranslatorModes.CF_SU_RANDOM_MERGED_ORDER_COMPLETE]:
+        if self.translatorMode not in [TranslatorModes.CF_STRUCT_REPLAY, TranslatorModes.CF_STRUCT_FN_REPLAY, TranslatorModes.CF_SINGLE_REQUEST_MERGE]:
             return
         for structName in FunctionAndDependencies.structsWithUsageInfoMap:
             structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[structName]
@@ -525,7 +512,7 @@ class Translator:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
             request = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
             (successFlag, result) = self.compileAndRetryLoop(funcName, prompt,"",  "", "", "", funcSrc)
-        elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
+        elif self.translatorMode == TranslatorModes.CF_STRUCT_REPLAY:
             (successFlag, result) = self.compileWithFeedback(funcName, funcDepsObj)
         
         return result
@@ -549,7 +536,7 @@ class Translator:
     def translateAll(self, funcMap, individualFuncPath, multiThreading):
         self.preTranslateComplexStructs()
         # If the translatorMode is per-function then
-        if self.translatorMode in [TranslatorModes.BASIC_CHUNK_CHAIN, TranslatorModes.COMPILATION_FEEDBACK, TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE]:
+        if self.translatorMode in [TranslatorModes.BASIC_CHUNK_CHAIN, TranslatorModes.COMPILATION_FEEDBACK, TranslatorModes.CF_STRUCT_REPLAY]:
             if multiThreading:
                 # launch 10 threads at a time
                 threads = []
@@ -573,13 +560,13 @@ class Translator:
                 for i, key in enumerate(funcMap):
                     self.translateAndCreateRustFiles(funcMap, key, individualFuncPath)
         else:
-            if self.translatorMode == TranslatorModes.CF_SU_RANDOM_MERGED_ORDER_COMPLETE:
+            if self.translatorMode == TranslatorModes.CF_SINGLE_REQUEST_MERGE:
                 mergedFuncDepsObj = self.mergeFuncDepsObjects(funcMap)
                 (successFlag, translatedResult) = self.compileWithFeedback("merged_files", mergedFuncDepsObj)
                 self.logger.debug("Translated entire library:")
                 self.logger.debug(translatedResult)
                 rs_path = os.path.join(individualFuncPath, "merged_funcs.rs")
-            elif self.translatorMode == TranslatorModes.CF_SU_RANDOM_MERGED_ORDER:
+            elif self.translatorMode == TranslatorModes.CF_STRUCT_FN_REPLAY:
                 # Get the merged header
                 mergedHeader = self.mergeFuncDepsObjects(funcMap).typeDeclDefCodeLines
                 previouslyTranslatedFunctions = ""
