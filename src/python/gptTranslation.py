@@ -25,7 +25,7 @@ GPT4_MODEL="gpt-4o"
 GPT4_CTX_WINDOW_LEN=128*1024
 GPT4_MAX_COMPLETION_TOKENS=4096 
 
-COMPILATION_RETRIES=10
+COMPILATION_RETRIES=5
 MAX_THREADS=40
 
 # https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table
@@ -66,6 +66,8 @@ class TranslatorModes(Enum):
     """
     CF_SU_RANDOM_MERGED_ORDER = 5
 
+    CF_SU_RANDOM_MERGED_ORDER_COMPLETE = 6
+
 class Translator:
     """
     https://platform.openai.com/docs/guides/text-generation/chat-completions-api
@@ -82,8 +84,12 @@ class Translator:
             return TranslatorModes.CF_SU_MERGED_FILE_ORDER
         elif translatorModeStr == "merged-call-graph-order":
             return TranslatorModes.CF_SU_MERGED_CALL_GRAPH_ORDER
+        elif translatorModeStr == "merged-file-order":
+            return TranslatorModes.CF_SU_MERGED_FILE_ORDER
         elif translatorModeStr == "random-merged-order":
             return TranslatorModes.CF_SU_RANDOM_MERGED_ORDER
+        elif translatorModeStr == "random-merged-order-complete":
+            return TranslatorModes.CF_SU_RANDOM_MERGED_ORDER_COMPLETE
         else:
             printf("Invalid translator mode")
             sys.exit(-1)
@@ -286,6 +292,36 @@ class Translator:
         self.logger.info("Sent request in %d chunks", numChunks)
         return fullResponse
 
+    def cleanCode(self, code):
+        # remove identical duplicate structs
+        structPattern = r"(struct\s+\w+\s*\{[^}]*\})"
+        # Find all struct definitions
+        structs = re.findall(structPattern, code, re.DOTALL)
+    
+        # Track unique struct definitions
+        unique_structs = []
+        seen_structs = set()
+        duplicate_struct_bodies = set()
+    
+        # Keep only unique structs
+        for struct in structs:
+            print("struct: " + struct)
+            struct_name = re.search(r"struct\s+([A-Za-z_]\w*)", struct).group(1)
+            print("name: " + struct_name)
+            if struct_name in seen_structs:
+                duplicate_struct_bodies.append(struct)
+            seen_structs.add(struct_name)
+
+        tempCode = code
+        for duplicate_struct_body in duplicate_struct_bodies:
+            tempCode = code.replace(duplicate_struct_body, "")
+
+        for duplicate_struct_body in duplicate_struct_bodies:
+            tempCode = tempCode + "\n" + duplicate_struct_body
+
+        return tempCode
+    
+
     def compile(self, codeSnippet):
         isBinary = False
         if "fn main(" in codeSnippet:
@@ -306,18 +342,17 @@ class Translator:
         else:
             extractedErr = errStr
         self.logger.debug("Full compilation error: " + errStr)
-        self.logger.debug("Extracted error: " + extractedErr)
         return extractedErr
 
     def preTranslateComplexStructs(self):
-        if self.translatorMode not in [TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE, TranslatorModes.CF_SU_MERGED_FILE_ORDER, TranslatorModes.CF_SU_MERGED_CALL_GRAPH_ORDER, TranslatorModes.CF_SU_RANDOM_MERGED_ORDER]:
+        if self.translatorMode not in [TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE, TranslatorModes.CF_SU_MERGED_FILE_ORDER, TranslatorModes.CF_SU_MERGED_CALL_GRAPH_ORDER, TranslatorModes.CF_SU_RANDOM_MERGED_ORDER, TranslatorModes.CF_SU_RANDOM_MERGED_ORDER_COMPLETE]:
             return
         for structName in FunctionAndDependencies.structsWithUsageInfoMap:
             structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[structName]
             trialCount = 0
             err = ""
             while True:
-                request = "Please translate the struct in " + self.srcLang + " to " + self.dstLang + ". Please try to use safe and idiomatic Rust. After the struct definition, I will provide some sample uses of the struct enclosed in /* and */. Please consider them when translating. Reply only with the Rust code, no English words needed.\n"
+                request = "Please translate the struct in " + self.srcLang + " to " + self.dstLang + ". Please try to use safe and idiomatic Rust. After the struct definition, I will provide some sample uses of the struct enclosed in /* and */. Please consider them when translating. Reply only with the Rust code, no English words needed. Please do NOT add a main function.\n"
                 request = request + "\n".join(structWithUsageInfo.cCode)
                 request = request + "/*\n"
                 for usage in structWithUsageInfo.usageList:
@@ -327,18 +362,20 @@ class Translator:
                     request = request + "Previous translation gave error \n" + err
                 result = self.chunkAndSend(structName, request)
                 trialCount = trialCount + 1
-                self.logger.debug("Translated struct \n: %s", result)
-                (successFlag, err) = self.compile(result)
+                # self.logger.debug("Translated struct \n: %s", result)
+                (successFlag, err) = self.compile(self.cleanCode(result))
                 # We pray this will never fail
                 structWithUsageInfo.rustCode = result
                 if successFlag or trialCount > 5:
                     break
                 
-    def compileWithFeedbackAndStructUsage(self, funcName, funcDepsObj):
+    def compileWithFeedback(self, funcName, funcDepsObj):
         rustTranslatedStructs = ""
-        prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+        prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
 
         exitNow = False
+        rustTranslatedStructs = ""
+        rustTranslatedStructPrompt = ""
         for structName in FunctionAndDependencies.structsWithUsageInfoMap:
             if structName in funcDepsObj.structsWithUsageInfo: 
                 exitNow = True
@@ -346,9 +383,9 @@ class Translator:
                 # This function uses it, so record its rust translation
                 # We will add it to the request later
                 if len(rustTranslatedStructs) == 0:
-                    rustTranslatedStructs = "Please use the following Rust translations of struct definitions enclosed in /* Rust struct definitions ... */. The response should include the same Rust struct in addition to the translated C function. \n/*\n"
+                    rustTranslatedStructPrompt = "Please use the following Rust translations of struct definitions enclosed in /* Rust struct definitions ... */. Please include the original struct translation in your response. \n"
                 rustTranslatedStructs = rustTranslatedStructs + structWithUsageInfo.rustCode + "\n"
-                self.logger.info("Rust translated structs: %s", rustTranslatedStructs)
+                # self.logger.info("Rust translated structs: %s", rustTranslatedStructs)
 
                 # Remove the definition of this struct from the 
                 # function's C source code
@@ -359,28 +396,28 @@ class Translator:
         if len(rustTranslatedStructs) > 0:
             rustTranslatedStructs = rustTranslatedStructs + "*/\n"
 
-        self.logger.debug("Rust translated struct: %s", rustTranslatedStructs)
-        self.logger.debug("Function code after removing already-translated structs: %s", funcSrc)
+        # self.logger.debug("Rust translated struct: %s", rustTranslatedStructs)
+        # self.logger.debug("Function code after removing already-translated structs: %s", funcSrc)
 
+
+        previouslyTranslatedFunctions = ""
+        previouslyTranslatedPrompt = ""
+        if len(funcDepsObj.previouslyTranslatedFunctions) != 0:
+            previouslyTranslatedPrompt = "Please use the following previously translated Rust functions, included in /*// and //*/ for context. Please DO NOT include these already translated functions in your response.\n"
         # Now we enter the compile + feedback loop
-        result = self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructs, funcSrc)
-        """
-        if exitNow:
-            sys.exit(-1)
-        """
-        return result
+        (successFlag, result) = self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructPrompt, rustTranslatedStructs, previouslyTranslatedPrompt, funcDepsObj.previouslyTranslatedFunctions, funcSrc)
+        
+        return (successFlag, result)
 
-    def compileAndRetryLoop(self, funcName, prompt, additionalContext, funcSrc):
-        """
-        prompt: contains the initial prompt "Translate C to Rust... " 
-        additionalContext: contains any extra information such as already translated structs, etc.
-        funcSrc: the source code of the function and all headers expanded
-        """
-        request = prompt + "\n" + funcSrc + "\n" + additionalContext
-        if len(additionalContext) > 0:
-            self.logger.info("The request with additional context :\n %s", request)
+    def compileAndRetryLoop(self, funcName, prompt, translatedStructPrompt, translatedStructs, translatedFuncPrompt, translatedFuncs, funcSrc):
+        
+        request = prompt + "\n" + funcSrc + "\n";
+        if len(translatedStructs) > 0:
+            request = request + "\n" + translatedStructPrompt + "/*\n" + translatedStructs + "\n*/\n"
+        if len(translatedFuncs) > 0:
+            request = request + "\n" + translatedFuncPrompt + "/*// \n" + translatedFuncs + "/*//\n";
         result = self.chunkAndSend(funcName, request)
-        (successFlag, err) = self.compile(result)
+        (successFlag, err) = self.compile(self.cleanCode(result + "\n" + translatedFuncs))
         if "extern \"C\"" in result:
             successFlag = False
         if "fn " not in result:
@@ -400,21 +437,30 @@ class Translator:
             errorStr = self.extractError(err)
             # Hack! We should probably use the messages API for both 
             if "claude" in self.model:
-                feedback = "I got compilation error. Please do NOT reply with anything other than the Rust code. No English words needed.\n" + str(errorStr) + "\n The original function was "
+                feedback = "I got compilation error. If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+
             else:
                 feedback = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
-            request = feedback + funcSrc + additionalContext
+            request = feedback + "\n" + funcSrc + "\n"
+            if len(translatedStructs) > 0:
+                request = request + "\n" + translatedStructPrompt + "/*\n" + translatedStructs + "\n*/\n"
+ 
+            if len(translatedFuncs) > 0:
+                request = request + "\n" + translatedFuncPrompt + "/*// \n" + translatedFuncs + "/*//\n";
+
             result = self.chunkAndSend(funcName, request)
-            (successFlag, err) = self.compile(result)
+            (successFlag, err) = self.compile(self.cleanCode(result + "\n" + translatedFuncs))
+            """
             if "extern \"C\"" in result:
                 successFlag = False
             if "fn " not in result:
                 successFlag = False
+            """
             attempts = attempts + 1
         if attempts != 0:
             self.logger.debug("After %d retranslation attempts result: %s", attempts, result)
 
-        return result
+        return (successFlag, result)
 
     def getUniqueCode(self, visitor):
         """Generate cleaned C code from unique definitions."""
@@ -440,15 +486,11 @@ class Translator:
 
     def mergeFuncDepsObjects(self, funcsMap):
         mergedFuncDepObj = FunctionAndDependencies("merged")
-        if self.translatorMode == TranslatorModes.CF_SU_RANDOM_MERGED_ORDER:
-            for funcSym in funcsMap:
-                funcObj = funcsMap[funcSym]
-                mergedFuncDepObj.funcCodeLines = mergedFuncDepObj.funcCodeLines + "\n\n" + funcObj.funcCodeLines
-                mergedFuncDepObj.typeDeclDefCodeLines = mergedFuncDepObj.typeDeclDefCodeLines + "\n" + funcObj.typeDeclDefCodeLines
-                mergedFuncDepObj.structsWithUsageInfo.update(funcObj.structsWithUsageInfo)
-        else:
-            self.logger.warning("Unimplemented translator mode.")
-            sys.exit(-1)
+        for funcSym in funcsMap:
+            funcObj = funcsMap[funcSym]
+            mergedFuncDepObj.funcCodeLines = mergedFuncDepObj.funcCodeLines + "\n\n" + funcObj.funcCodeLines
+            mergedFuncDepObj.typeDeclDefCodeLines = mergedFuncDepObj.typeDeclDefCodeLines + "\n" + funcObj.typeDeclDefCodeLines
+            mergedFuncDepObj.structsWithUsageInfo.update(funcObj.structsWithUsageInfo)
 
 
 		# Hack to remove duplicates in the header content
@@ -464,27 +506,27 @@ class Translator:
 
         mergedFuncDepObj.typeDeclDefCodeLines = result.stdout
 
-        self.logger.debug("Merged func dep obj content:\n %s \n %s", mergedFuncDepObj.typeDeclDefCodeLines, mergedFuncDepObj.funcCodeLines)
+        # self.logger.debug("Merged func dep obj content:\n %s \n %s", mergedFuncDepObj.typeDeclDefCodeLines, mergedFuncDepObj.funcCodeLines)
 
         headerStatements = mergedFuncDepObj.typeDeclDefCodeLines.split(';')
         uniqueStatements = list(unique_everseen(headerStatements))
         mergedFuncDepObj.typeDeclDefCodeLines = ";".join(uniqueStatements) 
-        self.logger.debug("Merged header information:\n%s", mergedFuncDepObj.typeDeclDefCodeLines)
-        self.logger.debug("Merged source code:\n%s", mergedFuncDepObj.funcCodeLines)
+        # self.logger.debug("Merged header information:\n%s", mergedFuncDepObj.typeDeclDefCodeLines)
+        # self.logger.debug("Merged source code:\n%s", mergedFuncDepObj.funcCodeLines)
         return mergedFuncDepObj
 
 
     def translate(self, funcName, funcDepsObj):
         if self.translatorMode == TranslatorModes.BASIC_CHUNK_CHAIN:
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
-            request = "Please translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"  + funcSrc
+            request = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
             result = self.chunkAndSend(funcName, request)
         elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK: 
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
-            prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". The C source code might be chunked across different requests. Please don't end the function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
-            result = self.compileAndRetryLoop(funcName, prompt, "", funcSrc)
+            request = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+            (successFlag, result) = self.compileAndRetryLoop(funcName, prompt,"",  "", "", "", funcSrc)
         elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK_WITH_STRUCT_USAGE:
-            result = self.compileWithFeedbackAndStructUsage(funcName, funcDepsObj)
+            (successFlag, result) = self.compileWithFeedback(funcName, funcDepsObj)
         
         return result
 
@@ -531,15 +573,39 @@ class Translator:
                 for i, key in enumerate(funcMap):
                     self.translateAndCreateRustFiles(funcMap, key, individualFuncPath)
         else:
-            mergedFuncDepsObj = self.mergeFuncDepsObjects(funcMap)
-            translatedResult = self.compileWithFeedbackAndStructUsage("merged_files", mergedFuncDepsObj)
-            self.logger.debug("Translated entire library:")
-            self.logger.debug(translatedResult)
-            rs_path = os.path.join(individualFuncPath, "merged_funcs.rs")
-            with open(rs_path, "w") as rs_file:
-                rs_file.write(translatedResult)
-            self.logger.info("Translation for merged_funcs generated")
-
+            if self.translatorMode == TranslatorModes.CF_SU_RANDOM_MERGED_ORDER_COMPLETE:
+                mergedFuncDepsObj = self.mergeFuncDepsObjects(funcMap)
+                (successFlag, translatedResult) = self.compileWithFeedback("merged_files", mergedFuncDepsObj)
+                self.logger.debug("Translated entire library:")
+                self.logger.debug(translatedResult)
+                rs_path = os.path.join(individualFuncPath, "merged_funcs.rs")
+            elif self.translatorMode == TranslatorModes.CF_SU_RANDOM_MERGED_ORDER:
+                # Get the merged header
+                mergedHeader = self.mergeFuncDepsObjects(funcMap).typeDeclDefCodeLines
+                previouslyTranslatedFunctions = ""
+                """
+                Approach:
+                0. Initialize context = null
+                1. Process each function one by one
+                    - If it compiles along with the context
+                    - If it does, add it to the context
+                """
+                for funcSym in funcMap:
+                    funcDepsObj = funcMap[funcSym]
+                    funcDepsObj.previouslyTranslatedFunctions = previouslyTranslatedFunctions
+                    (successFlag, translatedResult) = self.compileWithFeedback(funcSym, funcDepsObj)
+                    if successFlag:
+                        self.logger.warn("Successfully added %s to the merged file.", funcSym)
+                        rs_path = os.path.join(individualFuncPath, "merged_funcs.rs")
+                        with open(rs_path, "w") as rs_file:
+                            rs_file.write(previouslyTranslatedFunctions + "\n" + translatedResult)
+                        previouslyTranslatedFunctions = previouslyTranslatedFunctions + "\n" + translatedResult
+                        self.logger.info("Updated translation for merged_funcs.rs")
+                    else:
+                        self.logger.warn("Failed to add %s to the merged file.", funcSym)
+                        rs_path = os.path.join(individualFuncPath, f"{funcSym}.rs")
+                        with open(rs_path, "w") as rs_file:
+                            rs_file.write(translatedResult)
 
 
 class Gpt3Translator(Translator):
@@ -603,8 +669,6 @@ class Claude_3_5_Translator(Translator):
             max_tokens = self.maxCompletionTokens,
             temperature = 0.0,
             top_p = 0.1) # Anthropic doesn't support seed
-        self.logger.debug("Raw response:")
-        self.logger.debug(completion)
         response = self.extractRustCode(completion.content[0].text)
-        self.logger.debug("Raw response: %s", response)
+        self.logger.debug("Rust response: %s", response)
         return (completion, response)
