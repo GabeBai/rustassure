@@ -226,6 +226,12 @@ def fingerPrintModel(logger, srcDir, translator):
             logger.info("Finger print check mismatched (%s, %s) and (%s, %s). The results can potentially be very different from the previous run. Or it could just be that a different hardware was used to run the request!", oldModelName, oldFingerPrint, newModelName, newFingerPrint)
 
 
+"""
+Some common invocations:
+    python3 translationValidator.py --src=./inputs-complex/libcsv
+
+"""
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
