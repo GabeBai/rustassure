@@ -296,7 +296,7 @@ class Translator:
             struct_name = re.search(r"struct\s+([A-Za-z_]\w*)", struct).group(1)
             print("name: " + struct_name)
             if struct_name in seen_structs:
-                duplicate_struct_bodies.append(struct)
+                duplicate_struct_bodies.add(struct)
             seen_structs.add(struct_name)
 
         tempCode = code
