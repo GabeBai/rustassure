@@ -71,7 +71,7 @@ class Translator:
             return TranslatorModes.BASIC_CHUNK_CHAIN
         elif translatorModeStr == "feedback":
             return TranslatorModes.COMPILATION_FEEDBACK
-        elif translatorModeStr == "cf_struct_replay":
+        elif translatorModeStr == "cf-struct-replay":
             return TranslatorModes.CF_STRUCT_REPLAY
         elif translatorModeStr == "struct-fn-replay":
             return TranslatorModes.CF_STRUCT_FN_REPLAY
@@ -510,7 +510,7 @@ class Translator:
             result = self.chunkAndSend(funcName, request)
         elif self.translatorMode == TranslatorModes.COMPILATION_FEEDBACK: 
             funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
-            request = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+            prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
             (successFlag, result) = self.compileAndRetryLoop(funcName, prompt,"",  "", "", "", funcSrc)
         elif self.translatorMode == TranslatorModes.CF_STRUCT_REPLAY:
             (successFlag, result) = self.compileWithFeedback(funcName, funcDepsObj)

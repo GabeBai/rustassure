@@ -84,10 +84,11 @@ def getFunctions(logger, extractor, srcPath, singleFileName, fileList, functionO
     # For each struct type used in each function, extract _all_ uses of the same type
     # from other functions
     # TODO: Consider if refactoring the toolchain helps?
+    """
     if "individual-funcs" in srcPath:
-        # pass
         logger.info("Going to extract type usage")
         extractor.extractGlobalTypeUsageDetails(srcPath, fileFuncMap)
+    """
 
     return fileFuncMap
 
@@ -228,8 +229,8 @@ def fingerPrintModel(logger, srcDir, translator):
 
 """
 Some common invocations:
-    python3 translationValidator.py --src=./inputs-complex/libcsv
-
+    python3 translationValidator.py --src=./inputs-complex/mbedtls/library --file-list-file=mbedtls_ssl_lib_files.txt --translator-mode=feedback
+    python3 translationValidator.py --src=./inputs-complex/libcsv --translator-mode=cf-struct-replay
 """
 
 if __name__ == "__main__":
@@ -239,7 +240,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-gpt4", type=bool, default=True, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")
 
-    parser.add_argument("--translator-mode", type=str, default="struct-fn-replay", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--translator-mode", type=str, default="feedback", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")

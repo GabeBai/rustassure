@@ -133,8 +133,7 @@ class FunctionAndDepsExtractor:
 
             result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             if result.returncode != 0:
-                self.logger.info("Failed command and bailing: %s", cmd)
-                self.logger.info("Stderr: %s", result.stderr)
+                self.logger.info("Failed command and bailing: %s\nReturn code: %d\nStderr: %s\n", cmd, result.returncode, result.stderr)
                 continue
             else:
                 self.logger.debug("Output of %s", cmd)
@@ -176,7 +175,7 @@ class FunctionAndDepsExtractor:
                 otherCmd = "struct-field-use-printer " + otherFullFileName
                 result = subprocess.run(otherCmd, shell=True, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
                 if result.returncode != 0:
-                    self.logger.info("Failed command and bailing: %s", cmd)
+                    self.logger.info("Failed command and bailing: %s", otherCmd)
                     continue
                 else:
                     self.logger.debug("Output of %s", otherCmd)
