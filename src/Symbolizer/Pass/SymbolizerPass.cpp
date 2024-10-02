@@ -143,7 +143,7 @@ namespace {
 			}
 		}
 
-		void mark_symbolic(Module& M, AllocaInst* value, IRBuilder<>& Builder) {
+		void mark_symbolic(Module& M, Value* value, IRBuilder<>& Builder) {
 			LLVMContext& ctx = M.getContext();
 			const DataLayout& DL = M.getDataLayout();
 
@@ -240,11 +240,18 @@ namespace {
 					type = ArrayType::get(integer_type, 100);
 				}
 			}
-			AllocaInst* stackArg = Builder.CreateAlloca(type, 0, name);
+			AllocaInst* stack_arg = Builder.CreateAlloca(type, 0, name);
 			// Any inner objects, should also be initialized
-			initialize_inner_objects(M, Builder, stackArg);
-			mark_symbolic(M, stackArg, Builder);
-			return stackArg;
+			initialize_inner_objects(M, Builder, stack_arg);
+			// Only mark the non-pointers symbolic
+			// For structs, only mark the non-pointer fields symbolic
+			if (!isa<PointerType>(type)) {
+				// type is the type passed to the CreateAlloca
+				// For structs too, we can mark the whole struct
+				// as symbolic
+				mark_symbolic(M, stack_arg, Builder);
+			}
+			return stack_arg;
 		}
 
 		void symbolize_function_args(Module& M) {
@@ -272,11 +279,17 @@ namespace {
 			std::vector<Value*> actual_args;
 			// Now create a stack object of each of the argument type
 			for (Argument& arg: target_function->args()) {
-				Value* stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType(), arg.getName());
-				// We will call the main function later, so we store the args
-				// We load this stack arg
-				LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
-				actual_args.push_back(stack_load_inst);
+				// If it's a C pointer type, then we must create a stack object (AllocaInst) of the base type, mark it symbolic, and pass it directly to the function
+				// If it's a scalar, then we must create a stack object, load it and pass it to the function
+				Value* stackArg = nullptr;
+				if (isa<PointerType>(arg.getType()) && arg.getType()->getPointerElementType()) {
+					stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType()->getPointerElementType(), arg.getName());
+					actual_args.push_back(stackArg);
+				} else {
+					stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType(), arg.getName());
+					LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
+					actual_args.push_back(stack_load_inst);
+				}
 			}
 
 			// Now we pass these arguments to the actual function
