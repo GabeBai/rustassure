@@ -19,7 +19,7 @@
 
 6. Make sure you have a GPT key stored in the environment variable `$OPENAI_KEY`.
 
-7. Install the Python modules `openai`, `tiktoken`, `more_itertools`, and `pycparser` using `pip3`. For the validator, also install `numpy`, `scipy`, `pygraphviz` and `networkx`.
+7. Install the Python modules `openai`, `tiktoken`, `more_itertools`, and `pycparser` using `pip3`. For the validator, also install `antlr4-tools`, `antlr4-python3-runtime`, `numpy`, `scipy`, `pygraphviz` and `networkx`.
 
  
 NOTE: When pulling, please make sure that you have the latest of the typedefextractor repo too.
@@ -85,3 +85,13 @@ We can only fine-tune GPT 3.5 models, as of 6/24/2024.
 
 4. Then, pass --fine-tuned-model=<model_name> when invoking `translatorValidator.py`.
 
+### For symbolic execution
+
+1. `sudo apt-get install z3`
+
+2. Once you init the LLVM submodules you should have the KLEE repository. 
+	 Create a directory for `klee-build` and run
+	`cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
+	`make -j4 && sudo make install`
+
+3. Inside `rustify/src/Symbolizer` run `./build.sh`.
