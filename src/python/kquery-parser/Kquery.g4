@@ -66,27 +66,75 @@ comparison_expr_kind: ( EQ | NE | ULT | ULE | UGT | UGE | SLT | SLE | SGT | SGE 
 
 prog: expr+;
 
+number_with_type: TYPE NUMBER;
+
+CONCAT: 'Concat';
+EXTRACT: 'Extract';
+
+bv_expr_kind: ( CONCAT | EXTRACT );
+
+ZEXT: 'ZExt';
+SEXT: 'SExt';
+extension_expr_kind: ( ZEXT | SEXT );
+
+READ: 'Read';
+read_expr_kind: READ;
+
+SELECT: 'Select';
+select_expr_kind: SELECT;
+
+NEG: 'Neg';
+
+neg_expr_kind: NEG;
+
+READLSB : 'ReadLSB';
+READMSB : 'ReadMSB';
+
+array_read_expr_kind: ( READLSB | READMSB );
+
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9._]*;
+
+identifier: IDENTIFIER;
+number: NUMBER;
+
+type: TYPE;
+
+definition: IDENTIFIER ':' expr;
+
+arithmetic_expr: '(' arithmetic_expr_kind type expr expr ')';
+
+bitwise_expr: '(' bitwise_expr_kind expr expr ')';
+
+comparison_expr: '(' comparison_expr_kind (type)? expr expr ')';
+
+bv_expr: '(' bv_expr_kind (type)? expr expr ')'; // Bitvector
+
+extension_expr: '(' extension_expr_kind type expr ')'; // Zero-extend
+
+read_expr: '(' read_expr_kind type expr version ')';
+
+select_expr : '(' select_expr_kind type expr expr expr ')';
+
+neg_expr : '(' neg_expr_kind (type)? expr ')';
+
+array_read_expr : '(' array_read_expr_kind type expr version ')';
 
 // Expressions
 expr 
-			: IDENTIFIER 
-			| NUMBER 
-			| IDENTIFIER ':' expr 
-			| '(' TYPE NUMBER ')'
+			: identifier
+			| number
+			| definition
+			| '(' number_with_type ')'
 			| array_declaration
-			| '(' arithmetic_expr_kind TYPE expr expr ')'
-			| '(' bitwise_expr_kind expr expr ')'
-			| '(' comparison_expr_kind (TYPE)? expr expr ')'
-			| '(' 'Concat' (TYPE)? expr expr ')'							// Bitvector
-			| '(' 'Extract' (TYPE)? expr NUMBER ')' 
-			| '(' 'ZExt' TYPE expr ')'												// Zero-extend
-			| '(' 'SExt' TYPE expr ')'												// Sign-extend
-			| '(' 'Read' TYPE expr version ')'								// Read
-			| '(' 'Select' TYPE expr expr expr ')'						// Select
-			| '(' 'Neg' (TYPE)? expr ')'
-			| '(' 'ReadLSB' TYPE expr version ')'							// ReadLSB
-			| '(' 'ReadMSB' TYPE expr version ')'							// ReadMSB
+			| arithmetic_expr
+			| bitwise_expr
+			| comparison_expr
+			| bv_expr
+			| extension_expr
+			| read_expr
+			| select_expr
+			| neg_expr
+			| array_read_expr
 		;
 
 // Versions
