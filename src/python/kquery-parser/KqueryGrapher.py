@@ -37,6 +37,7 @@ class KqueryASTVisitor(KqueryVisitor):
         return Node(identifier, "")
 
     def visitNumber(self, ctx):
+        # print("Number")
         number = ctx.getText()
         return Node(number, "")
 
@@ -52,15 +53,15 @@ class KqueryASTVisitor(KqueryVisitor):
         # number_list: NUMBER | NUMBER ',' number_list;
         node = Node("number_list", "")
         self.G.add_node(node)
-        if len(ctx.getChildCount()) == 1:
-            number = visit(ctx.getChild(0))
-            node.children.append(number)
-            self.G.add_edge(node, number)
+        if ctx.getChildCount() == 1:
+            node = Node(ctx.getChild(0).getText(), "")
+            return node
         else:
-            child_number = self.visit(ctx.getChild(0))
+            child_number = Node(ctx.getChild(0).getText(), "")
             child_number_list = self.visit(ctx.getChild(2))
 
             node = Node("NumberList", "")
+
             node.children.append(child_number)
             node.children.append(child_number_list)
 
@@ -299,6 +300,7 @@ class KqueryASTVisitor(KqueryVisitor):
         return node
 
     def visitExpr(self, ctx):
+        # print("Visit expr: " + ctx.getText())
         if ctx.getChildCount() > 1:
             for i in range(ctx.getChildCount()):
                 child = ctx.getChild(i)
@@ -308,8 +310,33 @@ class KqueryASTVisitor(KqueryVisitor):
         else:
             return self.visit(ctx)
 
+def convert_kquery_to_graph(expressions, function_name):
+    for i in range(len(expressions)):
+        expression = expressions[i]
+    
+        input_stream = InputStream(expression)
+        lexer = KqueryLexer(input_stream)
+        token_stream = CommonTokenStream(lexer)
+        parser = KqueryParser(token_stream)
+        
+        tree = parser.prog()
+        # print(tree.toStringTree(recog=parser))
+        
+        """
+        listener = KqueryGrapher()
+        walker = ParseTreeWalker()
+        walker.walk(listener, tree)
+        """
+        # Create and apply the custom visitor
+        visitor = KqueryASTVisitor()
+        visitor.visit(tree)
+        write_dot(visitor.G, "output_graph_" + function_name + "_" + str(i) + ".dot")
+
 if __name__ == "__main__":
     expressions = [
+     "69",
+     "array const_array[2] : w32 -> w8 = [5,6]",
+     "array const_array[] : w32 -> w8 = [5,6]",
      "array small_array[2] : w32 -> w8 = symbolic",
      "(Read w8 0 small_array)",
      "(ReadLSB w32 0 d)",
@@ -321,30 +348,6 @@ if __name__ == "__main__":
      "(Eq (And (Add w32 N0:(ReadLSB w32 4 sptr) N0) (ReadLSB w32 0 d)) (Read w8 1 U0))",
      "(Read w8 1 [1=0xff] @ small_array)",
      ]
+    convert_kquery_to_graph(expressions, "")
 
-    """
 
-     "array const_array[2] : w32 -> w8 = [5,6]",
-     "array const_array[] : w32 -> w8 = [5,6]",
-    """
-    for i in range(len(expressions)):
-        expression = expressions[i]
-    
-        input_stream = InputStream(expression)
-        lexer = KqueryLexer(input_stream)
-        token_stream = CommonTokenStream(lexer)
-        parser = KqueryParser(token_stream)
-        
-        tree = parser.prog()
-        print(tree.toStringTree(recog=parser))
-        
-        """
-        listener = KqueryGrapher()
-        walker = ParseTreeWalker()
-        walker.walk(listener, tree)
-        """
-        # Create and apply the custom visitor
-        visitor = KqueryASTVisitor()
-        visitor.visit(tree)
-        print("Handled %s", expression)
-        write_dot(visitor.G, "output_graph_" + str(i) + ".dot")
