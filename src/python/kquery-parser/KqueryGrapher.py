@@ -31,7 +31,6 @@ class KqueryASTVisitor(KqueryVisitor):
 
     def visitIdentifier(self, ctx):
         identifier = ctx.getText()
-        print("identifier: " + identifier)
         if identifier in self.definition_map:
             node = self.definition_map[identifier]
             return node
@@ -42,7 +41,6 @@ class KqueryASTVisitor(KqueryVisitor):
         return Node(number, "")
 
     def visitDefinition(self, ctx):
-        print("In definition")
         # Create the node and populate it in the definition_map
         # definition: IDENTIFIER ':' expr;
         identifier = ctx.getChild(0).getText()
@@ -111,8 +109,6 @@ class KqueryASTVisitor(KqueryVisitor):
         expr1 = ctx.getChild(3)
         expr2 = ctx.getChild(4)
 
-        print("expr1 = " + expr1.getText())
-        print("expr2 = " + expr2.getText())
         child_node1 = self.visit(expr1)
         child_node2 = self.visit(expr2)
         
@@ -131,8 +127,6 @@ class KqueryASTVisitor(KqueryVisitor):
         expr1 = ctx.getChild(2)
         expr2 = ctx.getChild(3)
 
-        print("expr1 = " + expr1.getText())
-        print("expr2 = " + expr2.getText())
         child_node1 = self.visit(expr1)
         child_node2 = self.visit(expr2)
         
@@ -173,11 +167,46 @@ class KqueryASTVisitor(KqueryVisitor):
         return node
 
     def visitBv_expr(self, ctx):
-        pass
+        # bv_expr: '(' bv_expr_kind (type)? expr expr ')'; // Bitvector
+        expr_kind = ctx.getChild(1).getText()
+
+        if ctx.getChildCount() == 6:
+            value_type = ctx.getChild(2).getText()
+            node = Node(expr_kind, value_type)
+
+            child1 = self.visit(ctx.getChild(3))
+            child2 = self.visit(ctx.getChild(4))
+            
+            node.children.append(child1)
+            node.children.append(child2)
+            self.G.add_edge(node, child1)
+            self.G.add_edge(node, child2)
+        else:
+            node = Node(expr_kind, "")
+
+            child1 = self.visit(ctx.getChild(2))
+            child2 = self.visit(ctx.getChild(3))
+            
+            node.children.append(child1)
+            node.children.append(child2)
+            self.G.add_edge(node, child1)
+            self.G.add_edge(node, child2)
+        return node
 
 
     def visitExtension_expr(self, ctx):
-        pass
+        # extension_expr: '(' extension_expr_kind type expr ')';
+        expr_kind = ctx.getChild(1).getText()
+        value_type = ctx.getChild(2).getText()
+        child = self.visit(ctx.getChild(3))
+        
+        node = Node(expr_kind, value_type)
+
+        self.G.add_node(node)
+        node.children.append(child)
+
+        self.G.add_edge(node, child)
+        return node
 
     def visitRead_expr(self, ctx):
         # read_expr: '(' read_expr_kind type expr version ')';
@@ -196,6 +225,7 @@ class KqueryASTVisitor(KqueryVisitor):
 
         self.G.add_edge(node, child)
         self.G.add_edge(node, version)
+        return node
 
     def visitSelect_expr(self, ctx):
         # select_expr : '(' select_expr_kind type expr expr expr ')';
@@ -269,7 +299,6 @@ class KqueryASTVisitor(KqueryVisitor):
         return node
 
     def visitExpr(self, ctx):
-        print(str(type(ctx)) + " : " + ctx.getText())
         if ctx.getChildCount() > 1:
             for i in range(ctx.getChildCount()):
                 child = ctx.getChild(i)
@@ -278,45 +307,44 @@ class KqueryASTVisitor(KqueryVisitor):
             return self.visit(ctx.getChild(0))
         else:
             return self.visit(ctx)
-       
-    
-    """
-    def exitExpr(self, ctx):
-        print("Exited expr")
-    """
-
 
 if __name__ == "__main__":
     expressions = [
-     "array foo[] : w8 -> w1 = [ true, false, false, true ]",
+     "array small_array[2] : w32 -> w8 = symbolic",
      "(Read w8 0 small_array)",
-     "(Read w8 1 [1=0xff] @ small_array)",
      "(ReadLSB w32 0 d)",
      "(Add w32 (ReadLSB w32 4 sptr) d)",
      "(Add w32 N0:(ReadLSB w32 4 sptr) N0)",
      "(Neg (Add w32 N0:(ReadLSB w32 4 sptr) N0))",
      "(And (Add w32 N0:(ReadLSB w32 4 sptr) N0) (ReadLSB w32 0 d))",
      "(Read w8 1 U0)",
-     "array small_array[2] : w32 -> w8 = symbolic"
-     "array const_array[] : w32 -> w8 = [5,6]"]
+     "(Eq (And (Add w32 N0:(ReadLSB w32 4 sptr) N0) (ReadLSB w32 0 d)) (Read w8 1 U0))",
+     "(Read w8 1 [1=0xff] @ small_array)",
+     ]
 
-    expression = expressions[-1] 
+    """
 
-    input_stream = InputStream(expression)
-    lexer = KqueryLexer(input_stream)
-    token_stream = CommonTokenStream(lexer)
-    parser = KqueryParser(token_stream)
-    
-    tree = parser.prog()
-    print(tree.toStringTree(recog=parser))
-    
+     "array const_array[2] : w32 -> w8 = [5,6]",
+     "array const_array[] : w32 -> w8 = [5,6]",
     """
-    listener = KqueryGrapher()
-    walker = ParseTreeWalker()
-    walker.walk(listener, tree)
-    """
-    # Create and apply the custom visitor
-    visitor = KqueryASTVisitor()
-    visitor.visit(tree)
-    print(visitor.G)
-    write_dot(visitor.G, "output_graph.dot")
+    for i in range(len(expressions)):
+        expression = expressions[i]
+    
+        input_stream = InputStream(expression)
+        lexer = KqueryLexer(input_stream)
+        token_stream = CommonTokenStream(lexer)
+        parser = KqueryParser(token_stream)
+        
+        tree = parser.prog()
+        print(tree.toStringTree(recog=parser))
+        
+        """
+        listener = KqueryGrapher()
+        walker = ParseTreeWalker()
+        walker.walk(listener, tree)
+        """
+        # Create and apply the custom visitor
+        visitor = KqueryASTVisitor()
+        visitor.visit(tree)
+        print("Handled %s", expression)
+        write_dot(visitor.G, "output_graph_" + str(i) + ".dot")

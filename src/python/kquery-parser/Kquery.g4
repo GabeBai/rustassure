@@ -109,7 +109,7 @@ comparison_expr: '(' comparison_expr_kind (type)? expr expr ')';
 
 bv_expr: '(' bv_expr_kind (type)? expr expr ')'; // Bitvector
 
-extension_expr: '(' extension_expr_kind type expr ')'; // Zero-extend
+extension_expr: '(' extension_expr_kind type expr ')';
 
 read_expr: '(' read_expr_kind type expr version ')';
 
