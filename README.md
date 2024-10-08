@@ -1,64 +1,120 @@
-# Rustify
+## C2Rust Translation Validator
 
-This is the repository for the rustify tool which is related to our paper blah blah.
+This is the repository for the `rustify-validator` tool to compute the semantic similarity between the original C code and the translation. 
 
-## Overview
-Our tool uses program analysis to identify code written in C that would be *easy* to 
-translate to Rust (either automatically or by a developer). Therefore, our tool consists
-of an LLVM pass which performs program analysis and then a python script which converts
-the identified *easy* code to Rust using generative AI.
-We will test the generated code both manually and by running any test cases available for
-the code.
+The overview of this tool is as follows. The script in `src/python/translationValidator.py` kicks off the process. 
 
-## Prerequisites
-1. LLVM, SVF, Gold linker
-2. python3.8
-3. TODO...
+1. It accepts as input a codebase, and then it separates out each function in its own file. The script file responsible for this is `src/python/functionAndDepsExtractor.py` The codebase should reside inside `src/python/inputs-complex`.
 
-## LLVM Pass
+2. Then, it reads each file (containing one function) and asks the chosen LLM model for a translation. 
+(See script: `src/python/gptTranslation.py`).
 
-## AI-powered Translation
-To perform the translation we need the following:
-    1. Function/API names that are simple to translate
-    2. The source code of the functions/APIs so we can translate them
-    3. A tool to perform the translation
-        3.a For generative AI we need to support multiple APIs (both on the web and local)
+3. It tries to compile the Rust translation, and if it fails, it tries feeds the error message back to the LLM model and asks it to fix it. There is a cap on the number of attempts that can be controlled by the `COMPILATION_RETRIES` in the script `gptTranslation.py`.
 
-The first need is provided by our LLVM pass. Our LLVM pass only provides the names
-of the simple functions. We need to extract the source code for each function, so
-we can perform the translation. Once we have the source code of a function, we can 
-perform the translation.
+4. The output is typically inside a directory named `individual-funcs_<options>`, where `options` contains the model used and the timestamp. Every time we execute the script, it will create a new directory so and not cobble the old result directory.
 
-We have developed a python script which manages all of these steps. It first runs the
-LLVM pass to extract the simple/complex function names. Given the path to a target
-program's source code, it then uses `ctags` to extract the source code for each function.
-It then provides this source code to an LLM and asks it to translate the given code to Rust.
+5. The script `src/python/symbolic_executor.py` has the initial code for triggering the symbolic execution using KLEE for one such result directory. TODO: This has to be integrated with the rest of the toolchain.
 
-Our script can also train the LLM before sending the translation requests. To use the training
-feature you must provide sample C and Rust code pairs which are semantically equivalent.
+NOTE: IMPORTANT: 
 
-### Python Script
-In this section we will discuss how we can configure our script to perform the operations
-discussed above.
-Everything is configured through a json file named `config.json`. Through this json file
-you can specify the source language, the target language and all the paths needed to 
-run the LLVM pass, extract the function source code for simple/complex functions, and 
-invoke the AI interface to perform the translation. Each option has been explained below:
+When developing or trying to fix bugs, PLEASE make sure that the LLM model is set to GPT-3.5. You can do this by turning off `use-gpt4` and `use-claude` in the `translationValidator.py` either by hardcoding it or passing these values explicitly as `False` on the command line. 
 
-- srcLang: specify the source language, this will be used when interacting with the LLM
-- dstLang: specify the source language, this will be used when interacting with the LLM
-- trainingFile: this specifies a folder containing C/Rust pairs. Each file in this folder
-    should contain code in the source language and in the target language
-- srcFolder: (deprecated)
-- llvm-pass-cmd: the command used to run the LLVM pass, it should show the correct path to the
-  llvm run-pass.sh script
-- llvm-log-path: (unused for now) 
-- simple-api-path: path to the simple functions, the prefix of the path should be changed to
-  match the folder of the python script -> TODO: change these to use predefined ENV vars
-- complex-api-path: path to the complex functions, the prefix of the path should be changed to
-  match the folder of the python script -> TODO: change these to use predefined ENV vars
-- export-func-path: (deprecated)
-- inputs: this contains an array of dictionaries, where we specify the target name, and
-  the path to its bitcode and source code
-- translators: this is another array of dictionaries, which we will use to specify our translators.
-  to add a new translator you can follow the same style used for openai 
+GPT-4o is very expensive. So please use GPT-3.5 for testing and development and when we are ready to generate the results, lets use GPT-4.o.
+
+If you are a member of the team, please email `tpalit@ucdavis.edu` for the OpenAI key that you should set up in an environment variable as described below (if you haven't received it yet).
+
+### Dependencies
+
+1. Run `git submodule update --init --recursive`. Inside `src/SVF` execute `./build.sh` and then inside `Release-Build` invoke `sudo make install`.
+
+2. Install `rust` using `rustup`. Then, downgrade to version 1.64.0 which uses LLVM 14 backend, which we use.
+
+		`rustup install 1.64.0`
+		`rustup default 1.64.0`
+
+3. Please clone `git@github.com:taptipalit/typedefextractor.git` and build it. Make sure it builds the `clang` project.
+
+4. Add the build directory to your `$PATH`. Make sure you can run `unused-typedef-extractor <src-dir>` from the terminal. 
+
+5. Make sure you have `universal-ctags` installed.
+
+`sudo apt purge ctags && sudo apt install universal-ctags`.
+
+6. Make sure you have a GPT key stored in the environment variable `$OPENAI_KEY`.
+
+7. Install the Python modules `openai`, `tiktoken`, `more_itertools`, and `pycparser` using `pip3`. For the validator, also install `antlr4-tools`, `antlr4-python3-runtime`, `numpy`, `scipy`, `pygraphviz`, `pydot`, and `networkx`.
+
+ 
+NOTE: When pulling, please make sure that you have the latest of the typedefextractor repo too.
+
+### Generate the preprocessed files from the source directory
+
+There is a wrapper (`inputs-complex/clang-wrapper.sh`) around the `clang` compiler that dumps out the preprocessed files. Configure and build the source code of the target application by passing `CC=<dir>/clang-wrapper.sh`. 
+
+For an example, check out `compile.sh` in `inputs-complex/zlib-1.3.1`.
+
+This will generate a bunch of `.i` files in the source directory. We want those.
+
+NOTE: The clang wrapper assumes that the Makefile commands compile a single file at a time. This is the common case. But if you have something that tries to compile multiple files (and link) in the same command, such as `$(CC) a.c b.c -o a.out`, the wrapper won't work. Please let me know in case it's not easy to adjust the Makefile.
+
+### Running the entire toolchain
+
+You can either run the entire toolchain
+`python3 translationValidator.py --src=<SRC_DIR>`.
+
+This will:
+
+1. Parse the `.i` files and extract the individual functions and create `.i` files for _each_ function. This file will also contain all the `typedef` and `astruct` definitions referenced by that function. 
+
+The script will automatically filter all unneeded dependencies from the preprocessor expansion by automatically invoking `unused-typedef-extractor`. The code to do this is in `typedefFilter.py`. 
+
+2. Then it will take each individual `.i` file and invoke the `gptTranslation.py` file. Currently, it uses GPT-3.5 by default (to prevent us from going bankrupt). To use GPT-4 pass `--use-gpt4` to the `translationValidator.py`.
+
+3. This will (hopefully) use GPT to create a corresponding `.rs` file for each `.i` file. 
+
+4. Automatically invoke both the Clang C compiler to compile the `.i` files for the individual functions and the `rustc` compiler for the individual functions for the `.rs` files. Any compilation failures will be displayed on screen, and also in the log file in `validator.log`.
+
+The final files will be in the directory `<SRC_DIR>/individual-funcs`. This directory will contain the individual `.i` files, the Rust files for each function, and the compiled bitcodes for both the `.i` file and the `.rs` file (if successful).
+
+5. IMPORTANT: This will also generate an analysis.log file which reports how many functions and functions + dependent declarations fit in the request and response limits for the model. Keep an eye out for this because, from my experience, chunking requests or chaining responses, result in even worse quality results. This file will also contain this information for every function.
+
+### Invoking only the GPT translation module
+
+The GPT translation module has the following functionalities:
+
+1. Chunk larger functions into smaller chunks that fit the context window length.
+
+2. Chain the responses when the get truncated because of the response length limit.
+
+To use this module you need to---
+
+1. Create an instance of the `Translator` class from `gptTranslation.py`. and set up the `__init__` function. 
+
+2. For each function you want to translate, set up a`FunctionDepsObj` instance (see. `functionAndDeps.py`). The fields `typeDeclDefCodeLines` and `funcCodeLines` are single strings of (newline-separated) typedefs and function code. 
+
+Look at `extractFuncAndDeps` function in `functionAndDepsExtractor.py` for an example.
+
+3. Invoke the `translate` function on the `Translator` object. This will return the translated Rust code.
+
+### Fine-tuning
+
+We can only fine-tune GPT 3.5 models, as of 6/24/2024.
+
+1. Place the fine-tuning training file in `./training` according to the existing formatting. 
+
+2. Run `python3 jsonifyTrainingData.py`. 
+
+3. Go to `https://platform.openai.com/finetune/` to check the progress. It should show the fine tuning job. When it finishes, grab the name of the model (TODO: provide it as a argument to the script)
+
+4. Then, pass --fine-tuned-model=<model_name> when invoking `translatorValidator.py`.
+
+### For symbolic execution
+
+1. `sudo apt-get install z3`
+
+2. Once you init the LLVM submodules you should have the KLEE repository. 
+	 Create a directory for `klee-build` and run
+	`cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
+	`make -j4 && sudo make install`
+
+3. Inside `rustify/src/Symbolizer` run `./build.sh`.
