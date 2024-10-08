@@ -234,10 +234,13 @@ namespace {
 		}
 
 		Value* create_object_and_mark_symbolic(Module& M, IRBuilder<>& Builder, Type* type, StringRef name) {
+			LLVMContext& ctx = M.getContext();
 			// special handling for i8* which could be strings
+			bool cast_to_i8 = false;
 			if (IntegerType* integer_type = dyn_cast<IntegerType>(type)) {
 				if (integer_type->getBitWidth() == 8) {
 					type = ArrayType::get(integer_type, 100);
+					cast_to_i8 = true;
 				}
 			}
 			AllocaInst* stack_arg = Builder.CreateAlloca(type, 0, name);
@@ -251,7 +254,12 @@ namespace {
 				// as symbolic
 				mark_symbolic(M, stack_arg, Builder);
 			}
-			return stack_arg;
+			if (cast_to_i8) {
+				Type* void_ptr_type = PointerType::get(IntegerType::getInt8Ty(ctx), 0);
+				return (Builder.CreateBitCast(stack_arg, void_ptr_type));
+			} else {
+				return stack_arg;
+			}
 		}
 
 		void symbolize_function_args(Module& M) {
@@ -295,8 +303,93 @@ namespace {
 			// Now we pass these arguments to the actual function
 			Builder.CreateCall(target_function, actual_args);
 
+			for (int i = 0; i < actual_args.size(); i++) {
+				Value* arg_value = actual_args[i];
+				print_nested_klee_exprs(M, Builder, arg_value, std::string("arg_value_") + std::to_string(i));
+				
+			}
 
 			Builder.CreateRetVoid();
+		}
+
+		void print_nested_klee_exprs(Module& M, IRBuilder<>& Builder, Value* arg_value, std::string label) {
+			LLVMContext& ctx = M.getContext();
+			// Now we add the calls to the klee_print_expr functions
+			Function* klee_print_expr_function = M.getFunction("klee_print_expr");
+
+			// If it's not a pointer (not an LLVM pointer, basically a loadInst)
+			// then just pass it directly
+			// and return.
+			
+			if (!isa<PointerType>(arg_value->getType())) {
+				std::vector<Value*> args_vec;
+				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
+				args_vec.push_back(arg_value);
+				Builder.CreateCall(klee_print_expr_function, args_vec);
+				return;
+			}
+
+			// If it is a pointer type, we have to be a little careful
+			while (isa<PointerType>(arg_value->getType()) && isa<PointerType>(arg_value->getType()->getPointerElementType())) {
+				label = "*(" + label + ")";
+				// Create a load
+				arg_value = Builder.CreateLoad(arg_value->getType()->getPointerElementType(), arg_value);
+			}
+
+			if (StructType* struct_type = dyn_cast<StructType>(arg_value->getType()->getPointerElementType())) {
+				for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
+					Type* field_type = struct_type->getElementType(i);
+					Value* gep = Builder.CreateStructGEP(
+							struct_type, 
+							arg_value, 
+							i,
+							"gep");
+					if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
+						print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
+					} else {
+						
+						// Create a load
+						Value* load_arg_value = Builder.CreateLoad(gep->getType()->getPointerElementType(), gep);
+
+
+						std::vector<Value*> args_vec;
+						
+						std::string label_name = std::string("*(" + label + ")");
+
+						args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label_name + " : "));
+						args_vec.push_back(load_arg_value);
+						Builder.CreateCall(klee_print_expr_function, args_vec);
+					}
+				}
+			} else if (ArrayType* array_type = dyn_cast<ArrayType>(arg_value->getType()->getPointerElementType())) {
+				Type* element_type = array_type->getElementType();
+				for (unsigned int i = 0; i < array_type->getNumElements(); i++) {
+					Value* gep = Builder.CreateGEP(
+							array_type, 
+							arg_value, 
+							ArrayRef<Value*>({ConstantInt::get(IntegerType::get(ctx, 64), 0), ConstantInt::get(IntegerType::get(ctx, 64), 0)}),
+							"gep");
+					if (isa<PointerType>(element_type) || isa<StructType>(element_type) || isa<ArrayType>(element_type)) {
+						print_nested_klee_exprs(M, Builder, gep, label + "[" + std::to_string(i) + "]");
+					} else {
+
+						// Create a load
+						Value* load_arg_value = Builder.CreateLoad(gep->getType()->getPointerElementType(), gep);
+
+						std::string label_name = std::string("*(" + label + ")");
+
+						std::vector<Value*> args_vec;
+						args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label_name +  " : "));
+						args_vec.push_back(load_arg_value);
+						Builder.CreateCall(klee_print_expr_function, args_vec);
+					}
+				}
+			} else {
+				std::vector<Value*> args_vec;
+				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
+				args_vec.push_back(arg_value);
+				Builder.CreateCall(klee_print_expr_function, args_vec);
+			}
 		}
 
 		void create_klee_function_decls(Module& M) {
@@ -312,13 +405,20 @@ namespace {
 			ArrayRef<Type*> argTypes(types);
 			FunctionType* klee_make_symbolic_type = FunctionType::get(FunctionType::getVoidTy(ctx), argTypes, false);
 			Function::Create(klee_make_symbolic_type, Function::ExternalLinkage, "klee_make_symbolic", M);
+
+			SmallVector<Type*, 5> types2;
+			types2.push_back(char_ptr_type);
+			ArrayRef<Type*> argTypes2(types2);
+
+			FunctionType* klee_print_expr_type = FunctionType::get(FunctionType::getVoidTy(ctx), argTypes2, true); 
+			Function::Create(klee_print_expr_type, Function::ExternalLinkage, "klee_print_expr", M);
 		}
 
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
 			symbolize_function_args(M);
-			M.dump();
+			//M.dump();
 			return PreservedAnalyses::none();
 		}
 

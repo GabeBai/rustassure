@@ -19,7 +19,7 @@
 
 6. Make sure you have a GPT key stored in the environment variable `$OPENAI_KEY`.
 
-7. Install the Python modules `openai`, `tiktoken`, `more_itertools`, and `pycparser` using `pip3`. For the validator, also install `antlr4-tools`, `antlr4-python3-runtime`, `numpy`, `scipy`, `pygraphviz` and `networkx`.
+7. Install the Python modules `openai`, `tiktoken`, `more_itertools`, and `pycparser` using `pip3`. For the validator, also install `antlr4-tools`, `antlr4-python3-runtime`, `numpy`, `scipy`, `pygraphviz`, `pydot`, and `networkx`.
 
  
 NOTE: When pulling, please make sure that you have the latest of the typedefextractor repo too.

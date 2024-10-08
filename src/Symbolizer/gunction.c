@@ -3,12 +3,13 @@
 
 struct Student {
 	int i; 
-	char name[100];
+//	char name[100];
+	int j;
 };
 
 int gunction(struct Student* sptr, int d) {
 	sptr->i = d / 100;
-	strcpy(sptr->name, "Hello");
+//	strcpy(sptr->name, "Hello");
 	if (sptr->i > 10) {
 		sptr->i = 300;
 	}	
@@ -16,6 +17,7 @@ int gunction(struct Student* sptr, int d) {
 	if (sptr->i > 100) {
 		printf("%d\n", sptr->i);
 	}
+	sptr->j = sptr->j + sptr->j;
 	return 0;
 }
 

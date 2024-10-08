@@ -1,6 +1,3 @@
-[submodule "src/python/python-utils"]
-	path = src/python/python-utils
-	url = git@github.com:shamedgh/python-utils.git
 [submodule "src/SVF"]
 	path = src/SVF
 	url = https://github.com/SVF-tools/SVF.git
@@ -13,3 +10,6 @@
 [submodule "src/python/inputs-complex/minutils"]
 	path = src/python/inputs-complex/minutils
 	url = https://github.com/emmiegit/minutils.git
+[submodule "src/klee"]
+	path = src/klee
+	url = git@github.com:taptipalit/klee.git
