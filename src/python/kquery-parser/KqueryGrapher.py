@@ -350,4 +350,3 @@ if __name__ == "__main__":
      ]
     convert_kquery_to_graph(expressions, "")
 
-

@@ -118,3 +118,17 @@ We can only fine-tune GPT 3.5 models, as of 6/24/2024.
 	`make -j4 && sudo make install`
 
 3. Inside `rustify/src/Symbolizer` run `./build.sh`.
+
+
+### To execute ONLY the latter stages of the toolchain
+
+1. `sudo apt-get install z3`
+2. Download the LLVM and clang binaries `wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
+	 Extract it `tar -Jxvf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
+   Add the `<FULL_PATH>/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin` to `$PATH`. This will bring the binaries on your path and you can invoke them like standard Linux tools.
+3. Build the Symbolizer pass. This is LLVM tool that automatically inserts the `klee_make_symbolic` and `klee_print_exprs` functions to the LLVM bitcode. 
+	 Inside `rustify/src/Symbolizer` run `./build.sh`.
+4. Run the sanity test `cd rustify/src/Symbolizer && ./sanity_test.sh` It will run `klee <bitcode_name.bc>` and should print out some symbolic arguments (the lines starting with `SYM_VALUE`). Note that it might take a few minutes for the sanity test to complete.
+5. Ensure that the `KQueryGrapher.py` script is working. To do this, manually add some of the symbolic values to the `expressions` array in `KQueryGrapher.py` and see if it can get plotted.
+6. TODO: Automate the extraction of the symbolic constraints from the output of `klee <bitcode_name.bc>` and pass them to `KQueryGrapher.py` script's `convert_kquery_to_graph` function.
+7. TODO: Modify the script to work with the generated C and Rust bitcode files and generate the graphs for all functions in `rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-4o_2024-09-17_22-20-56__complete` and then use networkx library functions to find the similarity between them.
