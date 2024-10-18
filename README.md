@@ -110,26 +110,33 @@ We can only fine-tune GPT 3.5 models, as of 6/24/2024.
 
 ### For symbolic execution
 
-1. `sudo apt-get install z3`
+1. Install dependencies 
+   * `sudo apt-get install z3 cmake`
+   * `pip3 install cmake`
+   * `pip install cmake`
 
 2. Once you init the LLVM submodules you should have the KLEE repository. 
-	 Create a directory for `klee-build` and run
-	`cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
-	`make -j4 && sudo make install`
+	 * Create a directory for `klee-build` in `<PATH>/rustify-validator/src` 
+	 * Run `cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
+	 * Run `make -j4 && sudo make install`
 
 3. Inside `rustify/src/Symbolizer` run `./build.sh`.
 
 
 ### To execute ONLY the latter stages of the toolchain
 
-1. `sudo apt-get install z3`
-2. Download the LLVM and clang binaries `wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
-	 Extract it `tar -Jxvf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
-   Add the `<FULL_PATH>/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin` to `$PATH`. This will bring the binaries on your path and you can invoke them like standard Linux tools.
+1. Install dependencies 
+   * `sudo apt-get install z3 cmake`
+   * `pip3 install cmake`
+   * `pip install cmake`
+2. Download the LLVM and clang binaries 
+	* `wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
+	* Extract it `tar -Jxvf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
+	* Add the `<FULL_PATH>/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin` to `$PATH`. This will bring the binaries on your path and you can invoke them like standard Linux tools.
 3.  Once you init the LLVM submodules you should have the KLEE repository. 
-	 Create a directory for `klee-build` and run
-	`cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
-	`make -j4 && sudo make install`
+	 * Create a directory for `klee-build` in `<PATH>/rustify-validator/src` 
+	 * Run `cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
+	* Run `make -j4 && sudo make install`
 4. Build the Symbolizer pass. This is LLVM tool that automatically inserts the `klee_make_symbolic` and `klee_print_exprs` functions to the LLVM bitcode. 
 	 Inside `rustify/src/Symbolizer` run `./build.sh`.
 5. Run the sanity test `cd rustify/src/Symbolizer && ./sanity_test.sh` It will run `klee <bitcode_name.bc>` and should print out some symbolic arguments (the lines starting with `SYM_VALUE`). Note that it might take a few minutes for the sanity test to complete.
