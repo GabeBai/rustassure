@@ -20,7 +20,7 @@ struct CsvParser<'a> {
     free_func: fn(*mut c_void),
 }
 
-fn csv_error(p: &CsvParser) -> i32 {
+#[no_mangle] fn csv_error(p: &CsvParser) -> i32 {
     assert!(p as *const _ != ptr::null(), "received null csv_parser");
     p.status
 }

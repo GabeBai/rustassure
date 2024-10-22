@@ -22,6 +22,10 @@ def emitLLVMBitcodes(individualFuncPath, logger):
     totalRustFiles = 0
     successRustFiles = 0
     for filename in glob.iglob(rustSrcPattern, recursive=True):
+        # First, annotate the Rust function with "#[no_mangle]" to prevent it getting removed
+        sed_cmd = "sed -i 's/^fn /#[no_mangle] fn /' " + filename
+        subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
         # Compile it and generate the bitcode file
         logger.debug("Compiling Rust file %s ", filename)
         # Check if the file has a fn main() 
@@ -39,6 +43,11 @@ def emitLLVMBitcodes(individualFuncPath, logger):
             emitBitcodeCmd = "rustc -A dead_code --emit=llvm-bc --crate-type=lib -o " + filename + ".bc " + filename
         logger.debug("Running command %s", emitBitcodeCmd)
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Disassemble it (let's generate both to avoid any errors in bc -> ll conversion)
+
+        disassemble_cmd = "llvm-dis " + filename + ".bc"
+        subprocess.run(disassemble_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
         totalRustFiles = totalRustFiles + 1
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
@@ -51,6 +60,10 @@ def emitLLVMBitcodes(individualFuncPath, logger):
         logger.debug("Running command %s", emitBitcodeCmd)
 
         result = subprocess.run(emitBitcodeCmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        disassemble_cmd = "llvm-dis " + filename + ".bc"
+        subprocess.run(disassemble_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
         totalCFiles = totalCFiles + 1
         if (result.returncode != 0):
             logger.warn ("Compilation failed for %s", filename)
@@ -63,4 +76,4 @@ def emitLLVMBitcodes(individualFuncPath, logger):
 
 if __name__ == "__main__":
     logger = getLogger("test_llvm_bitcode_emitter_logger.log")
-    emitLLVMBitcodes("/home/tpalit/rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2024-07-04_10-16-12", logger)
+    emitLLVMBitcodes("/home/tpalit/rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-4o_2024-09-17_20-51-53__complete", logger)

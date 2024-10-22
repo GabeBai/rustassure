@@ -19,7 +19,7 @@ struct CsvParser<'a> {
     free_func: fn(*mut c_void),
 }
 
-fn csv_init(p: &mut CsvParser, options: u8) -> i32 {
+#[no_mangle] fn csv_init(p: &mut CsvParser, options: u8) -> i32 {
     if p as *mut _ == std::ptr::null_mut() {
         return -1;
     }

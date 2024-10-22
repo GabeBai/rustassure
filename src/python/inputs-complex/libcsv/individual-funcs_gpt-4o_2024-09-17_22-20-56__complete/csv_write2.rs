@@ -1,6 +1,6 @@
 use std::ffi::c_void;
 
-fn csv_write2(dest: *mut c_void, dest_size: usize, src: *const c_void, src_size: usize, quote: u8) -> usize {
+#[no_mangle] fn csv_write2(dest: *mut c_void, dest_size: usize, src: *const c_void, src_size: usize, quote: u8) -> usize {
     let cdest = dest as *mut u8;
     let csrc = src as *const u8;
     let mut chars = 0;

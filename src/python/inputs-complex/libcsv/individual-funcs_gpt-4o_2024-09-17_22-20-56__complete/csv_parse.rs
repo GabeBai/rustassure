@@ -29,7 +29,7 @@ extern "C" {
     ) -> !;
 }
 
-fn csv_parse(
+#[no_mangle] fn csv_parse(
     p: &mut CsvParser,
     s: *const u8,
     len: usize,

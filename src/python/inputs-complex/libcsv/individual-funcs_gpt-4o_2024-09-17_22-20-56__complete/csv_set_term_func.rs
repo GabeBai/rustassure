@@ -19,7 +19,7 @@ struct CsvParser<'a> {
 }
 
 // Translated function from C to Rust
-fn csv_set_term_func(p: &mut CsvParser, f: fn(u8) -> i32) {
+#[no_mangle] fn csv_set_term_func(p: &mut CsvParser, f: fn(u8) -> i32) {
     if p as *mut _ != std::ptr::null_mut() {
         p.is_term = f;
     }

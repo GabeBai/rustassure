@@ -1,7 +1,7 @@
 
 type __uint32_t = u32;
 
-fn __uint32_identity(__x: __uint32_t) -> __uint32_t {
+#[no_mangle] fn __uint32_identity(__x: __uint32_t) -> __uint32_t {
     __x
 }
 
@@ -24,7 +24,7 @@ struct CsvParser<'a> {
     free_func: fn(*mut std::ffi::c_void),
 }
 
-fn csv_set_free_func(p: &mut CsvParser, f: fn(*mut std::ffi::c_void)) {
+#[no_mangle] fn csv_set_free_func(p: &mut CsvParser, f: fn(*mut std::ffi::c_void)) {
     if p.free_func as *const () != std::ptr::null() && f as *const () != std::ptr::null() {
         p.free_func = f;
     }
@@ -36,7 +36,7 @@ extern "C" {
     fn csv_write2(dest: *mut c_void, dest_size: usize, src: *const c_void, src_size: usize, quote: u8) -> usize;
 }
 
-fn csv_write(dest: *mut c_void, dest_size: usize, src: *const c_void, src_size: usize) -> usize {
+#[no_mangle] fn csv_write(dest: *mut c_void, dest_size: usize, src: *const c_void, src_size: usize) -> usize {
     unsafe {
         csv_write2(dest, dest_size, src, src_size, 0x22)
     }
@@ -44,14 +44,14 @@ fn csv_write(dest: *mut c_void, dest_size: usize, src: *const c_void, src_size: 
 
 type __uint16_t = u16;
 
-fn __bswap_16(__bsx: __uint16_t) -> __uint16_t {
+#[no_mangle] fn __bswap_16(__bsx: __uint16_t) -> __uint16_t {
     ((__bsx >> 8) & 0xff) | ((__bsx & 0xff) << 8)
 }
 
 use std::io::Write;
 use std::ptr;
 
-fn csv_fwrite2(fp: &mut std::fs::File, src: &[u8], quote: u8) -> i32 {
+#[no_mangle] fn csv_fwrite2(fp: &mut std::fs::File, src: &[u8], quote: u8) -> i32 {
     if fp as *mut _ == ptr::null_mut() || src.is_empty() {
         return 0;
     }
@@ -74,29 +74,29 @@ fn csv_fwrite2(fp: &mut std::fs::File, src: &[u8], quote: u8) -> i32 {
     0
 }
 
-fn __bswap_32(__bsx: __uint32_t) -> __uint32_t {
+#[no_mangle] fn __bswap_32(__bsx: __uint32_t) -> __uint32_t {
     (((__bsx & 0xff000000) >> 24) | ((__bsx & 0x00ff0000) >> 8) | ((__bsx & 0x0000ff00) << 8) | ((__bsx & 0x000000ff) << 24))
 }
 
-fn __uint16_identity(__x: __uint16_t) -> __uint16_t {
+#[no_mangle] fn __uint16_identity(__x: __uint16_t) -> __uint16_t {
     __x
 }
 
-fn csv_get_quote(p: &CsvParser) -> u8 {
+#[no_mangle] fn csv_get_quote(p: &CsvParser) -> u8 {
     assert!(p as *const _ != std::ptr::null(), "received null csv_parser");
     p.quote_char
 }
 
 type __uint64_t = u64;
 
-fn __uint64_identity(__x: __uint64_t) -> __uint64_t {
+#[no_mangle] fn __uint64_identity(__x: __uint64_t) -> __uint64_t {
     __x
 }
-fn csv_fwrite(fp: &mut std::fs::File, src: &[u8], src_size: usize) -> i32 {
+#[no_mangle] fn csv_fwrite(fp: &mut std::fs::File, src: &[u8], src_size: usize) -> i32 {
     csv_fwrite2(fp, &src[..src_size], 0x22)
 }
 
-fn csv_fini<'a>(p: &mut CsvParser<'a>, cb1: Option<fn(*mut c_void, usize, *mut c_void)>, cb2: Option<fn(i32, *mut c_void)>, data: *mut c_void) -> i32 {
+#[no_mangle] fn csv_fini<'a>(p: &mut CsvParser<'a>, cb1: Option<fn(*mut c_void, usize, *mut c_void)>, cb2: Option<fn(i32, *mut c_void)>, data: *mut c_void) -> i32 {
     if p as *mut _ == std::ptr::null_mut() {
         return -1;
     }
@@ -154,14 +154,14 @@ fn csv_fini<'a>(p: &mut CsvParser<'a>, cb1: Option<fn(*mut c_void, usize, *mut c
     0
 }
 
-fn csv_get_buffer_size(p: &CsvParser) -> usize {
+#[no_mangle] fn csv_get_buffer_size(p: &CsvParser) -> usize {
     if p as *const _ != std::ptr::null() {
         return p.entry_size;
     }
     0
 }
 
-fn __bswap_64(__bsx: __uint64_t) -> __uint64_t {
+#[no_mangle] fn __bswap_64(__bsx: __uint64_t) -> __uint64_t {
     (((__bsx & 0xff00000000000000) >> 56)
         | ((__bsx & 0x00ff000000000000) >> 40)
         | ((__bsx & 0x0000ff0000000000) >> 24)
@@ -172,25 +172,25 @@ fn __bswap_64(__bsx: __uint64_t) -> __uint64_t {
         | ((__bsx & 0x00000000000000ff) << 56))
 }
 
-fn csv_get_delim(p: &CsvParser) -> u8 {
+#[no_mangle] fn csv_get_delim(p: &CsvParser) -> u8 {
     assert!(p as *const _ != std::ptr::null(), "received null csv_parser");
     p.delim_char
 }
 
-fn csv_get_opts(p: &CsvParser) -> i32 {
+#[no_mangle] fn csv_get_opts(p: &CsvParser) -> i32 {
     if p as *const _ == std::ptr::null() {
         return -1;
     }
     p.options as i32
 }
 
-fn csv_set_delim(p: Option<&mut CsvParser>, c: u8) {
+#[no_mangle] fn csv_set_delim(p: Option<&mut CsvParser>, c: u8) {
     if let Some(parser) = p {
         parser.delim_char = c;
     }
 }
 
-fn csv_set_opts(p: Option<&mut CsvParser>, options: u8) -> i32 {
+#[no_mangle] fn csv_set_opts(p: Option<&mut CsvParser>, options: u8) -> i32 {
     if p.is_none() {
         return -1;
     }
@@ -198,19 +198,19 @@ fn csv_set_opts(p: Option<&mut CsvParser>, options: u8) -> i32 {
     0
 }
 
-fn csv_set_quote(p: Option<&mut CsvParser>, c: u8) {
+#[no_mangle] fn csv_set_quote(p: Option<&mut CsvParser>, c: u8) {
     if let Some(parser) = p {
         parser.quote_char = c;
     }
 }
 
-fn csv_set_realloc_func(p: Option<&mut CsvParser>, f: Option<fn(*mut std::ffi::c_void, usize) -> *mut std::ffi::c_void>) {
+#[no_mangle] fn csv_set_realloc_func(p: Option<&mut CsvParser>, f: Option<fn(*mut std::ffi::c_void, usize) -> *mut std::ffi::c_void>) {
     if let (Some(parser), Some(func)) = (p, f) {
         parser.realloc_func = func;
     }
 }
 
-fn csv_free(p: Option<&mut CsvParser>) {
+#[no_mangle] fn csv_free(p: Option<&mut CsvParser>) {
     if let Some(parser) = p {
         if let Some(entry_buf) = parser.entry_buf.take() {
             (parser.free_func)(entry_buf.as_mut_ptr() as *mut std::ffi::c_void);
@@ -219,13 +219,13 @@ fn csv_free(p: Option<&mut CsvParser>) {
     }
 }
 
-fn csv_set_space_func(p: Option<&mut CsvParser>, f: fn(u8) -> i32) {
+#[no_mangle] fn csv_set_space_func(p: Option<&mut CsvParser>, f: fn(u8) -> i32) {
     if let Some(parser) = p {
         parser.is_space = f;
     }
 }
 
-fn csv_set_blk_size(p: Option<&mut CsvParser>, size: usize) {
+#[no_mangle] fn csv_set_blk_size(p: Option<&mut CsvParser>, size: usize) {
     if let Some(parser) = p {
         parser.blk_size = size;
     }
@@ -239,7 +239,7 @@ const CSV_ERRORS: [&str; 5] = [
     "invalid status code",
 ];
 
-fn csv_strerror(status: i32) -> &'static str {
+#[no_mangle] fn csv_strerror(status: i32) -> &'static str {
     if status >= 4 || status < 0 {
         CSV_ERRORS[4]
     } else {
