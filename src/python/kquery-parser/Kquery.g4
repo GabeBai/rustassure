@@ -135,10 +135,12 @@ expr
 			| select_expr
 			| neg_expr
 			| array_read_expr
+			| version
 		;
 
 // Versions
 
-update_list : expr '=' expr (',' update_list)?;
-version: IDENTIFIER | '[' update_list? ']' '@' version;
-
+update_list : expr '=' expr (',' expr '=' expr)*;
+version: '[' (update_list)? ']' '@' version
+       | IDENTIFIER (':' expr)?
+       ;
