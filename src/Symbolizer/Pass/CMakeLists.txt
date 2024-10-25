@@ -6,3 +6,12 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O0")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O0")
 
 add_library(SymbolizerPass MODULE SymbolizerPass.cpp)
+
+target_link_libraries(SymbolizerPassgit 
+    ${LLVM_LIBRARIES}
+    LLVMCore
+    LLVMSupport
+    LLVMIRReader
+    LLVMTransformUtils
+    LLVMAnalysis
+)

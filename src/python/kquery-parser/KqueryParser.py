@@ -1,0 +1,2287 @@
+# Generated from Kquery.g4 by ANTLR 4.13.2
+# encoding: utf-8
+from antlr4 import *
+from io import StringIO
+import sys
+if sys.version_info[1] > 5:
+	from typing import TextIO
+else:
+	from typing.io import TextIO
+
+def serializedATN():
+    return [
+        4,1,54,238,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
+        2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,
+        7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,
+        2,27,7,27,2,28,7,28,2,29,7,29,1,0,1,0,1,0,1,0,3,0,65,8,0,1,1,1,1,
+        1,1,1,1,1,1,3,1,72,8,1,1,2,1,2,1,2,1,2,3,2,78,8,2,1,2,1,2,1,2,1,
+        2,1,2,1,2,1,2,1,2,1,3,1,3,1,4,1,4,1,5,1,5,1,6,4,6,95,8,6,11,6,12,
+        6,96,1,7,1,7,1,7,1,8,1,8,1,9,1,9,1,10,1,10,1,11,1,11,1,12,1,12,1,
+        13,1,13,1,14,1,14,1,15,1,15,1,16,1,16,1,17,1,17,1,17,1,17,1,18,1,
+        18,1,18,1,18,1,18,1,18,1,18,1,19,1,19,1,19,1,19,1,19,1,19,1,20,1,
+        20,1,20,3,20,140,8,20,1,20,1,20,1,20,1,20,1,21,1,21,1,21,3,21,149,
+        8,21,1,21,1,21,1,21,1,21,1,22,1,22,1,22,1,22,1,22,1,22,1,23,1,23,
+        1,23,1,23,1,23,1,23,1,23,1,24,1,24,1,24,1,24,1,24,1,24,1,24,1,24,
+        1,25,1,25,1,25,3,25,179,8,25,1,25,1,25,1,25,1,26,1,26,1,26,1,26,
+        1,26,1,26,1,26,1,27,1,27,1,27,1,27,1,27,1,27,1,27,1,27,1,27,1,27,
+        1,27,1,27,1,27,1,27,1,27,1,27,1,27,1,27,3,27,209,8,27,1,28,1,28,
+        1,28,1,28,1,28,1,28,1,28,1,28,5,28,219,8,28,10,28,12,28,222,9,28,
+        1,29,1,29,3,29,226,8,29,1,29,1,29,1,29,1,29,1,29,1,29,3,29,234,8,
+        29,3,29,236,8,29,1,29,0,0,30,0,2,4,6,8,10,12,14,16,18,20,22,24,26,
+        28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,0,6,1,0,22,27,1,
+        0,29,34,1,0,35,44,1,0,45,46,1,0,47,48,1,0,52,53,232,0,64,1,0,0,0,
+        2,71,1,0,0,0,4,73,1,0,0,0,6,87,1,0,0,0,8,89,1,0,0,0,10,91,1,0,0,
+        0,12,94,1,0,0,0,14,98,1,0,0,0,16,101,1,0,0,0,18,103,1,0,0,0,20,105,
+        1,0,0,0,22,107,1,0,0,0,24,109,1,0,0,0,26,111,1,0,0,0,28,113,1,0,
+        0,0,30,115,1,0,0,0,32,117,1,0,0,0,34,119,1,0,0,0,36,123,1,0,0,0,
+        38,130,1,0,0,0,40,136,1,0,0,0,42,145,1,0,0,0,44,154,1,0,0,0,46,160,
+        1,0,0,0,48,167,1,0,0,0,50,175,1,0,0,0,52,183,1,0,0,0,54,208,1,0,
+        0,0,56,210,1,0,0,0,58,235,1,0,0,0,60,65,5,13,0,0,61,62,5,13,0,0,
+        62,63,5,1,0,0,63,65,3,0,0,0,64,60,1,0,0,0,64,61,1,0,0,0,65,1,1,0,
+        0,0,66,72,5,2,0,0,67,68,5,3,0,0,68,69,3,0,0,0,69,70,5,4,0,0,70,72,
+        1,0,0,0,71,66,1,0,0,0,71,67,1,0,0,0,72,3,1,0,0,0,73,74,5,5,0,0,74,
+        75,5,54,0,0,75,77,5,3,0,0,76,78,5,13,0,0,77,76,1,0,0,0,77,78,1,0,
+        0,0,78,79,1,0,0,0,79,80,5,4,0,0,80,81,5,6,0,0,81,82,5,21,0,0,82,
+        83,5,7,0,0,83,84,5,21,0,0,84,85,5,8,0,0,85,86,3,2,1,0,86,5,1,0,0,
+        0,87,88,7,0,0,0,88,7,1,0,0,0,89,90,7,1,0,0,90,9,1,0,0,0,91,92,7,
+        2,0,0,92,11,1,0,0,0,93,95,3,54,27,0,94,93,1,0,0,0,95,96,1,0,0,0,
+        96,94,1,0,0,0,96,97,1,0,0,0,97,13,1,0,0,0,98,99,5,21,0,0,99,100,
+        5,13,0,0,100,15,1,0,0,0,101,102,7,3,0,0,102,17,1,0,0,0,103,104,7,
+        4,0,0,104,19,1,0,0,0,105,106,5,49,0,0,106,21,1,0,0,0,107,108,5,50,
+        0,0,108,23,1,0,0,0,109,110,5,51,0,0,110,25,1,0,0,0,111,112,7,5,0,
+        0,112,27,1,0,0,0,113,114,5,54,0,0,114,29,1,0,0,0,115,116,5,13,0,
+        0,116,31,1,0,0,0,117,118,5,21,0,0,118,33,1,0,0,0,119,120,5,54,0,
+        0,120,121,5,6,0,0,121,122,3,54,27,0,122,35,1,0,0,0,123,124,5,9,0,
+        0,124,125,3,6,3,0,125,126,3,32,16,0,126,127,3,54,27,0,127,128,3,
+        54,27,0,128,129,5,10,0,0,129,37,1,0,0,0,130,131,5,9,0,0,131,132,
+        3,8,4,0,132,133,3,54,27,0,133,134,3,54,27,0,134,135,5,10,0,0,135,
+        39,1,0,0,0,136,137,5,9,0,0,137,139,3,10,5,0,138,140,3,32,16,0,139,
+        138,1,0,0,0,139,140,1,0,0,0,140,141,1,0,0,0,141,142,3,54,27,0,142,
+        143,3,54,27,0,143,144,5,10,0,0,144,41,1,0,0,0,145,146,5,9,0,0,146,
+        148,3,16,8,0,147,149,3,32,16,0,148,147,1,0,0,0,148,149,1,0,0,0,149,
+        150,1,0,0,0,150,151,3,54,27,0,151,152,3,54,27,0,152,153,5,10,0,0,
+        153,43,1,0,0,0,154,155,5,9,0,0,155,156,3,18,9,0,156,157,3,32,16,
+        0,157,158,3,54,27,0,158,159,5,10,0,0,159,45,1,0,0,0,160,161,5,9,
+        0,0,161,162,3,20,10,0,162,163,3,32,16,0,163,164,3,54,27,0,164,165,
+        3,58,29,0,165,166,5,10,0,0,166,47,1,0,0,0,167,168,5,9,0,0,168,169,
+        3,22,11,0,169,170,3,32,16,0,170,171,3,54,27,0,171,172,3,54,27,0,
+        172,173,3,54,27,0,173,174,5,10,0,0,174,49,1,0,0,0,175,176,5,9,0,
+        0,176,178,3,24,12,0,177,179,3,32,16,0,178,177,1,0,0,0,178,179,1,
+        0,0,0,179,180,1,0,0,0,180,181,3,54,27,0,181,182,5,10,0,0,182,51,
+        1,0,0,0,183,184,5,9,0,0,184,185,3,26,13,0,185,186,3,32,16,0,186,
+        187,3,54,27,0,187,188,3,58,29,0,188,189,5,10,0,0,189,53,1,0,0,0,
+        190,209,3,28,14,0,191,209,3,30,15,0,192,209,3,34,17,0,193,194,5,
+        9,0,0,194,195,3,14,7,0,195,196,5,10,0,0,196,209,1,0,0,0,197,209,
+        3,4,2,0,198,209,3,36,18,0,199,209,3,38,19,0,200,209,3,40,20,0,201,
+        209,3,42,21,0,202,209,3,44,22,0,203,209,3,46,23,0,204,209,3,48,24,
+        0,205,209,3,50,25,0,206,209,3,52,26,0,207,209,3,58,29,0,208,190,
+        1,0,0,0,208,191,1,0,0,0,208,192,1,0,0,0,208,193,1,0,0,0,208,197,
+        1,0,0,0,208,198,1,0,0,0,208,199,1,0,0,0,208,200,1,0,0,0,208,201,
+        1,0,0,0,208,202,1,0,0,0,208,203,1,0,0,0,208,204,1,0,0,0,208,205,
+        1,0,0,0,208,206,1,0,0,0,208,207,1,0,0,0,209,55,1,0,0,0,210,211,3,
+        54,27,0,211,212,5,8,0,0,212,220,3,54,27,0,213,214,5,1,0,0,214,215,
+        3,54,27,0,215,216,5,8,0,0,216,217,3,54,27,0,217,219,1,0,0,0,218,
+        213,1,0,0,0,219,222,1,0,0,0,220,218,1,0,0,0,220,221,1,0,0,0,221,
+        57,1,0,0,0,222,220,1,0,0,0,223,225,5,3,0,0,224,226,3,56,28,0,225,
+        224,1,0,0,0,225,226,1,0,0,0,226,227,1,0,0,0,227,228,5,4,0,0,228,
+        229,5,11,0,0,229,236,3,58,29,0,230,233,5,54,0,0,231,232,5,6,0,0,
+        232,234,3,54,27,0,233,231,1,0,0,0,233,234,1,0,0,0,234,236,1,0,0,
+        0,235,223,1,0,0,0,235,230,1,0,0,0,236,59,1,0,0,0,12,64,71,77,96,
+        139,148,178,208,220,225,233,235
+    ]
+
+class KqueryParser ( Parser ):
+
+    grammarFileName = "Kquery.g4"
+
+    atn = ATNDeserializer().deserialize(serializedATN())
+
+    decisionsToDFA = [ DFA(ds, i) for i, ds in enumerate(atn.decisionToState) ]
+
+    sharedContextCache = PredictionContextCache()
+
+    literalNames = [ "<INVALID>", "','", "'symbolic'", "'['", "']'", "'array'", 
+                     "':'", "'->'", "'='", "'('", "')'", "'@'", "<INVALID>", 
+                     "<INVALID>", "'true'", "'false'", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "'Add'", "'Sub'", "'Mul'", "'UDiv'", "'URem'", "'SDiv'", 
+                     "'Not'", "'And'", "'OR'", "'Xor'", "'Shl'", "'LShr'", 
+                     "'AShr'", "'Eq'", "'Ne'", "'Ult'", "'Ule'", "'Ugt'", 
+                     "'Uge'", "'Slt'", "'Sle'", "'Sgt'", "'Sge'", "'Concat'", 
+                     "'Extract'", "'ZExt'", "'SExt'", "'Read'", "'Select'", 
+                     "'Neg'", "'ReadLSB'", "'ReadMSB'" ]
+
+    symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "WS", "NUMBER", "TRUE", "FALSE", "SIGNED_CONSTANT", 
+                      "DEC_CONSTANT", "BIN_CONSTANT", "OCT_CONSTANT", "HEX_CONSTANT", 
+                      "TYPE", "ADD", "SUB", "MUL", "UDIV", "UREM", "SDIV", 
+                      "NOT", "AND", "OR", "XOR", "SHL", "LSHR", "ASHR", 
+                      "EQ", "NE", "ULT", "ULE", "UGT", "UGE", "SLT", "SLE", 
+                      "SGT", "SGE", "CONCAT", "EXTRACT", "ZEXT", "SEXT", 
+                      "READ", "SELECT", "NEG", "READLSB", "READMSB", "IDENTIFIER" ]
+
+    RULE_number_list = 0
+    RULE_array_initializer = 1
+    RULE_array_declaration = 2
+    RULE_arithmetic_expr_kind = 3
+    RULE_bitwise_expr_kind = 4
+    RULE_comparison_expr_kind = 5
+    RULE_prog = 6
+    RULE_number_with_type = 7
+    RULE_bv_expr_kind = 8
+    RULE_extension_expr_kind = 9
+    RULE_read_expr_kind = 10
+    RULE_select_expr_kind = 11
+    RULE_neg_expr_kind = 12
+    RULE_array_read_expr_kind = 13
+    RULE_identifier = 14
+    RULE_number = 15
+    RULE_type = 16
+    RULE_definition = 17
+    RULE_arithmetic_expr = 18
+    RULE_bitwise_expr = 19
+    RULE_comparison_expr = 20
+    RULE_bv_expr = 21
+    RULE_extension_expr = 22
+    RULE_read_expr = 23
+    RULE_select_expr = 24
+    RULE_neg_expr = 25
+    RULE_array_read_expr = 26
+    RULE_expr = 27
+    RULE_update_list = 28
+    RULE_version = 29
+
+    ruleNames =  [ "number_list", "array_initializer", "array_declaration", 
+                   "arithmetic_expr_kind", "bitwise_expr_kind", "comparison_expr_kind", 
+                   "prog", "number_with_type", "bv_expr_kind", "extension_expr_kind", 
+                   "read_expr_kind", "select_expr_kind", "neg_expr_kind", 
+                   "array_read_expr_kind", "identifier", "number", "type", 
+                   "definition", "arithmetic_expr", "bitwise_expr", "comparison_expr", 
+                   "bv_expr", "extension_expr", "read_expr", "select_expr", 
+                   "neg_expr", "array_read_expr", "expr", "update_list", 
+                   "version" ]
+
+    EOF = Token.EOF
+    T__0=1
+    T__1=2
+    T__2=3
+    T__3=4
+    T__4=5
+    T__5=6
+    T__6=7
+    T__7=8
+    T__8=9
+    T__9=10
+    T__10=11
+    WS=12
+    NUMBER=13
+    TRUE=14
+    FALSE=15
+    SIGNED_CONSTANT=16
+    DEC_CONSTANT=17
+    BIN_CONSTANT=18
+    OCT_CONSTANT=19
+    HEX_CONSTANT=20
+    TYPE=21
+    ADD=22
+    SUB=23
+    MUL=24
+    UDIV=25
+    UREM=26
+    SDIV=27
+    NOT=28
+    AND=29
+    OR=30
+    XOR=31
+    SHL=32
+    LSHR=33
+    ASHR=34
+    EQ=35
+    NE=36
+    ULT=37
+    ULE=38
+    UGT=39
+    UGE=40
+    SLT=41
+    SLE=42
+    SGT=43
+    SGE=44
+    CONCAT=45
+    EXTRACT=46
+    ZEXT=47
+    SEXT=48
+    READ=49
+    SELECT=50
+    NEG=51
+    READLSB=52
+    READMSB=53
+    IDENTIFIER=54
+
+    def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
+        super().__init__(input, output)
+        self.checkVersion("4.13.2")
+        self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
+        self._predicates = None
+
+
+
+
+    class Number_listContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def NUMBER(self):
+            return self.getToken(KqueryParser.NUMBER, 0)
+
+        def number_list(self):
+            return self.getTypedRuleContext(KqueryParser.Number_listContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_number_list
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterNumber_list" ):
+                listener.enterNumber_list(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitNumber_list" ):
+                listener.exitNumber_list(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitNumber_list" ):
+                return visitor.visitNumber_list(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def number_list(self):
+
+        localctx = KqueryParser.Number_listContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 0, self.RULE_number_list)
+        try:
+            self.state = 64
+            self._errHandler.sync(self)
+            la_ = self._interp.adaptivePredict(self._input,0,self._ctx)
+            if la_ == 1:
+                self.enterOuterAlt(localctx, 1)
+                self.state = 60
+                self.match(KqueryParser.NUMBER)
+                pass
+
+            elif la_ == 2:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 61
+                self.match(KqueryParser.NUMBER)
+                self.state = 62
+                self.match(KqueryParser.T__0)
+                self.state = 63
+                self.number_list()
+                pass
+
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Array_initializerContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def number_list(self):
+            return self.getTypedRuleContext(KqueryParser.Number_listContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_array_initializer
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterArray_initializer" ):
+                listener.enterArray_initializer(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitArray_initializer" ):
+                listener.exitArray_initializer(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitArray_initializer" ):
+                return visitor.visitArray_initializer(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def array_initializer(self):
+
+        localctx = KqueryParser.Array_initializerContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 2, self.RULE_array_initializer)
+        try:
+            self.state = 71
+            self._errHandler.sync(self)
+            token = self._input.LA(1)
+            if token in [2]:
+                self.enterOuterAlt(localctx, 1)
+                self.state = 66
+                self.match(KqueryParser.T__1)
+                pass
+            elif token in [3]:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 67
+                self.match(KqueryParser.T__2)
+                self.state = 68
+                self.number_list()
+                self.state = 69
+                self.match(KqueryParser.T__3)
+                pass
+            else:
+                raise NoViableAltException(self)
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Array_declarationContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def IDENTIFIER(self):
+            return self.getToken(KqueryParser.IDENTIFIER, 0)
+
+        def TYPE(self, i:int=None):
+            if i is None:
+                return self.getTokens(KqueryParser.TYPE)
+            else:
+                return self.getToken(KqueryParser.TYPE, i)
+
+        def array_initializer(self):
+            return self.getTypedRuleContext(KqueryParser.Array_initializerContext,0)
+
+
+        def NUMBER(self):
+            return self.getToken(KqueryParser.NUMBER, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_array_declaration
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterArray_declaration" ):
+                listener.enterArray_declaration(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitArray_declaration" ):
+                listener.exitArray_declaration(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitArray_declaration" ):
+                return visitor.visitArray_declaration(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def array_declaration(self):
+
+        localctx = KqueryParser.Array_declarationContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 4, self.RULE_array_declaration)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 73
+            self.match(KqueryParser.T__4)
+            self.state = 74
+            self.match(KqueryParser.IDENTIFIER)
+            self.state = 75
+            self.match(KqueryParser.T__2)
+            self.state = 77
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if _la==13:
+                self.state = 76
+                self.match(KqueryParser.NUMBER)
+
+
+            self.state = 79
+            self.match(KqueryParser.T__3)
+            self.state = 80
+            self.match(KqueryParser.T__5)
+            self.state = 81
+            self.match(KqueryParser.TYPE)
+            self.state = 82
+            self.match(KqueryParser.T__6)
+            self.state = 83
+            self.match(KqueryParser.TYPE)
+            self.state = 84
+            self.match(KqueryParser.T__7)
+            self.state = 85
+            self.array_initializer()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Arithmetic_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def ADD(self):
+            return self.getToken(KqueryParser.ADD, 0)
+
+        def SUB(self):
+            return self.getToken(KqueryParser.SUB, 0)
+
+        def MUL(self):
+            return self.getToken(KqueryParser.MUL, 0)
+
+        def UDIV(self):
+            return self.getToken(KqueryParser.UDIV, 0)
+
+        def UREM(self):
+            return self.getToken(KqueryParser.UREM, 0)
+
+        def SDIV(self):
+            return self.getToken(KqueryParser.SDIV, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_arithmetic_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterArithmetic_expr_kind" ):
+                listener.enterArithmetic_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitArithmetic_expr_kind" ):
+                listener.exitArithmetic_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitArithmetic_expr_kind" ):
+                return visitor.visitArithmetic_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def arithmetic_expr_kind(self):
+
+        localctx = KqueryParser.Arithmetic_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 6, self.RULE_arithmetic_expr_kind)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 87
+            _la = self._input.LA(1)
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 264241152) != 0)):
+                self._errHandler.recoverInline(self)
+            else:
+                self._errHandler.reportMatch(self)
+                self.consume()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Bitwise_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def AND(self):
+            return self.getToken(KqueryParser.AND, 0)
+
+        def OR(self):
+            return self.getToken(KqueryParser.OR, 0)
+
+        def XOR(self):
+            return self.getToken(KqueryParser.XOR, 0)
+
+        def SHL(self):
+            return self.getToken(KqueryParser.SHL, 0)
+
+        def LSHR(self):
+            return self.getToken(KqueryParser.LSHR, 0)
+
+        def ASHR(self):
+            return self.getToken(KqueryParser.ASHR, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_bitwise_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterBitwise_expr_kind" ):
+                listener.enterBitwise_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitBitwise_expr_kind" ):
+                listener.exitBitwise_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitBitwise_expr_kind" ):
+                return visitor.visitBitwise_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def bitwise_expr_kind(self):
+
+        localctx = KqueryParser.Bitwise_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 8, self.RULE_bitwise_expr_kind)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 89
+            _la = self._input.LA(1)
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 33822867456) != 0)):
+                self._errHandler.recoverInline(self)
+            else:
+                self._errHandler.reportMatch(self)
+                self.consume()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Comparison_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def EQ(self):
+            return self.getToken(KqueryParser.EQ, 0)
+
+        def NE(self):
+            return self.getToken(KqueryParser.NE, 0)
+
+        def ULT(self):
+            return self.getToken(KqueryParser.ULT, 0)
+
+        def ULE(self):
+            return self.getToken(KqueryParser.ULE, 0)
+
+        def UGT(self):
+            return self.getToken(KqueryParser.UGT, 0)
+
+        def UGE(self):
+            return self.getToken(KqueryParser.UGE, 0)
+
+        def SLT(self):
+            return self.getToken(KqueryParser.SLT, 0)
+
+        def SLE(self):
+            return self.getToken(KqueryParser.SLE, 0)
+
+        def SGT(self):
+            return self.getToken(KqueryParser.SGT, 0)
+
+        def SGE(self):
+            return self.getToken(KqueryParser.SGE, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_comparison_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterComparison_expr_kind" ):
+                listener.enterComparison_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitComparison_expr_kind" ):
+                listener.exitComparison_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitComparison_expr_kind" ):
+                return visitor.visitComparison_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def comparison_expr_kind(self):
+
+        localctx = KqueryParser.Comparison_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 10, self.RULE_comparison_expr_kind)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 91
+            _la = self._input.LA(1)
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 35150012350464) != 0)):
+                self._errHandler.recoverInline(self)
+            else:
+                self._errHandler.reportMatch(self)
+                self.consume()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class ProgContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(KqueryParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(KqueryParser.ExprContext,i)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_prog
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterProg" ):
+                listener.enterProg(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitProg" ):
+                listener.exitProg(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitProg" ):
+                return visitor.visitProg(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def prog(self):
+
+        localctx = KqueryParser.ProgContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 12, self.RULE_prog)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 94 
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            while True:
+                self.state = 93
+                self.expr()
+                self.state = 96 
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if not ((((_la) & ~0x3f) == 0 and ((1 << _la) & 18014398509490728) != 0)):
+                    break
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Number_with_typeContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def TYPE(self):
+            return self.getToken(KqueryParser.TYPE, 0)
+
+        def NUMBER(self):
+            return self.getToken(KqueryParser.NUMBER, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_number_with_type
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterNumber_with_type" ):
+                listener.enterNumber_with_type(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitNumber_with_type" ):
+                listener.exitNumber_with_type(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitNumber_with_type" ):
+                return visitor.visitNumber_with_type(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def number_with_type(self):
+
+        localctx = KqueryParser.Number_with_typeContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 14, self.RULE_number_with_type)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 98
+            self.match(KqueryParser.TYPE)
+            self.state = 99
+            self.match(KqueryParser.NUMBER)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Bv_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def CONCAT(self):
+            return self.getToken(KqueryParser.CONCAT, 0)
+
+        def EXTRACT(self):
+            return self.getToken(KqueryParser.EXTRACT, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_bv_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterBv_expr_kind" ):
+                listener.enterBv_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitBv_expr_kind" ):
+                listener.exitBv_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitBv_expr_kind" ):
+                return visitor.visitBv_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def bv_expr_kind(self):
+
+        localctx = KqueryParser.Bv_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 16, self.RULE_bv_expr_kind)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 101
+            _la = self._input.LA(1)
+            if not(_la==45 or _la==46):
+                self._errHandler.recoverInline(self)
+            else:
+                self._errHandler.reportMatch(self)
+                self.consume()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Extension_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def ZEXT(self):
+            return self.getToken(KqueryParser.ZEXT, 0)
+
+        def SEXT(self):
+            return self.getToken(KqueryParser.SEXT, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_extension_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExtension_expr_kind" ):
+                listener.enterExtension_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExtension_expr_kind" ):
+                listener.exitExtension_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitExtension_expr_kind" ):
+                return visitor.visitExtension_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def extension_expr_kind(self):
+
+        localctx = KqueryParser.Extension_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 18, self.RULE_extension_expr_kind)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 103
+            _la = self._input.LA(1)
+            if not(_la==47 or _la==48):
+                self._errHandler.recoverInline(self)
+            else:
+                self._errHandler.reportMatch(self)
+                self.consume()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Read_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def READ(self):
+            return self.getToken(KqueryParser.READ, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_read_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterRead_expr_kind" ):
+                listener.enterRead_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitRead_expr_kind" ):
+                listener.exitRead_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitRead_expr_kind" ):
+                return visitor.visitRead_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def read_expr_kind(self):
+
+        localctx = KqueryParser.Read_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 20, self.RULE_read_expr_kind)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 105
+            self.match(KqueryParser.READ)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Select_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def SELECT(self):
+            return self.getToken(KqueryParser.SELECT, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_select_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterSelect_expr_kind" ):
+                listener.enterSelect_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitSelect_expr_kind" ):
+                listener.exitSelect_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitSelect_expr_kind" ):
+                return visitor.visitSelect_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def select_expr_kind(self):
+
+        localctx = KqueryParser.Select_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 22, self.RULE_select_expr_kind)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 107
+            self.match(KqueryParser.SELECT)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Neg_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def NEG(self):
+            return self.getToken(KqueryParser.NEG, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_neg_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterNeg_expr_kind" ):
+                listener.enterNeg_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitNeg_expr_kind" ):
+                listener.exitNeg_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitNeg_expr_kind" ):
+                return visitor.visitNeg_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def neg_expr_kind(self):
+
+        localctx = KqueryParser.Neg_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 24, self.RULE_neg_expr_kind)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 109
+            self.match(KqueryParser.NEG)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Array_read_expr_kindContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def READLSB(self):
+            return self.getToken(KqueryParser.READLSB, 0)
+
+        def READMSB(self):
+            return self.getToken(KqueryParser.READMSB, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_array_read_expr_kind
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterArray_read_expr_kind" ):
+                listener.enterArray_read_expr_kind(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitArray_read_expr_kind" ):
+                listener.exitArray_read_expr_kind(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitArray_read_expr_kind" ):
+                return visitor.visitArray_read_expr_kind(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def array_read_expr_kind(self):
+
+        localctx = KqueryParser.Array_read_expr_kindContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 26, self.RULE_array_read_expr_kind)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 111
+            _la = self._input.LA(1)
+            if not(_la==52 or _la==53):
+                self._errHandler.recoverInline(self)
+            else:
+                self._errHandler.reportMatch(self)
+                self.consume()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class IdentifierContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def IDENTIFIER(self):
+            return self.getToken(KqueryParser.IDENTIFIER, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_identifier
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterIdentifier" ):
+                listener.enterIdentifier(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitIdentifier" ):
+                listener.exitIdentifier(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitIdentifier" ):
+                return visitor.visitIdentifier(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def identifier(self):
+
+        localctx = KqueryParser.IdentifierContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 28, self.RULE_identifier)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 113
+            self.match(KqueryParser.IDENTIFIER)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class NumberContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def NUMBER(self):
+            return self.getToken(KqueryParser.NUMBER, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_number
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterNumber" ):
+                listener.enterNumber(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitNumber" ):
+                listener.exitNumber(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitNumber" ):
+                return visitor.visitNumber(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def number(self):
+
+        localctx = KqueryParser.NumberContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 30, self.RULE_number)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 115
+            self.match(KqueryParser.NUMBER)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class TypeContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def TYPE(self):
+            return self.getToken(KqueryParser.TYPE, 0)
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_type
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterType" ):
+                listener.enterType(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitType" ):
+                listener.exitType(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitType" ):
+                return visitor.visitType(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def type_(self):
+
+        localctx = KqueryParser.TypeContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 32, self.RULE_type)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 117
+            self.match(KqueryParser.TYPE)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class DefinitionContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def IDENTIFIER(self):
+            return self.getToken(KqueryParser.IDENTIFIER, 0)
+
+        def expr(self):
+            return self.getTypedRuleContext(KqueryParser.ExprContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_definition
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterDefinition" ):
+                listener.enterDefinition(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitDefinition" ):
+                listener.exitDefinition(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitDefinition" ):
+                return visitor.visitDefinition(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def definition(self):
+
+        localctx = KqueryParser.DefinitionContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 34, self.RULE_definition)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 119
+            self.match(KqueryParser.IDENTIFIER)
+            self.state = 120
+            self.match(KqueryParser.T__5)
+            self.state = 121
+            self.expr()
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Arithmetic_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def arithmetic_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Arithmetic_expr_kindContext,0)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(KqueryParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(KqueryParser.ExprContext,i)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_arithmetic_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterArithmetic_expr" ):
+                listener.enterArithmetic_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitArithmetic_expr" ):
+                listener.exitArithmetic_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitArithmetic_expr" ):
+                return visitor.visitArithmetic_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def arithmetic_expr(self):
+
+        localctx = KqueryParser.Arithmetic_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 36, self.RULE_arithmetic_expr)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 123
+            self.match(KqueryParser.T__8)
+            self.state = 124
+            self.arithmetic_expr_kind()
+            self.state = 125
+            self.type_()
+            self.state = 126
+            self.expr()
+            self.state = 127
+            self.expr()
+            self.state = 128
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Bitwise_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def bitwise_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Bitwise_expr_kindContext,0)
+
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(KqueryParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(KqueryParser.ExprContext,i)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_bitwise_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterBitwise_expr" ):
+                listener.enterBitwise_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitBitwise_expr" ):
+                listener.exitBitwise_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitBitwise_expr" ):
+                return visitor.visitBitwise_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def bitwise_expr(self):
+
+        localctx = KqueryParser.Bitwise_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 38, self.RULE_bitwise_expr)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 130
+            self.match(KqueryParser.T__8)
+            self.state = 131
+            self.bitwise_expr_kind()
+            self.state = 132
+            self.expr()
+            self.state = 133
+            self.expr()
+            self.state = 134
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Comparison_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def comparison_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Comparison_expr_kindContext,0)
+
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(KqueryParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(KqueryParser.ExprContext,i)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_comparison_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterComparison_expr" ):
+                listener.enterComparison_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitComparison_expr" ):
+                listener.exitComparison_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitComparison_expr" ):
+                return visitor.visitComparison_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def comparison_expr(self):
+
+        localctx = KqueryParser.Comparison_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 40, self.RULE_comparison_expr)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 136
+            self.match(KqueryParser.T__8)
+            self.state = 137
+            self.comparison_expr_kind()
+            self.state = 139
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if _la==21:
+                self.state = 138
+                self.type_()
+
+
+            self.state = 141
+            self.expr()
+            self.state = 142
+            self.expr()
+            self.state = 143
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Bv_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def bv_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Bv_expr_kindContext,0)
+
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(KqueryParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(KqueryParser.ExprContext,i)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_bv_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterBv_expr" ):
+                listener.enterBv_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitBv_expr" ):
+                listener.exitBv_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitBv_expr" ):
+                return visitor.visitBv_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def bv_expr(self):
+
+        localctx = KqueryParser.Bv_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 42, self.RULE_bv_expr)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 145
+            self.match(KqueryParser.T__8)
+            self.state = 146
+            self.bv_expr_kind()
+            self.state = 148
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if _la==21:
+                self.state = 147
+                self.type_()
+
+
+            self.state = 150
+            self.expr()
+            self.state = 151
+            self.expr()
+            self.state = 152
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Extension_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def extension_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Extension_expr_kindContext,0)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def expr(self):
+            return self.getTypedRuleContext(KqueryParser.ExprContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_extension_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExtension_expr" ):
+                listener.enterExtension_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExtension_expr" ):
+                listener.exitExtension_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitExtension_expr" ):
+                return visitor.visitExtension_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def extension_expr(self):
+
+        localctx = KqueryParser.Extension_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 44, self.RULE_extension_expr)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 154
+            self.match(KqueryParser.T__8)
+            self.state = 155
+            self.extension_expr_kind()
+            self.state = 156
+            self.type_()
+            self.state = 157
+            self.expr()
+            self.state = 158
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Read_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def read_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Read_expr_kindContext,0)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def expr(self):
+            return self.getTypedRuleContext(KqueryParser.ExprContext,0)
+
+
+        def version(self):
+            return self.getTypedRuleContext(KqueryParser.VersionContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_read_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterRead_expr" ):
+                listener.enterRead_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitRead_expr" ):
+                listener.exitRead_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitRead_expr" ):
+                return visitor.visitRead_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def read_expr(self):
+
+        localctx = KqueryParser.Read_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 46, self.RULE_read_expr)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 160
+            self.match(KqueryParser.T__8)
+            self.state = 161
+            self.read_expr_kind()
+            self.state = 162
+            self.type_()
+            self.state = 163
+            self.expr()
+            self.state = 164
+            self.version()
+            self.state = 165
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Select_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def select_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Select_expr_kindContext,0)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(KqueryParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(KqueryParser.ExprContext,i)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_select_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterSelect_expr" ):
+                listener.enterSelect_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitSelect_expr" ):
+                listener.exitSelect_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitSelect_expr" ):
+                return visitor.visitSelect_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def select_expr(self):
+
+        localctx = KqueryParser.Select_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 48, self.RULE_select_expr)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 167
+            self.match(KqueryParser.T__8)
+            self.state = 168
+            self.select_expr_kind()
+            self.state = 169
+            self.type_()
+            self.state = 170
+            self.expr()
+            self.state = 171
+            self.expr()
+            self.state = 172
+            self.expr()
+            self.state = 173
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Neg_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def neg_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Neg_expr_kindContext,0)
+
+
+        def expr(self):
+            return self.getTypedRuleContext(KqueryParser.ExprContext,0)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_neg_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterNeg_expr" ):
+                listener.enterNeg_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitNeg_expr" ):
+                listener.exitNeg_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitNeg_expr" ):
+                return visitor.visitNeg_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def neg_expr(self):
+
+        localctx = KqueryParser.Neg_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 50, self.RULE_neg_expr)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 175
+            self.match(KqueryParser.T__8)
+            self.state = 176
+            self.neg_expr_kind()
+            self.state = 178
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if _la==21:
+                self.state = 177
+                self.type_()
+
+
+            self.state = 180
+            self.expr()
+            self.state = 181
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Array_read_exprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def array_read_expr_kind(self):
+            return self.getTypedRuleContext(KqueryParser.Array_read_expr_kindContext,0)
+
+
+        def type_(self):
+            return self.getTypedRuleContext(KqueryParser.TypeContext,0)
+
+
+        def expr(self):
+            return self.getTypedRuleContext(KqueryParser.ExprContext,0)
+
+
+        def version(self):
+            return self.getTypedRuleContext(KqueryParser.VersionContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_array_read_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterArray_read_expr" ):
+                listener.enterArray_read_expr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitArray_read_expr" ):
+                listener.exitArray_read_expr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitArray_read_expr" ):
+                return visitor.visitArray_read_expr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def array_read_expr(self):
+
+        localctx = KqueryParser.Array_read_exprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 52, self.RULE_array_read_expr)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 183
+            self.match(KqueryParser.T__8)
+            self.state = 184
+            self.array_read_expr_kind()
+            self.state = 185
+            self.type_()
+            self.state = 186
+            self.expr()
+            self.state = 187
+            self.version()
+            self.state = 188
+            self.match(KqueryParser.T__9)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class ExprContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def identifier(self):
+            return self.getTypedRuleContext(KqueryParser.IdentifierContext,0)
+
+
+        def number(self):
+            return self.getTypedRuleContext(KqueryParser.NumberContext,0)
+
+
+        def definition(self):
+            return self.getTypedRuleContext(KqueryParser.DefinitionContext,0)
+
+
+        def number_with_type(self):
+            return self.getTypedRuleContext(KqueryParser.Number_with_typeContext,0)
+
+
+        def array_declaration(self):
+            return self.getTypedRuleContext(KqueryParser.Array_declarationContext,0)
+
+
+        def arithmetic_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Arithmetic_exprContext,0)
+
+
+        def bitwise_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Bitwise_exprContext,0)
+
+
+        def comparison_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Comparison_exprContext,0)
+
+
+        def bv_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Bv_exprContext,0)
+
+
+        def extension_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Extension_exprContext,0)
+
+
+        def read_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Read_exprContext,0)
+
+
+        def select_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Select_exprContext,0)
+
+
+        def neg_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Neg_exprContext,0)
+
+
+        def array_read_expr(self):
+            return self.getTypedRuleContext(KqueryParser.Array_read_exprContext,0)
+
+
+        def version(self):
+            return self.getTypedRuleContext(KqueryParser.VersionContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_expr
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterExpr" ):
+                listener.enterExpr(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitExpr" ):
+                listener.exitExpr(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitExpr" ):
+                return visitor.visitExpr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def expr(self):
+
+        localctx = KqueryParser.ExprContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 54, self.RULE_expr)
+        try:
+            self.state = 208
+            self._errHandler.sync(self)
+            la_ = self._interp.adaptivePredict(self._input,7,self._ctx)
+            if la_ == 1:
+                self.enterOuterAlt(localctx, 1)
+                self.state = 190
+                self.identifier()
+                pass
+
+            elif la_ == 2:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 191
+                self.number()
+                pass
+
+            elif la_ == 3:
+                self.enterOuterAlt(localctx, 3)
+                self.state = 192
+                self.definition()
+                pass
+
+            elif la_ == 4:
+                self.enterOuterAlt(localctx, 4)
+                self.state = 193
+                self.match(KqueryParser.T__8)
+                self.state = 194
+                self.number_with_type()
+                self.state = 195
+                self.match(KqueryParser.T__9)
+                pass
+
+            elif la_ == 5:
+                self.enterOuterAlt(localctx, 5)
+                self.state = 197
+                self.array_declaration()
+                pass
+
+            elif la_ == 6:
+                self.enterOuterAlt(localctx, 6)
+                self.state = 198
+                self.arithmetic_expr()
+                pass
+
+            elif la_ == 7:
+                self.enterOuterAlt(localctx, 7)
+                self.state = 199
+                self.bitwise_expr()
+                pass
+
+            elif la_ == 8:
+                self.enterOuterAlt(localctx, 8)
+                self.state = 200
+                self.comparison_expr()
+                pass
+
+            elif la_ == 9:
+                self.enterOuterAlt(localctx, 9)
+                self.state = 201
+                self.bv_expr()
+                pass
+
+            elif la_ == 10:
+                self.enterOuterAlt(localctx, 10)
+                self.state = 202
+                self.extension_expr()
+                pass
+
+            elif la_ == 11:
+                self.enterOuterAlt(localctx, 11)
+                self.state = 203
+                self.read_expr()
+                pass
+
+            elif la_ == 12:
+                self.enterOuterAlt(localctx, 12)
+                self.state = 204
+                self.select_expr()
+                pass
+
+            elif la_ == 13:
+                self.enterOuterAlt(localctx, 13)
+                self.state = 205
+                self.neg_expr()
+                pass
+
+            elif la_ == 14:
+                self.enterOuterAlt(localctx, 14)
+                self.state = 206
+                self.array_read_expr()
+                pass
+
+            elif la_ == 15:
+                self.enterOuterAlt(localctx, 15)
+                self.state = 207
+                self.version()
+                pass
+
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Update_listContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(KqueryParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(KqueryParser.ExprContext,i)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_update_list
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterUpdate_list" ):
+                listener.enterUpdate_list(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitUpdate_list" ):
+                listener.exitUpdate_list(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitUpdate_list" ):
+                return visitor.visitUpdate_list(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def update_list(self):
+
+        localctx = KqueryParser.Update_listContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 56, self.RULE_update_list)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 210
+            self.expr()
+            self.state = 211
+            self.match(KqueryParser.T__7)
+            self.state = 212
+            self.expr()
+            self.state = 220
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            while _la==1:
+                self.state = 213
+                self.match(KqueryParser.T__0)
+                self.state = 214
+                self.expr()
+                self.state = 215
+                self.match(KqueryParser.T__7)
+                self.state = 216
+                self.expr()
+                self.state = 222
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class VersionContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def version(self):
+            return self.getTypedRuleContext(KqueryParser.VersionContext,0)
+
+
+        def update_list(self):
+            return self.getTypedRuleContext(KqueryParser.Update_listContext,0)
+
+
+        def IDENTIFIER(self):
+            return self.getToken(KqueryParser.IDENTIFIER, 0)
+
+        def expr(self):
+            return self.getTypedRuleContext(KqueryParser.ExprContext,0)
+
+
+        def getRuleIndex(self):
+            return KqueryParser.RULE_version
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterVersion" ):
+                listener.enterVersion(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitVersion" ):
+                listener.exitVersion(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitVersion" ):
+                return visitor.visitVersion(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def version(self):
+
+        localctx = KqueryParser.VersionContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 58, self.RULE_version)
+        self._la = 0 # Token type
+        try:
+            self.state = 235
+            self._errHandler.sync(self)
+            token = self._input.LA(1)
+            if token in [3]:
+                self.enterOuterAlt(localctx, 1)
+                self.state = 223
+                self.match(KqueryParser.T__2)
+                self.state = 225
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & 18014398509490728) != 0):
+                    self.state = 224
+                    self.update_list()
+
+
+                self.state = 227
+                self.match(KqueryParser.T__3)
+                self.state = 228
+                self.match(KqueryParser.T__10)
+                self.state = 229
+                self.version()
+                pass
+            elif token in [54]:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 230
+                self.match(KqueryParser.IDENTIFIER)
+                self.state = 233
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if _la==6:
+                    self.state = 231
+                    self.match(KqueryParser.T__5)
+                    self.state = 232
+                    self.expr()
+
+
+                pass
+            else:
+                raise NoViableAltException(self)
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+
+
+
