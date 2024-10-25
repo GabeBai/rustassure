@@ -117,7 +117,7 @@ namespace {
 					//F.eraseFromParent();
 					continue;
 				}
-				std::string demangled_name = exec_rustfilt(F.getName().str());
+				std::string demangled_name = F.getName().str(); // exec_rustfilt(F.getName().str());
 				//llvm::errs() << "Demangled name: " << demangled_name << "\n";
 				std::vector<std::string> result = splitString(demangled_name, "::");
 				std::string function_name = result[result.size() -1];
