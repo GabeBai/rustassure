@@ -5,6 +5,7 @@ from KqueryListener import KqueryListener
 from KqueryParser import KqueryParser
 from KqueryVisitor import KqueryVisitor
 from networkx.drawing.nx_pydot import write_dot
+import os
 
 
 import networkx as nx
@@ -309,19 +310,25 @@ class KqueryASTVisitor(KqueryVisitor):
             return self.visit(ctx.getChild(0))
         else:
             return self.visit(ctx)
+        
 
-def convert_kquery_to_graph(expressions, function_name):
+def convert_kquery_to_graph(expressions, function_name, output_dir):
+    # Create the directory if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     for i in range(len(expressions)):
         expression = expressions[i]
     
         input_stream = InputStream(expression)
         lexer = KqueryLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
+        # lazy init, need to fill the token
+        token_stream.fill()
         parser = KqueryParser(token_stream)
-        
         tree = parser.prog()
-        # print(tree.toStringTree(recog=parser))
-        
+        print(tree.toStringTree(recog=parser))
+
         """
         listener = KqueryGrapher()
         walker = ParseTreeWalker()
@@ -330,7 +337,11 @@ def convert_kquery_to_graph(expressions, function_name):
         # Create and apply the custom visitor
         visitor = KqueryASTVisitor()
         visitor.visit(tree)
-        write_dot(visitor.G, "output_graph_" + function_name + "_" + str(i) + ".dot")
+
+        # Save the output to the specified directory
+        output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(i) + ".dot")
+        write_dot(visitor.G, output_file)
+
 
 if __name__ == "__main__":
     expressions = [
@@ -348,5 +359,5 @@ if __name__ == "__main__":
      "(Eq (And (Add w32 N0:(ReadLSB w32 4 sptr) N0) (ReadLSB w32 0 d)) (Read w8 1 U0))",
      "(Read w8 1 [1=0xff] @ small_array)",
      ]
-    convert_kquery_to_graph(expressions, "")
+    convert_kquery_to_graph(expressions, "", "text")
 
