@@ -3,12 +3,6 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Check if an input directory is provided
-if [ -z "$1" ]; then
-    echo "Please provide an input directory."
-    exit 1
-fi
-
 if [ -e compare_graph_output_log.log ]; then
     rm compare_graph_output_log.log
 fi
@@ -32,7 +26,7 @@ export C_INCLUDE_PATH=../klee/include
 
 count=0
 # Loop through each .c file in the directory
-for c_file in "$1"/C/*.c; do
+for c_file in testcase/C/*.c; do
     # Extract the base filename without extension
     base_name=$(basename "$c_file" .c)
     
@@ -80,7 +74,7 @@ done
 echo "All the result C graphs have successfully been saved into graph_output. Total processed files: $count. Total graphs generate: $gcount"
 
 count=0
-for r_file in "$1"/Rust/*.rs; do
+for r_file in testcase/Rust/*.rs; do
     # Extract the base filename without extension
     base_name=$(basename "$r_file" .rs)
     
