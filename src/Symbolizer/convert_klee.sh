@@ -9,6 +9,10 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+if [ -e compare_graph_output_log.log ]; then
+    rm compare_graph_output_log.log
+fi
+
 prepare_directory() {
     if [ -d "$1" ]; then
         rm -rf "$1"/*
@@ -75,6 +79,7 @@ done
 
 echo "All the result C graphs have successfully been saved into graph_output. Total processed files: $count. Total graphs generate: $gcount"
 
+count=0
 for r_file in "$1"/Rust/*.rs; do
     # Extract the base filename without extension
     base_name=$(basename "$r_file" .rs)
@@ -120,3 +125,5 @@ for file in graph_output/Rust/**/**/*.dot; do
 done
 
 echo "All the rust result graphs have successfully been saved into graph_output. Total processed files: $count. Total graphs generate: $gcount"
+
+python3 ../python/distance.py
