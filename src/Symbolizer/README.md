@@ -14,7 +14,7 @@ The overview of this tool is as follows.
 
 
 ### Input
-Place all .c files you want to process inside the testcase directory.
+Place all .c and .rust files you want to process inside the testcase directory.
 
 ### Output
 The output is organized into two main directories:
@@ -23,15 +23,21 @@ The output is organized into two main directories:
 
 2. graph_out: Contains graph visualizations of the symbolized LLVM IR. Each file generates a separate directory structure within graph_out:
 
-For easier debugging, it first separates different files into individual folders named after the file, and then within each folder, it further separates them by argument name.
+For easier analyzing, it first separates different files into individual folders named after the file, and then within each folder, it further separates them by argument name.
 
 The output structure is as following:
     klee_symbol_log/   # symbolic execution logs from KLEE
     graph_out/
-    └── filename/
-        └── argumentname/
-            └── *.dot  # Original graph description files
-            └── *.png  # Graph visualizations converted from .dot files
+    |── c/
+    │   └── filename/
+    │       └── argumentname/
+    │           ├── *.dot  # Original graph description files
+    │           └── *.png  # Graph visualizations converted from .dot files
+    └── rust/
+        └── filename/
+            └── argumentname/
+                ├── *.dot  # Original graph description files
+                └── *.png  # Graph visualizations converted from .dot files
 
 
 
