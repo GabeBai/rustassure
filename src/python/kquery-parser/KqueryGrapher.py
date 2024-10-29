@@ -372,9 +372,11 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
         write_dot(visitor.G, output_file)
 
         # Convert to the PNG automatically
+        """
         png_cmd = "dot -Tpng " + output_file + " -o " + output_file+".png"
-#        print(png_cmd)
+        print(png_cmd)
         result = subprocess.getoutput(png_cmd)
+        """
 
 
 
