@@ -117,7 +117,7 @@ namespace {
 					//F.eraseFromParent();
 					continue;
 				}
-				std::string demangled_name = F.getName().str(); // exec_rustfilt(F.getName().str());
+				std::string demangled_name = exec_rustfilt(F.getName().str());
 				//llvm::errs() << "Demangled name: " << demangled_name << "\n";
 				std::vector<std::string> result = splitString(demangled_name, "::");
 				std::string function_name = result[result.size() -1];
@@ -262,7 +262,7 @@ namespace {
 			}
 		}
 
-		void symbolize_function_args(Module& M) {
+		void symbolize_function_args_and_invoke(Module& M) {
 			LLVMContext& ctx = M.getContext();
 			ArrayRef<Type*> args;
 			FunctionType* main_function_type = FunctionType::get(FunctionType::getVoidTy(ctx), args, false);
@@ -301,12 +301,18 @@ namespace {
 			}
 
 			// Now we pass these arguments to the actual function
-			Builder.CreateCall(target_function, actual_args);
+			CallInst* call_with_symb_args = Builder.CreateCall(target_function, actual_args);
 
+			// Then we dump the symbolic values
 			for (int i = 0; i < actual_args.size(); i++) {
 				Value* arg_value = actual_args[i];
 				print_nested_klee_exprs(M, Builder, arg_value, std::string("arg_value_") + std::to_string(i));
 				
+			}
+
+			// The return value
+			if (!call_with_symb_args->getType()->isVoidTy()) {
+				print_nested_klee_exprs(M, Builder, call_with_symb_args, std::string("ret_value"));
 			}
 
 			Builder.CreateRetVoid();
@@ -417,7 +423,7 @@ namespace {
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
-			symbolize_function_args(M);
+			symbolize_function_args_and_invoke(M);
 			//M.dump();
 			return PreservedAnalyses::none();
 		}
