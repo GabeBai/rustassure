@@ -6,22 +6,50 @@ from KqueryParser import KqueryParser
 from KqueryVisitor import KqueryVisitor
 from networkx.drawing.nx_pydot import write_dot
 import os
+import subprocess
 
 
 import networkx as nx
 
+
+# Command to generate the classes (need to do this because versions can be different.
+# antlr4 -Dlanguage=Python3 -visitor Kquery.g4
+
+
 class Node:
-    def __init__(self, value, type_value):
+
+    NODE_ID = 0
+    def __init__(self, value, type_value, G):
+        # We maintain a reference to the networkx graph in each Node
+        self.G = G
+
+        # NetworkX seems to need an unique ID per node, or it "merges" the two nodes
+        # with same value.
+        Node.NODE_ID+=1
+        self.node_id = Node.NODE_ID
         self.value = value
         self.type_value = type_value
         self.children = [] # List of Nodes
             
 
     def __str__(self):
-        desc = f"{self.value}"
+        desc = str(self.node_id) + f" [value = {self.value}, "
         if len(self.type_value) > 0:
-            desc = desc + f" [type = {self.type_value}]"
+            desc += f" type = {self.type_value}"
+        desc += "]"
         return desc
+
+    def deep_copy(self):
+        # When we encounter a definition (NO, for example)
+        # We will deep copy the tree that is rooted at that definition
+        # print("Calling deep copy for " + str(self))
+        copied_node = Node(self.value, self.type_value, self.G)
+        for child in self.children:
+            copied_child = child.deep_copy()
+            copied_node.children.append(copied_child)
+            self.G.add_node(copied_child)
+            self.G.add_edge(copied_node, copied_child)
+        return copied_node
 
 
 class KqueryASTVisitor(KqueryVisitor):
@@ -34,13 +62,13 @@ class KqueryASTVisitor(KqueryVisitor):
         identifier = ctx.getText()
         if identifier in self.definition_map:
             node = self.definition_map[identifier]
-            return node
-        return Node(identifier, "")
+            return node.deep_copy()
+        return Node(identifier, "", self.G)
 
     def visitNumber(self, ctx):
         # print("Number")
         number = ctx.getText()
-        return Node(number, "")
+        return Node(number, "", self.G)
 
     def visitDefinition(self, ctx):
         # Create the node and populate it in the definition_map
@@ -52,16 +80,16 @@ class KqueryASTVisitor(KqueryVisitor):
 
     def visitNumber_list(self, ctx):
         # number_list: NUMBER | NUMBER ',' number_list;
-        node = Node("number_list", "")
+        node = Node("number_list", "", self.G)
         self.G.add_node(node)
         if ctx.getChildCount() == 1:
-            node = Node(ctx.getChild(0).getText(), "")
+            node = Node(ctx.getChild(0).getText(), "", self.G)
             return node
         else:
-            child_number = Node(ctx.getChild(0).getText(), "")
+            child_number = Node(ctx.getChild(0).getText(), "", self.G)
             child_number_list = self.visit(ctx.getChild(2))
 
-            node = Node("NumberList", "")
+            node = Node("NumberList", "", self.G)
 
             node.children.append(child_number)
             node.children.append(child_number_list)
@@ -73,11 +101,11 @@ class KqueryASTVisitor(KqueryVisitor):
 
     def visitArray_initializer(self, ctx):
         # array_initializer: 'symbolic' | '[' number_list ']';
-        node = Node("array_initializer", "")
+        node = Node("array_initializer", "", self.G)
         self.G.add_node(node)
         if ctx.getChildCount() == 1:
             symbolic = ctx.getChild(0).getText()
-            child = Node(symbolic, "")
+            child = Node(symbolic, "", self.G)
             self.G.add_node(child)
             self.G.add_edge(node, child)
         else:
@@ -91,7 +119,7 @@ class KqueryASTVisitor(KqueryVisitor):
         # array_declaration: 'array' IDENTIFIER '[' NUMBER? ']' ':' TYPE '->' TYPE '=' array_initializer;
         array = ctx.getChild(0).getText()
         identifier = ctx.getChild(1).getText()
-        node = Node(array, identifier)
+        node = Node(array, identifier, self.G)
         self.G.add_node(node)
 
         if ctx.getChildCount() == 11:
@@ -114,7 +142,7 @@ class KqueryASTVisitor(KqueryVisitor):
         child_node1 = self.visit(expr1)
         child_node2 = self.visit(expr2)
         
-        node = Node(expr_kind, value_type)
+        node = Node(expr_kind, value_type, self.G)
         node.children.append(child_node1)
         node.children.append(child_node2)
 
@@ -132,7 +160,7 @@ class KqueryASTVisitor(KqueryVisitor):
         child_node1 = self.visit(expr1)
         child_node2 = self.visit(expr2)
         
-        node = Node(expr_kind, "")
+        node = Node(expr_kind, "", self.G)
         node.children.append(child_node1)
         node.children.append(child_node2)
 
@@ -147,7 +175,7 @@ class KqueryASTVisitor(KqueryVisitor):
 
         if ctx.getChildCount() == 6:
             value_type = ctx.getChild(2).getText()
-            node = Node(expr_kind, value_type)
+            node = Node(expr_kind, value_type, self.G)
 
             child1 = self.visit(ctx.getChild(3))
             child2 = self.visit(ctx.getChild(4))
@@ -157,7 +185,7 @@ class KqueryASTVisitor(KqueryVisitor):
             self.G.add_edge(node, child1)
             self.G.add_edge(node, child2)
         else:
-            node = Node(expr_kind, "")
+            node = Node(expr_kind, "", self.G)
 
             child1 = self.visit(ctx.getChild(2))
             child2 = self.visit(ctx.getChild(3))
@@ -174,7 +202,7 @@ class KqueryASTVisitor(KqueryVisitor):
 
         if ctx.getChildCount() == 6:
             value_type = ctx.getChild(2).getText()
-            node = Node(expr_kind, value_type)
+            node = Node(expr_kind, value_type, self.G)
 
             child1 = self.visit(ctx.getChild(3))
             child2 = self.visit(ctx.getChild(4))
@@ -184,7 +212,7 @@ class KqueryASTVisitor(KqueryVisitor):
             self.G.add_edge(node, child1)
             self.G.add_edge(node, child2)
         else:
-            node = Node(expr_kind, "")
+            node = Node(expr_kind, "", self.G)
 
             child1 = self.visit(ctx.getChild(2))
             child2 = self.visit(ctx.getChild(3))
@@ -202,7 +230,7 @@ class KqueryASTVisitor(KqueryVisitor):
         value_type = ctx.getChild(2).getText()
         child = self.visit(ctx.getChild(3))
         
-        node = Node(expr_kind, value_type)
+        node = Node(expr_kind, value_type, self.G)
 
         self.G.add_node(node)
         node.children.append(child)
@@ -219,7 +247,7 @@ class KqueryASTVisitor(KqueryVisitor):
         child = self.visit(ctx.getChild(3))
         version = self.visit(ctx.getChild(4))
         
-        node = Node(expr_kind, value_type)
+        node = Node(expr_kind, value_type, self.G)
 
         self.G.add_node(node)
         node.children.append(child)
@@ -233,7 +261,7 @@ class KqueryASTVisitor(KqueryVisitor):
         # select_expr : '(' select_expr_kind type expr expr expr ')';
         expr_kind = ctx.getChild(1).getText()
         value_type = ctx.getChild(2).getText()
-        node = Node(expr_kind, value_type)
+        node = Node(expr_kind, value_type, self.G)
 
         expr1 = ctx.getChild(3)
         expr2 = ctx.getChild(4)
@@ -258,14 +286,14 @@ class KqueryASTVisitor(KqueryVisitor):
         if ctx.getChildCount() == 5: 
             # There is (type)
             value_type = ctx.getChild(2).getText()
-            node = Node(expr_kind, value_type)
+            node = Node(expr_kind, value_type, self.G)
             expr = ctx.getChild(3)
             child = self.visit(expr)
             node.children.append(child)
             self.G.add_node(node)
             self.G.add_edge(node, child)
         else:
-            node = Node(expr_kind, "")
+            node = Node(expr_kind, "", self.G)
             expr = ctx.getChild(2)
             child = self.visit(expr)
             node.children.append(child)
@@ -283,7 +311,7 @@ class KqueryASTVisitor(KqueryVisitor):
         child1 = self.visit(expr)
         child2 = self.visit(version) 
 
-        node = Node(expr_kind, value_type)
+        node = Node(expr_kind, value_type, self.G)
         node.children.append(child1)
         node.children.append(child2)
 
@@ -297,7 +325,7 @@ class KqueryASTVisitor(KqueryVisitor):
     def visitVersion(self, ctx):
         # We don't parse version any deeper. TODO?
         version = ctx.getText()
-        node = Node(version, "")
+        node = Node(version, "", self.G)
         return node
 
     def visitExpr(self, ctx):
@@ -326,6 +354,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
         # lazy init, need to fill the token
         token_stream.fill()
         parser = KqueryParser(token_stream)
+        
         tree = parser.prog()
         print(tree.toStringTree(recog=parser))
 
@@ -341,6 +370,12 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
         # Save the output to the specified directory
         output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(i) + ".dot")
         write_dot(visitor.G, output_file)
+
+        # Convert to the PNG automatically
+        png_cmd = "dot -Tpng " + output_file + " -o " + output_file+".png"
+#        print(png_cmd)
+        result = subprocess.getoutput(png_cmd)
+
 
 
 if __name__ == "__main__":
@@ -359,5 +394,7 @@ if __name__ == "__main__":
      "(Eq (And (Add w32 N0:(ReadLSB w32 4 sptr) N0) (ReadLSB w32 0 d)) (Read w8 1 U0))",
      "(Read w8 1 [1=0xff] @ small_array)",
      ]
+#    expressions = ["(Add w32 N0:(ReadLSB w32 4 unnamed) N0)"]
+               
     convert_kquery_to_graph(expressions, "", "text")
 
