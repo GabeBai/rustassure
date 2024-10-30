@@ -1,6 +1,6 @@
 [submodule "src/SVF"]
 	path = src/SVF
-	url = https://github.com/SVF-tools/SVF.git
+	url = git@github.com:davsec-lab/rustify-SVF.git
 [submodule "src/python/networkx"]
 	path = src/python/networkx
 	url = git@github.com:taptipalit/networkx.git
@@ -12,4 +12,4 @@
 	url = https://github.com/emmiegit/minutils.git
 [submodule "src/klee"]
 	path = src/klee
-	url = git@github.com:taptipalit/klee.git
+	url = git@github.com:davsec-lab/rustify-klee.git
