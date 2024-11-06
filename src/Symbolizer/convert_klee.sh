@@ -79,7 +79,8 @@ for r_file in testcase/Rust/*.rs; do
     base_name=$(basename "$r_file" .rs)
     
     # Compile the .rust file to LLVM bitcode
-    rustc --emit=llvm-bc -C opt-level=0 "$r_file" -o "klee_bc/Rust/${base_name}.bc"
+    rustc --emit=llvm-ir -C opt-level=0 "$r_file" -o "klee_bc/Rust/${base_name}.bc"
+
 
     opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "klee_bc/Rust/${base_name}.bc" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
     
@@ -118,6 +119,6 @@ for file in graph_output/Rust/**/**/*.dot; do
     fi
 done
 
-echo "All the rust result graphs have successfully been saved into graph_output. Total processed files: $count. Total graphs generate: $gcount"
+# echo "All the rust result graphs have successfully been saved into graph_output. Total processed files: $count. Total graphs generate: $gcount"
 
-python3 ../python/distance.py
+# python3 ../python/distance.py
