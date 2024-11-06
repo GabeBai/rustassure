@@ -275,13 +275,18 @@ namespace {
 					target_function = &F;
 				}
 			}
+
+			if (!target_function) {
+    			llvm::errs() << "Error: target function not found.\n";
+    			return; 
+			}
+
 			// Target function
 			// Add an entry block to the main function
 			BasicBlock* EntryBB = BasicBlock::Create(ctx, "entry", main_function);
 			IRBuilder<> Builder(ctx);
 
 			Builder.SetInsertPoint(EntryBB);
-
 
 
 			std::vector<Value*> actual_args;
