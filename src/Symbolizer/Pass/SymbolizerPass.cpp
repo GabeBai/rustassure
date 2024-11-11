@@ -395,6 +395,57 @@ namespace {
 						Builder.CreateCall(klee_print_expr_function, args_vec);
 					}
 				}
+			} else if (arg_value->getType()->isPointerTy()) {
+				Function *function = Builder.GetInsertBlock()->getParent();
+				Value *zero = Builder.getInt32(0);
+				Value *one = Builder.getInt32(1);
+				std::vector<Value*> args_vec;
+				BasicBlock *LoopBodyBB = BasicBlock::Create(ctx, "loop.body", function);
+				BasicBlock *ExitBB = BasicBlock::Create(ctx, "exit", function);
+				BasicBlock *LoopCondBB = BasicBlock::Create(ctx, "loop.cond", function);
+
+				Value *InitVal = Builder.getInt32(0);
+				AllocaInst *iVar = Builder.CreateAlloca(Type::getInt32Ty(ctx), nullptr, "i");
+				Builder.CreateStore(InitVal, iVar);
+
+				Builder.CreateBr(LoopCondBB);
+
+				Builder.SetInsertPoint(LoopCondBB);
+
+
+				LoadInst *LoadI = Builder.CreateLoad(Type::getInt32Ty(ctx), iVar, "i");
+
+				Type *elementType = arg_value->getType()->getPointerElementType();
+				Value *ptr = Builder.CreateGEP(getType()->getPointerElemarg_value->entType(), arg_value, LoadI);
+				Value *Condition;
+				Value *charVal;
+
+
+				if (elementType->isIntegerTy(32)) {
+					charVal = Builder.CreateLoad(Builder.getInt32Ty(), ptr);
+					Condition = Builder.CreateICmpEQ(charVal, Builder.getInt32(0));
+				} else if (elementType->isIntegerTy(8)) {
+					charVal = Builder.CreateLoad(Builder.getInt8Ty(), ptr);
+					Condition = Builder.CreateICmpEQ(charVal, Builder.getInt8(0));
+				} else {
+					report_fatal_error("Unsupported array element type!");
+				}
+
+				Builder.CreateCondBr(Condition, ExitBB, LoopBodyBB);
+				Builder.SetInsertPoint(LoopBodyBB);
+
+
+
+				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
+				args_vec.push_back(charVal);
+				Builder.CreateCall(klee_print_expr_function, args_vec);
+
+				Value *Incremented = Builder.CreateAdd(LoadI, Builder.getInt32(1), "increment");
+				Builder.CreateStore(Incremented, iVar);
+
+				Builder.CreateBr(LoopCondBB);
+
+				Builder.SetInsertPoint(ExitBB);
 			} else {
 				std::vector<Value*> args_vec;
 				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
