@@ -41,6 +41,7 @@
 
 using namespace llvm;
 
+
 void strip_new_line(std::string& str) {
 	if (!str.empty() && str.back() == '\n') {
 		str.erase(str.length() - 1);
@@ -99,6 +100,24 @@ namespace {
 	struct Symbolizer : PassInfoMixin<Symbolizer> {
 
 		std::vector<StructType*> visited_struct_types;
+
+		void create_function(Module& M, Type* return_type, Function* function) {
+			LLVMContext& ctx = M.getContext();
+			BasicBlock *functionBB = BasicBlock::Create(ctx, "EntryBB", function);
+			IRBuilder<> builder(functionBB);
+			if (return_type->isVoidTy()) {
+				builder.CreateRetVoid();
+			} else if (return_type->isIntegerTy()) {
+				Value *retVal = ConstantInt::get(return_type, 0);
+				builder.CreateRet(retVal);
+			} else if (return_type->isFloatingPointTy()) {
+				Value *retVal = ConstantFP::get(return_type, 0.0);
+				builder.CreateRet(retVal);
+			} else if (return_type->isPointerTy()) {
+				Value *retVal = ConstantPointerNull::get(cast<PointerType>(return_type));
+				builder.CreateRet(retVal);
+			}
+		}
 
 		void remove_unneeded_functions(Module& M) {
 			// In the case of Rust, it adds a bunch of functions that we don't care about
@@ -240,29 +259,47 @@ namespace {
 		Value* create_object_and_mark_symbolic(Module& M, IRBuilder<>& Builder, Type* type, StringRef name) {
 			LLVMContext& ctx = M.getContext();
 			// special handling for i8* which could be strings
-			bool cast_to_i8 = false;
+			bool cast_to_integer = false;
+			Type* originalType = type;
 			if (IntegerType* integer_type = dyn_cast<IntegerType>(type)) {
-				if (integer_type->getBitWidth() == 8) {
 					type = ArrayType::get(integer_type, 100);
-					cast_to_i8 = true;
-				}
+					cast_to_integer = true;
 			}
-			AllocaInst* stack_arg = Builder.CreateAlloca(type, 0, name);
-			// Any inner objects, should also be initialized
-			initialize_inner_objects(M, Builder, stack_arg);
-			// Only mark the non-pointers symbolic
-			// For structs, only mark the non-pointer fields symbolic
-			if (!isa<PointerType>(type)) {
-				// type is the type passed to the CreateAlloca
-				// For structs too, we can mark the whole struct
-				// as symbolic
-				mark_symbolic(M, stack_arg, Builder);
-			}
-			if (cast_to_i8) {
-				Type* void_ptr_type = PointerType::get(IntegerType::getInt8Ty(ctx), 0);
-				return (Builder.CreateBitCast(stack_arg, void_ptr_type));
+			if (isa<FunctionType>(type)) {
+				FunctionType *functionType = cast<FunctionType>(type);
+				Function *function = Function::Create(functionType, Function::ExternalLinkage, "myFunction", M);
+				create_function(M, functionType->getReturnType(), function);
+				return function;
 			} else {
-				return stack_arg;
+				AllocaInst* stack_arg = Builder.CreateAlloca(type, 0, name);
+				// Any inner objects, should also be initialized
+				initialize_inner_objects(M, Builder, stack_arg);
+				// Only mark the non-pointers symbolic
+				// For structs, only mark the non-pointer fields symbolic
+				if (!isa<PointerType>(type)) {
+					// type is the type passed to the CreateAlloca
+					// For structs too, we can mark the whole struct
+					// as symbolic
+					mark_symbolic(M, stack_arg, Builder);
+				}
+				if (cast_to_integer) {
+					IntegerType* integer_type = dyn_cast<IntegerType>(originalType);
+					Type* void_ptr_type;
+					if (integer_type->getBitWidth() == 8) {
+						void_ptr_type = PointerType::get(IntegerType::getInt8Ty(ctx), 0);
+					} else if (integer_type->getBitWidth() == 16) {
+						void_ptr_type = PointerType::get(IntegerType::getInt16Ty(ctx), 0);
+					} else if (integer_type->getBitWidth() == 32) {
+						void_ptr_type = PointerType::get(IntegerType::getInt32Ty(ctx), 0);
+					} else if (integer_type->getBitWidth() == 64) {
+						void_ptr_type = PointerType::get(IntegerType::getInt64Ty(ctx), 0);
+					} else {
+						//error
+					}
+					return (Builder.CreateBitCast(stack_arg, void_ptr_type));
+				} else {
+					return stack_arg;
+				}
 			}
 		}
 
@@ -300,8 +337,15 @@ namespace {
 				// If it's a scalar, then we must create a stack object, load it and pass it to the function
 				Value* stackArg = nullptr;
 				if (isa<PointerType>(arg.getType()) && arg.getType()->getPointerElementType()) {
-					stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType()->getPointerElementType(), arg.getName());
-					actual_args.push_back(stackArg);
+					if (isa<FunctionType>(arg.getType()->getPointerElementType())) {
+						FunctionType *functionType = cast<FunctionType>(arg.getType()->getPointerElementType());
+						Function *function = Function::Create(functionType, Function::ExternalLinkage, "myFunction", M);
+						create_function(M, functionType->getReturnType(), function);
+						actual_args.push_back(function);
+					} else {
+						stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType()->getPointerElementType(), arg.getName());
+						actual_args.push_back(stackArg);
+					}
 				} else {
 					stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType(), arg.getName());
 					LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
@@ -315,8 +359,10 @@ namespace {
 			// Then we dump the symbolic values
 			for (int i = 0; i < actual_args.size(); i++) {
 				Value* arg_value = actual_args[i];
+				if (llvm::isa<llvm::Function>(arg_value)) {
+					continue;
+				}
 				print_nested_klee_exprs(M, Builder, arg_value, std::string("arg_value_") + std::to_string(i));
-				
 			}
 
 			// The return value
@@ -369,7 +415,8 @@ namespace {
 
 						std::vector<Value*> args_vec;
 						
-						std::string label_name = std::string("*(" + label + ")");
+						std::string new_label = label + "." + "field_" + std::to_string(i);
+						std::string label_name = std::string("*(" + new_label + ")");
 
 						args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label_name + " : "));
 						args_vec.push_back(load_arg_value);
@@ -382,7 +429,7 @@ namespace {
 					Value* gep = Builder.CreateGEP(
 							array_type, 
 							arg_value, 
-							ArrayRef<Value*>({ConstantInt::get(IntegerType::get(ctx, 64), 0), ConstantInt::get(IntegerType::get(ctx, 64), 0)}),
+							ArrayRef<Value*>({ConstantInt::get(IntegerType::get(ctx, 64), 0), ConstantInt::get(IntegerType::get(ctx, 64), i)}),
 							"gep");
 					if (isa<PointerType>(element_type) || isa<StructType>(element_type) || isa<ArrayType>(element_type)) {
 						print_nested_klee_exprs(M, Builder, gep, label + "[" + std::to_string(i) + "]");
@@ -400,56 +447,26 @@ namespace {
 					}
 				}
 			} else if (arg_value->getType()->isPointerTy()) {
-				Function *function = Builder.GetInsertBlock()->getParent();
-				Value *zero = Builder.getInt32(0);
-				Value *one = Builder.getInt32(1);
-				std::vector<Value*> args_vec;
-				BasicBlock *LoopBodyBB = BasicBlock::Create(ctx, "loop.body", function);
-				BasicBlock *ExitBB = BasicBlock::Create(ctx, "exit", function);
-				BasicBlock *LoopCondBB = BasicBlock::Create(ctx, "loop.cond", function);
-
-				Value *InitVal = Builder.getInt32(0);
-				AllocaInst *iVar = Builder.CreateAlloca(Type::getInt32Ty(ctx), nullptr, "i");
-				Builder.CreateStore(InitVal, iVar);
-
-				Builder.CreateBr(LoopCondBB);
-
-				Builder.SetInsertPoint(LoopCondBB);
-
-
-				LoadInst *LoadI = Builder.CreateLoad(Type::getInt32Ty(ctx), iVar, "i");
-
-				Type *elementType = arg_value->getType()->getPointerElementType();
-				Value *ptr = Builder.CreateGEP(getType()->getPointerElemarg_value->entType(), arg_value, LoadI);
-				Value *Condition;
-				Value *charVal;
-
-
-				if (elementType->isIntegerTy(32)) {
-					charVal = Builder.CreateLoad(Builder.getInt32Ty(), ptr);
-					Condition = Builder.CreateICmpEQ(charVal, Builder.getInt32(0));
-				} else if (elementType->isIntegerTy(8)) {
-					charVal = Builder.CreateLoad(Builder.getInt8Ty(), ptr);
-					Condition = Builder.CreateICmpEQ(charVal, Builder.getInt8(0));
-				} else {
-					report_fatal_error("Unsupported array element type!");
+				if (isa<FunctionType>(arg_value->getType()->getPointerElementType())) {
+					return;
 				}
+				Type *elementType = arg_value->getType()->getPointerElementType();
+				for (int i = 0; i < 5; ++i) {
+					// Create the GEP for the current index
+					Value *index = Builder.getInt32(i);
+					Value *ptr = Builder.CreateGEP(elementType, arg_value, index, "gep" + std::to_string(i));
 
-				Builder.CreateCondBr(Condition, ExitBB, LoopBodyBB);
-				Builder.SetInsertPoint(LoopBodyBB);
+					// Load the value from the pointer
+					Value *charVal = Builder.CreateLoad(elementType, ptr, "load" + std::to_string(i));
 
+					// Prepare arguments for the print function
+					std::vector<Value*> args_vec;
+					args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
+					args_vec.push_back(charVal);
 
-
-				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
-				args_vec.push_back(charVal);
-				Builder.CreateCall(klee_print_expr_function, args_vec);
-
-				Value *Incremented = Builder.CreateAdd(LoadI, Builder.getInt32(1), "increment");
-				Builder.CreateStore(Incremented, iVar);
-
-				Builder.CreateBr(LoopCondBB);
-
-				Builder.SetInsertPoint(ExitBB);
+					// Call the print function
+					Builder.CreateCall(klee_print_expr_function, args_vec);
+				}
 			} else {
 				std::vector<Value*> args_vec;
 				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
