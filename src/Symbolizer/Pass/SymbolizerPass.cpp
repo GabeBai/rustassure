@@ -515,6 +515,18 @@ namespace {
 				for (BasicBlock &basic_block : F) {
 					for (Instruction &instruction : basic_block) {
 						if (auto *call_inst = dyn_cast<CallInst>(&instruction)) {
+              if (call_inst->getCalledFunction() && call_inst->getCalledFunction()->isIntrinsic()) { // intrinsics are functions that are provided by the compiler
+                                                                                                     // No need to replace them as their definitions will always
+                                                                                                     // be provided by the compiler
+                                                                                                     // Debug information, along with certain memcpy, memchk functions
+                                                                                                     // are treated as intrinsics in LLVM.
+                                                                                                     // The arguments to a debug intrinsic cannot be passed to a normal
+                                                                                                     // function (which is what would happen if we tried to create dummy
+                                                                                                     // versions of intrinsic functions.
+                                                                                                     // Also, if we replaced the debug intrinsics, debug information would
+                                                                                                     // stop working.
+								continue;
+							}
 							call_insts.push_back(call_inst);
 						}
 					}
