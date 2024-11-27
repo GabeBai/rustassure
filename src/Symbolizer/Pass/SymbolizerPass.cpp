@@ -271,7 +271,16 @@ namespace {
 				create_function(M, functionType->getReturnType(), function);
 				return function;
 			} else {
-				AllocaInst* stack_arg = Builder.CreateAlloca(type, 0, name);
+				// If it is a struct type but the definition isn't present, then we just give it some random fields
+				// create an integer and mark it symbolic
+				// This implementation is incomplete: many corner cases need to be handled
+				AllocaInst* stack_arg = nullptr;
+				StructType* struct_symbol_type = dyn_cast<StructType>(type);
+				if (struct_symbol_type && struct_symbol_type->isOpaque()) {
+					// Create a dummy struct type of two ints
+					struct_symbol_type->setBody({llvm::Type::getInt8Ty(ctx), llvm::Type::getInt8Ty(ctx)});
+				} 
+				stack_arg = Builder.CreateAlloca(type, 0, name);
 				// Any inner objects, should also be initialized
 				initialize_inner_objects(M, Builder, stack_arg);
 				// Only mark the non-pointers symbolic
