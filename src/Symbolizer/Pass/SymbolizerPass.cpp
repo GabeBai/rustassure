@@ -176,6 +176,10 @@ namespace {
 
 			
 		void initialize_inner_pointer(Module& M, IRBuilder<>& Builder, Value* pointer, PointerType* ptr_type, StringRef name, std::vector<Value*>& nested_pointers) {
+			// If it is a pointer to a function, do nothing
+			if (isa<FunctionType>(ptr_type->getPointerElementType())) {
+				return;
+			}
 			// If it is, then allocate something and store it
 			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name);
 			// Store it to the pointer
@@ -476,10 +480,84 @@ namespace {
 			Function::Create(klee_print_expr_type, Function::ExternalLinkage, "klee_print_expr", M);
 		}
 
+		void convert_function_calls(Module& M) {
+			LLVMContext &ctx = M.getContext();
+			IRBuilder<> Builder(ctx);
+
+			// Iterate through all functions in the module
+			for (Function &F : M) {
+				if (F.isDeclaration())
+					continue; // Skip function declarations
+
+				if (F.getName() == "main" || F.getName().startswith("symbolic_dummy")) 
+					continue; // The main is the driver and symbolic_dummy's are the ones we inserted
+
+				std::vector<CallInst *> call_insts;
+
+				// Collect all CallInsts in the function
+				for (BasicBlock &basic_block : F) {
+					for (Instruction &instruction : basic_block) {
+						if (auto *call_inst = dyn_cast<CallInst>(&instruction)) {
+							call_insts.push_back(call_inst);
+						}
+					}
+				}
+				
+				int count = 0;
+				// Transform each CallInst
+				for (CallInst *call_inst : call_insts) {
+					FunctionType *func_type = call_inst->getFunctionType();
+					std::vector<Type *> param_types(func_type->param_begin(), func_type->param_end());
+
+					// Create a new function with the same signature
+					Function *dummy_func = Function::Create(
+							func_type, Function::ExternalLinkage,
+							"symbolic_dummy" + std::to_string(count++), M);
+
+					// Create the function body
+					BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
+					Builder.SetInsertPoint(basic_block);
+
+					Type *return_type = func_type->getReturnType();
+					if (return_type->isVoidTy()) {
+						Builder.CreateRetVoid();
+					} else {
+						// Create a global variable of the return type
+						GlobalVariable *symbolic_ret_val = new GlobalVariable(
+								M, return_type, false, GlobalValue::PrivateLinkage,
+								Constant::getNullValue(return_type), "symbolic_ret");
+
+						// Call klee_make_symbolic
+						Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
+						assert(klee_make_symbolic && "Can't find klee functions!");
+
+						Builder.CreateCall(
+								klee_make_symbolic,
+								{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
+								ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
+								Builder.CreateGlobalStringPtr("symbolic_var")});
+
+						// Return the global variable
+						Builder.CreateRet(Builder.CreateLoad(return_type, symbolic_ret_val));
+					}
+
+					// Replace the original CallInst
+					SmallVector<Value *, 8> args; // Adjust size based on expected number of arguments
+					for (auto &arg : call_inst->args()) {
+						args.push_back(arg.get());
+					}
+					IRBuilder<> CallBuilder(call_inst);
+					call_inst->replaceAllUsesWith(CallBuilder.CreateCall(dummy_func, args));
+					call_inst->eraseFromParent();
+				}
+			}
+		}
+
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);
+			convert_function_calls(M);
 			//M.dump();
 			return PreservedAnalyses::none();
 		}
