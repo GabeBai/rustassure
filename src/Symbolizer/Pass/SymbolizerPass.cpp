@@ -406,6 +406,10 @@ namespace {
 				arg_value = Builder.CreateLoad(arg_value->getType()->getPointerElementType(), arg_value);
 			}
 
+			if (isa<FunctionType>(arg_value->getType()->getPointerElementType())) {
+				return;
+			}
+
 			if (StructType* struct_type = dyn_cast<StructType>(arg_value->getType()->getPointerElementType())) {
 				for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
 					Type* field_type = struct_type->getElementType(i);
@@ -456,9 +460,15 @@ namespace {
 					}
 				}
 			} else if (arg_value->getType()->isPointerTy()) {
-				if (isa<FunctionType>(arg_value->getType()->getPointerElementType())) {
-					return;
-				}
+				Value *isNotNull = Builder.CreateICmpNE(arg_value, Constant::getNullValue(arg_value->getType()), "is_not_null");
+
+				// Create a basic block for the loop and after-loop continuation
+				BasicBlock *loopBlock = BasicBlock::Create(Builder.getContext(), "loop", Builder.GetInsertBlock()->getParent());
+				BasicBlock *afterBlock = BasicBlock::Create(Builder.getContext(), "after_loop", Builder.GetInsertBlock()->getParent());
+				Builder.CreateCondBr(isNotNull, loopBlock, afterBlock);
+				
+				Builder.SetInsertPoint(loopBlock);
+
 				Type *elementType = arg_value->getType()->getPointerElementType();
 				for (int i = 0; i < 5; ++i) {
 					// Create the GEP for the current index
@@ -476,6 +486,8 @@ namespace {
 					// Call the print function
 					Builder.CreateCall(klee_print_expr_function, args_vec);
 				}
+				Builder.CreateBr(afterBlock);
+				Builder.SetInsertPoint(afterBlock);
 			} else {
 				std::vector<Value*> args_vec;
 				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
