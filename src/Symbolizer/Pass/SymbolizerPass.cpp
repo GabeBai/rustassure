@@ -465,7 +465,9 @@ namespace {
 				// Create a basic block for the loop and after-loop continuation
 				BasicBlock *loopBlock = BasicBlock::Create(Builder.getContext(), "loop", Builder.GetInsertBlock()->getParent());
 				BasicBlock *afterBlock = BasicBlock::Create(Builder.getContext(), "after_loop", Builder.GetInsertBlock()->getParent());
-				Builder.CreateCondBr(isNotNull, loopBlock, afterBlock);
+				BasicBlock *nullBlock = BasicBlock::Create(Builder.getContext(), "null_block", Builder.GetInsertBlock()->getParent());
+
+				Builder.CreateCondBr(isNotNull, loopBlock, nullBlock);
 				
 				Builder.SetInsertPoint(loopBlock);
 
@@ -484,6 +486,15 @@ namespace {
 					args_vec.push_back(charVal);
 
 					// Call the print function
+					Builder.CreateCall(klee_print_expr_function, args_vec);
+				}
+				Builder.CreateBr(afterBlock);
+				Builder.SetInsertPoint(nullBlock);
+				{
+					std::vector<Value*> args_vec;
+					args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
+					args_vec.push_back(Builder.getInt64(0));
+
 					Builder.CreateCall(klee_print_expr_function, args_vec);
 				}
 				Builder.CreateBr(afterBlock);
