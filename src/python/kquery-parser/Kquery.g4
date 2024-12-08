@@ -42,7 +42,7 @@ arithmetic_expr_kind : ( ADD | SUB | MUL | UDIV | UREM | SDIV );
 
 NOT: 'Not';
 AND: 'And';
-OR: 'OR';
+OR: 'Or';
 XOR: 'Xor';
 SHL: 'Shl';
 LSHR: 'LShr';
@@ -103,7 +103,7 @@ definition: IDENTIFIER ':' expr;
 
 arithmetic_expr: '(' arithmetic_expr_kind type expr expr ')';
 
-bitwise_expr: '(' bitwise_expr_kind expr expr ')';
+bitwise_expr: '(' bitwise_expr_kind (type)? expr expr ')';
 
 comparison_expr: '(' comparison_expr_kind (type)? expr expr ')';
 
