@@ -1,0 +1,7 @@
+strict digraph {
+"504 [value = Read,  type = w8]";
+"502 [value = 0, ]";
+"503 [value = unnamed_1, ]";
+"504 [value = Read,  type = w8]" -> "502 [value = 0, ]";
+"504 [value = Read,  type = w8]" -> "503 [value = unnamed_1, ]";
+}

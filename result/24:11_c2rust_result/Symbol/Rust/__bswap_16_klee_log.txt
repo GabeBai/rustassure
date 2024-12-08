@@ -1,0 +1,6 @@
+SYM VALUE: arg_value_0 : :(ReadLSB w16 0 __bsx)
+SYM VALUE: ret_value : :(Or w16 (And w16 (LShr w16 N0:(ReadLSB w16 0 __bsx)
+                            8)
+                  255)
+         (Shl w16 (And w16 N0 255) 8))
+

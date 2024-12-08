@@ -1,0 +1,7 @@
+strict digraph {
+"2382 [value = ReadLSB,  type = w64]";
+"2380 [value = 24, ]";
+"2381 [value = unnamed, ]";
+"2382 [value = ReadLSB,  type = w64]" -> "2380 [value = 24, ]";
+"2382 [value = ReadLSB,  type = w64]" -> "2381 [value = unnamed, ]";
+}

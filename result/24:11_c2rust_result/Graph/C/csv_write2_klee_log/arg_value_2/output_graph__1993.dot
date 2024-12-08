@@ -1,0 +1,7 @@
+strict digraph {
+"36285 [value = Read,  type = w8]";
+"36283 [value = 16, ]";
+"36284 [value = unnamed_2, ]";
+"36285 [value = Read,  type = w8]" -> "36283 [value = 16, ]";
+"36285 [value = Read,  type = w8]" -> "36284 [value = unnamed_2, ]";
+}
