@@ -139,7 +139,5 @@ We can only fine-tune GPT 3.5 models, as of 6/24/2024.
 	* Run `make -j4 && sudo make install`
 4. Build the Symbolizer pass. This is LLVM tool that automatically inserts the `klee_make_symbolic` and `klee_print_exprs` functions to the LLVM bitcode. 
 	 Inside `rustify/src/Symbolizer` run `./build.sh`.
-5. Run the sanity test `cd rustify/src/Symbolizer && ./sanity_test.sh` It will run `klee <bitcode_name.bc>` and should print out some symbolic arguments (the lines starting with `SYM_VALUE`). Note that it might take a few minutes for the sanity test to complete.
-6. Ensure that the `KQueryGrapher.py` script is working. To do this, manually add some of the symbolic values to the `expressions` array in `KQueryGrapher.py` and see if it can get plotted.
-7. TODO: Automate the extraction of the symbolic constraints from the output of `klee <bitcode_name.bc>` and pass them to `KQueryGrapher.py` script's `convert_kquery_to_graph` function.
-8. TODO: Modify the script to work with the generated C and Rust bitcode files and generate the graphs for all functions in `rustify/src/python/inputs-complex/libcsv/individual-funcs_gpt-4o_2024-09-17_20-51-53__complete` and then use networkx library functions to find the similarity between them.
+5. Run the sanity test `cd rustify/src/Symbolizer && ./convert_klee.sh` It will loop through all the `.c` files in `testcase/C/` and first symbolize them using the Symbolizer pass, then run `klee <bitcode_name.bc>` and should print out some symbolic arguments (the lines starting with `SYM_VALUE`). It will also run the `KQueryConverty.py` script to convert the constraints in a Graph format and dump them. Note that it might take a few minutes for the sanity test to complete.
+6. The graphs will be in `.dot` format inside `graph_output/C`. Open the dot files and make sure that they aren't empty. This ensures that the latter part of the toolchain is working.
