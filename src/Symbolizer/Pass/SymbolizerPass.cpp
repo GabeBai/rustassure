@@ -419,6 +419,14 @@ namespace {
 							i,
 							"gep");
 					if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
+						// todo @ gab : fix me !!
+						// temporary solution for i64 * inside struct (In rust, it is a function pointer)
+						if (auto *ptrType = dyn_cast<PointerType>(field_type)) {
+							Type *pointeeType = ptrType->getElementType();
+							if (pointeeType->isIntegerTy(64)) {
+								continue;
+							}
+						}
 						print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
 					} else {
 						
