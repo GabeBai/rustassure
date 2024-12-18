@@ -3,6 +3,7 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+./build.sh
 if [ -e compare_graph_output_log.log ]; then
     rm compare_graph_output_log.log
 fi
@@ -27,7 +28,7 @@ export C_INCLUDE_PATH=../klee/include
 
 manage_dot_files() {
   local dir="$1"
-  local max_files=20  # Set your MAX_FILES limit here
+  local max_files=10  # Set your MAX_FILES limit here
 
   # Validate input
   if [ -z "$dir" ] || [ ! -d "$dir" ]; then
@@ -60,7 +61,7 @@ count=0
 # Loop through each .c file in the directory
 for c_file in testcase/C/*.i; do
     # Extract the base filename without extension
-    base_name=$(basename "$c_file" .c)
+    base_name=$(basename "$c_file" .i)
     
     # Compile the .c file to LLVM bitcode
     # don't use -g currently, -g will cause some klee error
@@ -73,7 +74,7 @@ for c_file in testcase/C/*.i; do
     klee --libc=klee --max-time=15 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
     
     #only for debug, we need to know all the execution error of KLEE 
-    klee --libc=klee --max-time=10 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/KLEE: ERROR/' > "klee_symbol_error_log/C/${base_name}_error_log.txt"
+    klee --libc=klee --max-time=30 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/KLEE: ERROR/' > "klee_symbol_error_log/C/${base_name}_error_log.txt"
 
     echo "Processed $c_file and saved log to klee_symbol_log/C/${base_name}_klee_log.txt"
     
@@ -116,18 +117,22 @@ done
 
 echo "All the result C graphs have successfully been saved into graph_output. Total processed files: $count. Total graphs generate: $gcount"
 
+
+python3 ../python/llvmBitcodeEmitter.py testcase/rust
+
+
 count=0
-for r_file in testcase/Rust/*.rs; do
+for r_file in testcase/Rust/*.bc; do
     # Extract the base filename without extension
-    base_name=$(basename "$r_file" .rs)
+    base_name=$(basename "$r_file" .rs.bc)
     
     # Compile the .rust file to LLVM bitcode
-    rustc --emit=llvm-ir -C opt-level=0 "$r_file" -o "klee_bc/Rust/${base_name}.bc"
+    # rustc --emit=llvm-ir -C opt-level=0 "$r_file" -o "klee_bc/Rust/${base_name}.bc"
 
 
-    opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "klee_bc/Rust/${base_name}.bc" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
+    opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
     
-    klee --libc=klee "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
+    klee --libc=klee --max-time=30 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
 
     echo "Processed $r_file and saved log to klee_symbol_log/Rust/${base_name}_klee_log.txt"
     
@@ -140,6 +145,13 @@ for r_file in testcase/Rust/*.rs; do
     count=$((count + 1))
     echo "$r_file output graph has been saved into graph_output/Rust/${base_name} folder"
 done
+
+base_dir="graph_output/rust"
+if [ -d "$base_dir" ]; then
+    find "$base_dir" -type d | while read -r subdir; do
+        manage_dot_files "$subdir"
+    done
+fi
 
 gcount=0
 for file in graph_output/Rust/**/**/*.dot; do
