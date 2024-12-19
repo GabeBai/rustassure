@@ -401,7 +401,23 @@ namespace {
 				if (llvm::isa<llvm::Function>(arg_value)) {
 					continue;
 				}
-				print_nested_klee_exprs(M, Builder, arg_value, std::string("arg_value_") + std::to_string(i));
+                bool needReplace = false;
+                std::string structName;
+                if (ParsedJson.contains(std::to_string(i))) {
+                    needReplace = true;
+                    structName = ParsedJson[std::to_string(i)];;
+                }
+                Type* targetType = arg_value->getType();
+                Type* originalType = targetType;
+                if (needReplace) {
+                    Type* structType = StructType::getTypeByName(M.getContext(), structName);
+                    targetType = PointerType::get(structType, 0);
+                }
+				if (needReplace) {
+					print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(arg_value, targetType), std::string("arg_value_") + std::to_string(i));
+				} else {
+					print_nested_klee_exprs(M, Builder, arg_value, std::string("arg_value_") + std::to_string(i));
+				}
 			}
 
 			// The return value
