@@ -1,3 +1,4 @@
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
@@ -18,11 +19,10 @@
 
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/InlineAsm.h"
-
+#include <fstream>
 #include <vector>
 #include <string>
 #include <stdint.h>
@@ -37,10 +37,11 @@
 #include <array>
 #include <filesystem>
 #include <sstream>
-
+#include <nlohmann/json.hpp> // JSON 解析库
 
 using namespace llvm;
 
+using json = nlohmann::json;
 
 void strip_new_line(std::string& str) {
 	if (!str.empty() && str.back() == '\n') {
@@ -100,6 +101,7 @@ namespace {
 	struct Symbolizer : PassInfoMixin<Symbolizer> {
 
 		std::vector<StructType*> visited_struct_types;
+		json ParsedJson;
 
 		void create_function(Module& M, Type* return_type, Function* function) {
 			LLVMContext& ctx = M.getContext();
@@ -200,7 +202,7 @@ namespace {
 				return;
 			}
 			// If it is, then allocate something and store it
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name);
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type->getPointerElementType(), false);
 			// Store it to the pointer
 			if (pointer->getType()->getPointerElementType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType()->getPointerElementType());
@@ -256,7 +258,7 @@ namespace {
 			}
 		}
 
-		Value* create_object_and_mark_symbolic(Module& M, IRBuilder<>& Builder, Type* type, StringRef name) {
+		Value* create_object_and_mark_symbolic(Module& M, IRBuilder<>& Builder, Type* type, StringRef name, Type* originType, bool needCast){
 			LLVMContext& ctx = M.getContext();
 			// special handling for i8* which could be strings
 			bool cast_to_integer = false;
@@ -306,6 +308,9 @@ namespace {
 						//error
 					}
 					return (Builder.CreateBitCast(stack_arg, void_ptr_type));
+				} else if (needCast) {
+					// need cast back to origninal type
+					return (Builder.CreateBitCast(stack_arg, originType));
 				} else {
 					return stack_arg;
 				}
@@ -331,6 +336,17 @@ namespace {
     			return; 
 			}
 
+			std::string fixedJsonPath = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/input.json";
+			std::ifstream jsonFile(fixedJsonPath);
+			if (!jsonFile.is_open()) {
+				llvm::errs() << "Error: Could not open JSON file: " << fixedJsonPath << "\n";
+			}
+			json jsonData;
+			jsonFile >> jsonData;
+			if (jsonData.contains(target_function->getName())) {
+				ParsedJson = jsonData[target_function->getName()];
+			}
+
 			// Target function
 			// Add an entry block to the main function
 			BasicBlock* EntryBB = BasicBlock::Create(ctx, "entry", main_function);
@@ -345,18 +361,32 @@ namespace {
 				// If it's a C pointer type, then we must create a stack object (AllocaInst) of the base type, mark it symbolic, and pass it directly to the function
 				// If it's a scalar, then we must create a stack object, load it and pass it to the function
 				Value* stackArg = nullptr;
-				if (isa<PointerType>(arg.getType()) && arg.getType()->getPointerElementType()) {
-					if (isa<FunctionType>(arg.getType()->getPointerElementType())) {
-						FunctionType *functionType = cast<FunctionType>(arg.getType()->getPointerElementType());
+				unsigned argIndex = arg.getArgNo();
+				bool needReplace = false;
+				std::string structName;
+				if (ParsedJson.contains(std::to_string(argIndex))) {
+					needReplace = true;
+					structName = ParsedJson[std::to_string(argIndex)];;
+				}
+				Type* targetType = arg.getType();
+				Type* originalType = targetType;
+				if (needReplace) {
+					Type* structType = StructType::getTypeByName(M.getContext(), structName);
+					targetType = PointerType::get(structType, 0);
+				}
+
+				if (isa<PointerType>(targetType) && targetType->getPointerElementType()) {
+					if (isa<FunctionType>(targetType->getPointerElementType())) {
+						FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
 						Function *function = Function::Create(functionType, Function::ExternalLinkage, "myFunction", M);
 						create_function(M, functionType->getReturnType(), function);
 						actual_args.push_back(function);
 					} else {
-						stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType()->getPointerElementType(), arg.getName());
+						stackArg = create_object_and_mark_symbolic(M, Builder,targetType->getPointerElementType(), arg.getName(), originalType, needReplace);
 						actual_args.push_back(stackArg);
 					}
 				} else {
-					stackArg = create_object_and_mark_symbolic(M, Builder, arg.getType(), arg.getName());
+					stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace);
 					LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
 					actual_args.push_back(stack_load_inst);
 				}
