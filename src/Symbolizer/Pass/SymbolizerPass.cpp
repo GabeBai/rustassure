@@ -202,7 +202,7 @@ namespace {
 				return;
 			}
 			// If it is, then allocate something and store it
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type->getPointerElementType(), false);
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type->getPointerElementType(), false, false);
 			// Store it to the pointer
 			if (pointer->getType()->getPointerElementType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType()->getPointerElementType());
@@ -258,7 +258,7 @@ namespace {
 			}
 		}
 
-		Value* create_object_and_mark_symbolic(Module& M, IRBuilder<>& Builder, Type* type, StringRef name, Type* originType, bool needCast){
+		Value* create_object_and_mark_symbolic(Module& M, IRBuilder<>& Builder, Type* type, StringRef name, Type* originType, bool needCast, bool needIgnore){
 			LLVMContext& ctx = M.getContext();
 			// special handling for i8* which could be strings
 			bool cast_to_integer = false;
@@ -287,7 +287,7 @@ namespace {
 				initialize_inner_objects(M, Builder, stack_arg);
 				// Only mark the non-pointers symbolic
 				// For structs, only mark the non-pointer fields symbolic
-				if (!isa<PointerType>(type)) {
+				if (!isa<PointerType>(type) && !needIgnore) {
 					// type is the type passed to the CreateAlloca
 					// For structs too, we can mark the whole struct
 					// as symbolic
@@ -363,18 +363,27 @@ namespace {
 				Value* stackArg = nullptr;
 				unsigned argIndex = arg.getArgNo();
 				bool needReplace = false;
-				std::string structName;
+				bool needIgnore = false;
+				std::string targetName;
+
 				if (ParsedJson.contains(std::to_string(argIndex))) {
-					needReplace = true;
-					structName = ParsedJson[std::to_string(argIndex)];;
+					targetName = ParsedJson[std::to_string(argIndex)];;
 				}
+				if (!targetName.empty()) {
+					if (targetName == "function") {
+						needIgnore = true;
+					} else {
+						needReplace = true;
+					}
+				}
+
 				Type* targetType = arg.getType();
 				Type* originalType = targetType;
 				if (needReplace) {
-					Type* structType = StructType::getTypeByName(M.getContext(), structName);
+					Type* structType = StructType::getTypeByName(M.getContext(), targetName);
 					targetType = PointerType::get(structType, 0);
 				}
-
+			
 				if (isa<PointerType>(targetType) && targetType->getPointerElementType()) {
 					if (isa<FunctionType>(targetType->getPointerElementType())) {
 						FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
@@ -382,11 +391,11 @@ namespace {
 						create_function(M, functionType->getReturnType(), function);
 						actual_args.push_back(function);
 					} else {
-						stackArg = create_object_and_mark_symbolic(M, Builder,targetType->getPointerElementType(), arg.getName(), originalType, needReplace);
+						stackArg = create_object_and_mark_symbolic(M, Builder,targetType->getPointerElementType(), arg.getName(), originalType, needReplace, needIgnore);
 						actual_args.push_back(stackArg);
 					}
 				} else {
-					stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace);
+					stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace, needIgnore);
 					LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
 					actual_args.push_back(stack_load_inst);
 				}
@@ -402,17 +411,30 @@ namespace {
 					continue;
 				}
                 bool needReplace = false;
-                std::string structName;
+				bool needIgnore = false;
+				std::string targetName;
+
                 if (ParsedJson.contains(std::to_string(i))) {
-                    needReplace = true;
-                    structName = ParsedJson[std::to_string(i)];;
+                    targetName = ParsedJson[std::to_string(i)];;
                 }
+				if (!targetName.empty()) {
+					if (targetName == "function") {
+						needIgnore = true;
+					} else {
+						needReplace = true;
+					}
+				}
+
+
                 Type* targetType = arg_value->getType();
-                Type* originalType = targetType;
                 if (needReplace) {
-                    Type* structType = StructType::getTypeByName(M.getContext(), structName);
-                    targetType = PointerType::get(structType, 0);
+					Type* structType = StructType::getTypeByName(M.getContext(), targetName);
+					targetType = PointerType::get(structType, 0);
                 }
+				if (needIgnore) {
+					continue;
+				}
+
 				if (needReplace) {
 					print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(arg_value, targetType), std::string("arg_value_") + std::to_string(i));
 				} else {
