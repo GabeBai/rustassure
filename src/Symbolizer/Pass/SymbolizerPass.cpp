@@ -37,7 +37,8 @@
 #include <array>
 #include <filesystem>
 #include <sstream>
-#include <nlohmann/json.hpp> // JSON 解析库
+#include <nlohmann/json.hpp>
+#include <filesystem>
 
 using namespace llvm;
 
@@ -337,14 +338,16 @@ namespace {
 			}
 
 			std::string fixedJsonPath = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/input.json";
-			std::ifstream jsonFile(fixedJsonPath);
-			if (!jsonFile.is_open()) {
-				llvm::errs() << "Error: Could not open JSON file: " << fixedJsonPath << "\n";
-			}
-			json jsonData;
-			jsonFile >> jsonData;
-			if (jsonData.contains(target_function->getName())) {
-				ParsedJson = jsonData[target_function->getName()];
+			if (std::filesystem::exists(fixedJsonPath)) {
+				std::ifstream jsonFile(fixedJsonPath);
+				if (!jsonFile.is_open()) {
+					llvm::errs() << "Error: Could not open JSON file: " << fixedJsonPath << "\n";
+				}
+				json jsonData;
+				jsonFile >> jsonData;
+				if (jsonData.contains(target_function->getName())) {
+					ParsedJson = jsonData[target_function->getName()];
+				}
 			}
 
 			// Target function
@@ -366,7 +369,7 @@ namespace {
 				bool needIgnore = false;
 				std::string targetName;
 
-				if (ParsedJson.contains(std::to_string(argIndex))) {
+				if (!ParsedJson.empty() && ParsedJson.contains(std::to_string(argIndex))) {
 					targetName = ParsedJson[std::to_string(argIndex)];;
 				}
 				if (!targetName.empty()) {
@@ -414,7 +417,7 @@ namespace {
 				bool needIgnore = false;
 				std::string targetName;
 
-                if (ParsedJson.contains(std::to_string(i))) {
+                if (!ParsedJson.empty() && ParsedJson.contains(std::to_string(i))) {
                     targetName = ParsedJson[std::to_string(i)];;
                 }
 				if (!targetName.empty()) {
