@@ -384,6 +384,10 @@ namespace {
 				Type* originalType = targetType;
 				if (needReplace) {
 					Type* structType = StructType::getTypeByName(M.getContext(), targetName);
+					//If the defination of the struct is empty
+					if (!structType) {
+						structType = StructType::create(M.getContext(), targetName);
+					}
 					targetType = PointerType::get(structType, 0);
 				}
 			
