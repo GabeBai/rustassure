@@ -1,7 +1,0 @@
-strict digraph {
-"2022 [value = ReadLSB,  type = w64]";
-"2020 [value = 0, ]";
-"2021 [value = unnamed_1, ]";
-"2022 [value = ReadLSB,  type = w64]" -> "2020 [value = 0, ]";
-"2022 [value = ReadLSB,  type = w64]" -> "2021 [value = unnamed_1, ]";
-}

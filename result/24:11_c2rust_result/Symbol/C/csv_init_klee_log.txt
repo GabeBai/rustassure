@@ -1,6 +1,0 @@
-SYM VALUE: *(arg_value_0) : :0
-SYM VALUE: *(arg_value_0) : :0
-SYM VALUE: *(arg_value_0) : :0
-KLEE: ERROR: (location information missing) memory error: null page access
-KLEE: NOTE: now ignoring this error at this location
-

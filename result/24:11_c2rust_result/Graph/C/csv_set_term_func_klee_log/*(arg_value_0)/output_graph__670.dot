@@ -1,7 +1,0 @@
-strict digraph {
-"2013 [value = Read,  type = w8]";
-"2011 [value = 44, ]";
-"2012 [value = unnamed, ]";
-"2013 [value = Read,  type = w8]" -> "2011 [value = 44, ]";
-"2013 [value = Read,  type = w8]" -> "2012 [value = unnamed, ]";
-}

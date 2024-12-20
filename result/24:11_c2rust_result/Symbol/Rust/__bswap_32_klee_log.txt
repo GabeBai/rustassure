@@ -1,8 +1,0 @@
-SYM VALUE: arg_value_0 : :(ReadLSB w32 0 __bsx)
-SYM VALUE: ret_value : :(Or w32 (Or w32 (Or w32 (LShr w32 (And w32 N0:(ReadLSB w32 0 __bsx)
-                                            4278190080)
-                                   24)
-                         (LShr w32 (And w32 N0 16711680) 8))
-                 (Shl w32 (And w32 N0 65280) 8))
-         (Shl w32 (And w32 N0 255) 24))
-

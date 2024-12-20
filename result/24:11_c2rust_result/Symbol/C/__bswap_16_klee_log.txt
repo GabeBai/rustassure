@@ -1,6 +1,0 @@
-SYM VALUE: arg_value_0 : :(ReadLSB w16 0 unnamed)
-SYM VALUE: ret_value : :(Extract w16 0 (Or w32 (And w32 (AShr w32 N0:(ZExt w32 (ReadLSB w16 0 unnamed))
-                                           8)
-                                 255)
-                        (Shl w32 (And w32 N0 255) 8)))
-

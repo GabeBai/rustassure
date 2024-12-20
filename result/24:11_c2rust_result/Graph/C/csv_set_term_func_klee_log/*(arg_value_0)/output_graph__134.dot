@@ -1,7 +1,0 @@
-strict digraph {
-"405 [value = ReadLSB,  type = w32]";
-"403 [value = 40, ]";
-"404 [value = unnamed, ]";
-"405 [value = ReadLSB,  type = w32]" -> "403 [value = 40, ]";
-"405 [value = ReadLSB,  type = w32]" -> "404 [value = unnamed, ]";
-}

@@ -1,7 +1,0 @@
-strict digraph {
-"405 [value = Read,  type = w8]";
-"403 [value = 45, ]";
-"404 [value = unnamed, ]";
-"405 [value = Read,  type = w8]" -> "403 [value = 45, ]";
-"405 [value = Read,  type = w8]" -> "404 [value = unnamed, ]";
-}
