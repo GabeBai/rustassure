@@ -8,6 +8,32 @@ if [ -e compare_graph_output_log.log ]; then
     rm compare_graph_output_log.log
 fi
 
+[ -f input.json ] && rm input.json
+
+# todo @gab fix me!!
+create_json() {
+    jq -n '{
+    "csv_set_quote" : {
+        "0" : "CsvParser",
+    },
+    "csv_get_opts" : {
+        "0" : "CsvParser"
+    },
+    "csv_fini" : {
+        "0" : "CsvParser"
+    },
+    "csv_set_space_func" : {
+        "1" : "function",
+        "2" : "function"
+    },
+    "r" : {
+        "0" : "CsvParser",
+        "1" : "function",
+        "2" : "function"
+    }
+}' > input.json
+}
+
 prepare_directory() {
     if [ -d "$1" ]; then
         rm -rf "$1"/*
@@ -117,6 +143,8 @@ done
 
 echo "All the result C graphs have successfully been saved into graph_output. Total processed files: $count. Total graphs generate: $gcount"
 
+
+create_json
 
 python3 ../python/llvmBitcodeEmitter.py testcase/rust
 
