@@ -68,7 +68,9 @@ class KqueryASTVisitor(KqueryVisitor):
     def visitNumber(self, ctx):
         # print("Number")
         number = ctx.getText()
-        return Node(number, "", self.G)
+        node =  Node(number, "", self.G)
+        self.G.add_node(node)
+        return node
 
     def visitDefinition(self, ctx):
         # Create the node and populate it in the definition_map
@@ -383,13 +385,8 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
 
 if __name__ == "__main__":
     expressions = [
-#         """
-# (Extract w16 0 (Or w32 (And w32 (AShr w32 N0:(ZExt w32 (ReadLSB w16 0 unnamed))
-#                                            8)
-#                                  255)
-#                         (Shl w32 (And w32 N0 255) 8)))
-#         """
-    "(Or w32 (ReadLSB w16 0 unnamed) (ReadLSB w16 0 unnamed))"
+    # "(ReadLSB w16 0 unnamed)",
+    "0",
     ]          
-    convert_kquery_to_graph(expressions, "", "text")
+    convert_kquery_to_graph(expressions, "abc", "text")
 
