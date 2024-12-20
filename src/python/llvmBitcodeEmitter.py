@@ -41,18 +41,16 @@ def remove_no_mangle_main(filename):
         lines = file.readlines()
 
     updated_lines = []
-    pattern = re.compile(r'^\s*#\s*\[\s*no_mangle\s*\]\s*fn\s+main\s*\(.*\)\s*\{')  # 精确匹配
+    pattern = re.compile(r'^\s*#\s*\[\s*no_mangle\s*\]\s*fn\s+main\s*\(.*\)\s*\{')
 
-    skip_next = False  # 标记是否跳过下一行
+    skip_next = False 
     for line in lines:
-        # 如果匹配到 #[no_mangle] fn main() {，跳过这一行
         if pattern.match(line):
             skip_next = True
             continue
 
-        # 如果上一行是 #[no_mangle] fn main() {，跳过下一行
         if skip_next:
-            if re.match(r'^\s*\{', line):  # 匹配开大括号
+            if re.match(r'^\s*\{', line):  
                 skip_next = False
             continue
 
