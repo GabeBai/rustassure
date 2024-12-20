@@ -160,7 +160,7 @@ for r_file in testcase/Rust/*.bc; do
 
     opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
     
-    klee --libc=klee --max-time=30 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
+    klee --libc=klee --max-time=250 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
 
     echo "Processed $r_file and saved log to klee_symbol_log/Rust/${base_name}_klee_log.txt"
     
