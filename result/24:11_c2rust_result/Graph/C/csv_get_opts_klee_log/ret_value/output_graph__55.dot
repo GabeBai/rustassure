@@ -1,0 +1,9 @@
+strict digraph {
+"3043 [value = Read,  type = w8]";
+"3041 [value = 44, ]";
+"3042 [value = unnamed, ]";
+"3044 [value = ZExt,  type = w32]";
+"3043 [value = Read,  type = w8]" -> "3041 [value = 44, ]";
+"3043 [value = Read,  type = w8]" -> "3042 [value = unnamed, ]";
+"3044 [value = ZExt,  type = w32]" -> "3043 [value = Read,  type = w8]";
+}

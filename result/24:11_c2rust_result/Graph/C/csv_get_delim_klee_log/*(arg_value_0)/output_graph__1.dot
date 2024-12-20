@@ -1,0 +1,7 @@
+strict digraph {
+"6 [value = ReadLSB,  type = w32]";
+"4 [value = 4, ]";
+"5 [value = unnamed, ]";
+"6 [value = ReadLSB,  type = w32]" -> "4 [value = 4, ]";
+"6 [value = ReadLSB,  type = w32]" -> "5 [value = unnamed, ]";
+}

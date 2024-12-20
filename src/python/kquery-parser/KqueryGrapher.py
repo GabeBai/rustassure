@@ -152,15 +152,16 @@ class KqueryASTVisitor(KqueryVisitor):
         return node
 
     def visitBitwise_expr(self, ctx):
-        # bitwise_expr: '(' bitwise_expr_kind expr expr ')';
+        # bitwise_expr: '(' bitwise_expr_kind (type)? expr expr ')';
         expr_kind = ctx.getChild(1).getText()
-        expr1 = ctx.getChild(2)
-        expr2 = ctx.getChild(3)
+        value_type = ctx.getChild(2).getText()
+        expr1 = ctx.getChild(3)
+        expr2 = ctx.getChild(4)
 
         child_node1 = self.visit(expr1)
         child_node2 = self.visit(expr2)
         
-        node = Node(expr_kind, "", self.G)
+        node = Node(expr_kind, value_type, self.G)
         node.children.append(child_node1)
         node.children.append(child_node2)
 
@@ -362,7 +363,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
         listener = KqueryGrapher()
         walker = ParseTreeWalker()
         walker.walk(listener, tree)
-        """
+        """ 
         # Create and apply the custom visitor
         visitor = KqueryASTVisitor()
         visitor.visit(tree)
@@ -382,21 +383,13 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
 
 if __name__ == "__main__":
     expressions = [
-     "69",
-     "array const_array[2] : w32 -> w8 = [5,6]",
-     "array const_array[] : w32 -> w8 = [5,6]",
-     "array small_array[2] : w32 -> w8 = symbolic",
-     "(Read w8 0 small_array)",
-     "(ReadLSB w32 0 d)",
-     "(Add w32 (ReadLSB w32 4 sptr) d)",
-     "(Add w32 N0:(ReadLSB w32 4 sptr) N0)",
-     "(Neg (Add w32 N0:(ReadLSB w32 4 sptr) N0))",
-     "(And (Add w32 N0:(ReadLSB w32 4 sptr) N0) (ReadLSB w32 0 d))",
-     "(Read w8 1 U0)",
-     "(Eq (And (Add w32 N0:(ReadLSB w32 4 sptr) N0) (ReadLSB w32 0 d)) (Read w8 1 U0))",
-     "(Read w8 1 [1=0xff] @ small_array)",
-     ]
-#    expressions = ["(Add w32 N0:(ReadLSB w32 4 unnamed) N0)"]
-               
+#         """
+# (Extract w16 0 (Or w32 (And w32 (AShr w32 N0:(ZExt w32 (ReadLSB w16 0 unnamed))
+#                                            8)
+#                                  255)
+#                         (Shl w32 (And w32 N0 255) 8)))
+#         """
+    "(Or w32 (ReadLSB w16 0 unnamed) (ReadLSB w16 0 unnamed))"
+    ]          
     convert_kquery_to_graph(expressions, "", "text")
 

@@ -1,0 +1,7 @@
+strict digraph {
+"2028 [value = ReadLSB,  type = w64]";
+"2026 [value = 64, ]";
+"2027 [value = unnamed, ]";
+"2028 [value = ReadLSB,  type = w64]" -> "2026 [value = 64, ]";
+"2028 [value = ReadLSB,  type = w64]" -> "2027 [value = unnamed, ]";
+}

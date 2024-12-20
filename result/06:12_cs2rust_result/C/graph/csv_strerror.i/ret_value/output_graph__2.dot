@@ -1,0 +1,33 @@
+strict digraph {
+"35 [value = ReadLSB,  type = w32]";
+"33 [value = 0, ]";
+"34 [value = unnamed, ]";
+"36 [value = SExt,  type = w64]";
+"37 [value = Mul,  type = w64]";
+"32 [value = 8, ]";
+"30 [value = Extract,  type = w32]";
+"31 [value = 0, ]";
+"39 [value = ReadLSB,  type = w64]";
+"38 [value = const_arr1, ]";
+"40 [value = Add,  type = w64]";
+"29 [value = 18446744044450086912, ]";
+"27 [value = Extract,  type = w32]";
+"28 [value = 0, ]";
+"42 [value = Read,  type = w8]";
+"41 [value = const_arr4, ]";
+"35 [value = ReadLSB,  type = w32]" -> "33 [value = 0, ]";
+"35 [value = ReadLSB,  type = w32]" -> "34 [value = unnamed, ]";
+"36 [value = SExt,  type = w64]" -> "35 [value = ReadLSB,  type = w32]";
+"37 [value = Mul,  type = w64]" -> "32 [value = 8, ]";
+"37 [value = Mul,  type = w64]" -> "36 [value = SExt,  type = w64]";
+"30 [value = Extract,  type = w32]" -> "31 [value = 0, ]";
+"30 [value = Extract,  type = w32]" -> "37 [value = Mul,  type = w64]";
+"39 [value = ReadLSB,  type = w64]" -> "30 [value = Extract,  type = w32]";
+"39 [value = ReadLSB,  type = w64]" -> "38 [value = const_arr1, ]";
+"40 [value = Add,  type = w64]" -> "29 [value = 18446744044450086912, ]";
+"40 [value = Add,  type = w64]" -> "39 [value = ReadLSB,  type = w64]";
+"27 [value = Extract,  type = w32]" -> "28 [value = 0, ]";
+"27 [value = Extract,  type = w32]" -> "40 [value = Add,  type = w64]";
+"42 [value = Read,  type = w8]" -> "27 [value = Extract,  type = w32]";
+"42 [value = Read,  type = w8]" -> "41 [value = const_arr4, ]";
+}

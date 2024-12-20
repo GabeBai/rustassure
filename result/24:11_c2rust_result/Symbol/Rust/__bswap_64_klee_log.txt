@@ -1,0 +1,12 @@
+SYM VALUE: arg_value_0 : :(ReadLSB w64 0 __bsx)
+SYM VALUE: ret_value : :(Or w64 (Or w64 (Or w64 (Or w64 (Or w64 (Or w64 (Or w64 (LShr w64 (And w64 N0:(ReadLSB w64 0 __bsx)
+                                                                            18374686479671623680)
+                                                                   56)
+                                                         (LShr w64 (And w64 N0 71776119061217280) 40))
+                                                 (LShr w64 (And w64 N0 280375465082880) 24))
+                                         (LShr w64 (And w64 N0 1095216660480) 8))
+                                 (Shl w64 (And w64 N0 4278190080) 8))
+                         (Shl w64 (And w64 N0 16711680) 24))
+                 (Shl w64 (And w64 N0 65280) 40))
+         (Shl w64 (And w64 N0 255) 56))
+

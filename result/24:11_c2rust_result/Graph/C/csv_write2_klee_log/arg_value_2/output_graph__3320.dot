@@ -1,0 +1,7 @@
+strict digraph {
+"40266 [value = Read,  type = w8]";
+"40264 [value = 4, ]";
+"40265 [value = unnamed_2, ]";
+"40266 [value = Read,  type = w8]" -> "40264 [value = 4, ]";
+"40266 [value = Read,  type = w8]" -> "40265 [value = unnamed_2, ]";
+}

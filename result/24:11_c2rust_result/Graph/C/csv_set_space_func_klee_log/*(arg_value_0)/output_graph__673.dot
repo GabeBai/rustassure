@@ -1,0 +1,7 @@
+strict digraph {
+"2022 [value = Read,  type = w8]";
+"2020 [value = 45, ]";
+"2021 [value = unnamed, ]";
+"2022 [value = Read,  type = w8]" -> "2020 [value = 45, ]";
+"2022 [value = Read,  type = w8]" -> "2021 [value = unnamed, ]";
+}
