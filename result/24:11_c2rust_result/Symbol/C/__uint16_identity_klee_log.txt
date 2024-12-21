@@ -1,3 +1,0 @@
-SYM VALUE: arg_value_0 : :(ReadLSB w16 0 unnamed)
-SYM VALUE: ret_value : :(ReadLSB w16 0 unnamed)
-

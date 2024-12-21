@@ -1,7 +1,0 @@
-strict digraph {
-"63741 [value = ReadLSB,  type = w32]";
-"63739 [value = 140, ]";
-"63740 [value = p, ]";
-"63741 [value = ReadLSB,  type = w32]" -> "63739 [value = 140, ]";
-"63741 [value = ReadLSB,  type = w32]" -> "63740 [value = p, ]";
-}

@@ -1,7 +1,0 @@
-strict digraph {
-"1314 [value = Read,  type = w8]";
-"1312 [value = 45, ]";
-"1313 [value = unnamed, ]";
-"1314 [value = Read,  type = w8]" -> "1312 [value = 45, ]";
-"1314 [value = Read,  type = w8]" -> "1313 [value = unnamed, ]";
-}

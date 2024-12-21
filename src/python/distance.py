@@ -8,6 +8,8 @@ from itertools import combinations
 from loggerFactory import getLogger
 import subprocess
 import logging
+import csv
+import glob
 
 class SingletonLogger:
     _instance = None
@@ -86,14 +88,29 @@ def matchNodes(N1, N2):
     else:
         return True
 
-
-def traverse_two_levels():
+def traverse_two_levels_rust():
     path_to_file_dict = {}
     
-    for root, dirs, files in os.walk('../Symbolizer/graph_output/Rust'):
-        rel_path = os.path.relpath(root, 'graph_output/Rust')
+    base_dir = '/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/Rust'
+    for root, dirs, files in os.walk(base_dir):
+        rel_path = os.path.relpath(root, base_dir)
         
         if len(rel_path.split(os.sep)) == 2:
+            dot_files = [file_name for file_name in files if file_name.endswith('.dot')]
+            if dot_files:
+                path_to_file_dict[rel_path] = dot_files
+
+    return path_to_file_dict
+
+def traverse_two_levels_c():
+    path_to_file_dict = {}
+    
+    base_dir = '/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/C'
+    for root, dirs, files in os.walk(base_dir):
+        rel_path = os.path.relpath(root, base_dir)
+        
+        if len(rel_path.split(os.sep)) == 2:
+
             dot_files = [file_name for file_name in files if file_name.endswith('.dot')]
             if dot_files:
                 path_to_file_dict[rel_path] = dot_files
@@ -108,9 +125,15 @@ def compare_graph_optimize_edit_distance(G1, G2):
     print("Graph2: number of nodes:", len(G2), ", edges:", len(G2.edges()))
     ged_generator = nx.optimize_graph_edit_distance(G1, G2, node_match=matchNodes)  #
     ged = 0
+    max_iterations = 4
+    count = 0
     for g in ged_generator:
-        print("ged = %f", g)
+        print("ged = %f" % g)
         ged = g
+
+        count += 1
+        if count >= max_iterations:
+            break
     normGed = ged / max(G1.number_of_nodes() + G1.number_of_edges(), G2.number_of_nodes() + G2.number_of_edges())
     return ged, normGed
 
@@ -124,57 +147,81 @@ def load_graph_from_dot(file_path):
         return None
 
 
-def compare_graphs_in_directories(input_dict):
 
-    rust_base = "graph_output/rust"
-    c_base = "graph_output/c"
+def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
+    rust_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/rust"
+    c_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/C"
 
-    for key, dot_files in input_dict.items():
-        rust_dir = os.path.join(rust_base, key)
-        c_dir = os.path.join(c_base, key)
+    results = [] 
 
-        for dot_file in dot_files:
-            rust_file_path = os.path.join(rust_dir, dot_file)
-            c_file_path = os.path.join(c_dir, dot_file)
+    for c_key, c_dot_files in c_dict.items():
+        if '/' in c_key:
+            function_name, argument_name = c_key.split('/', 1)
+        else:
+            function_name = c_key
+            argument_name = "" 
 
-            # Ensure both files exist before attempting to load and compare
-            if os.path.exists(rust_file_path) and os.path.exists(c_file_path):
-                G1 = load_graph_from_dot(rust_file_path)
-                G2 = load_graph_from_dot(c_file_path)
+        c_dir = os.path.join(c_base, c_key)
 
-                if G1 and G2:
-                    # Calculate and print the graph edit distance
-                    distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
-                    if distance is not None and normdistance is not None:
-                        logger = SingletonLogger()
-                        logger.info("Graph Edit Distance between %s and %s: %s", rust_file_path, c_file_path, distance)
-                        logger.info("Norm Graph Edit Distance between %s and %s: %s", rust_file_path, c_file_path, normdistance)
-                        print(f"Graph Edit Distance between {rust_file_path} and {c_file_path}: {distance}")
+        c_files = sorted(glob.glob(os.path.join(c_dir, "*.dot")))
+
+        max_edit_distance = None
+        found_match = False   
+
+        for r_key, r_dot_files in rust_dict.items():
+            c_key_modified = c_key[:-1]
+            if r_key.startswith(c_key_modified):
+                found_match = True
+                rust_dir = os.path.join(rust_base, r_key)
+                rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
+
+                max_len = max(len(c_files), len(rust_files)) if c_files and rust_files else 0
+
+                for i in range(max_len):
+                    if not c_files:
+                        continue
+                    if not rust_files:
+                        continue
+
+                    if i < len(c_files):
+                        c_file_path = c_files[i]
                     else:
-                        print(f"Failed to calculate graph edit distance between {rust_file_path} and {c_file_path}")
-            elif not os.path.exists(rust_file_path):
-                print(f"rust file do not exist: {rust_file_path}")
-            else:
-                print(f"C file do not exist: {rust_file_path}")
+                        c_file_path = c_files[-1]
+
+                    if i < len(rust_files):
+                        rust_file_path = rust_files[i]
+                    else:
+                        rust_file_path = rust_files[-1]
+
+                    if os.path.exists(rust_file_path) and os.path.exists(c_file_path):
+                        G1 = load_graph_from_dot(rust_file_path)
+                        G2 = load_graph_from_dot(c_file_path)
+
+                        if G1 and G2:
+                            distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
+                            if distance is not None and normdistance is not None:
+                                if max_edit_distance is None or distance > max_edit_distance:
+                                    max_edit_distance = distance
+
+        if not found_match or max_edit_distance is None:
+            max_edit_distance_str = "rust empty"
+        else:
+            max_edit_distance_str = str(max_edit_distance)
+
+        results.append((function_name, argument_name, max_edit_distance_str))
+
+    with open(output_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["function_name", "argument_name", "max_edit_distance"])
+        for row in results:
+            writer.writerow(row)
+
+
+
+                        
 
 if __name__ == "__main__":
     logger = SingletonLogger()
-    result = traverse_two_levels()
-    logger.info('all graphs need to be compared %s', result)
-    print(f'all graphs need to be compared {result}')
-    compare_graphs_in_directories(result)
-
-
-    # G1 = load_graph_from_dot('/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/rust/function/arg_value_0/output_graph__0.dot')
-    # G2 = load_graph_from_dot('/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/C/function/arg_value_0/output_graph__0.dot')
-    # for node in list(G1.nodes):
-    #     G1.nodes[node]["label"] = node
-    # for node in list(G2.nodes):
-    #     G2.nodes[node]["label"] = node
-
-    # # print_graph_nodes(G1, '1')
-
-
-    # distance = compare_graph_optimize_edit_distance(G1, G2)
-    # if distance is not None:
-    #     print(f"{distance}")
+    result_C = traverse_two_levels_c()
+    result_Rust = traverse_two_levels_rust()
+    compare_and_export_csv(result_C, result_Rust, "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/output.csv")

@@ -1,7 +1,0 @@
-strict digraph {
-"2010 [value = ReadLSB,  type = w64]";
-"2008 [value = 0, ]";
-"2009 [value = unnamed_1, ]";
-"2010 [value = ReadLSB,  type = w64]" -> "2008 [value = 0, ]";
-"2010 [value = ReadLSB,  type = w64]" -> "2009 [value = unnamed_1, ]";
-}
