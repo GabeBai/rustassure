@@ -1,0 +1,5 @@
+array ssl[24] : w32 -> w8 = symbolic
+(query [(Ult (Add w64 18446605248261267456
+                       (ReadLSB w64 0 ssl))
+              1)]
+        false)
