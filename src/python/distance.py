@@ -152,59 +152,69 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
     rust_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/rust"
     c_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/C"
 
-    results = [] 
+    results = []
 
     for c_key, c_dot_files in c_dict.items():
         if '/' in c_key:
             function_name, argument_name = c_key.split('/', 1)
         else:
             function_name = c_key
-            argument_name = "" 
+            argument_name = ""
 
         c_dir = os.path.join(c_base, c_key)
-
         c_files = sorted(glob.glob(os.path.join(c_dir, "*.dot")))
 
         max_edit_distance = None
-        found_match = False   
+        found_match = False
 
-        for r_key, r_dot_files in rust_dict.items():
-            if c_key.endswith(')'):
-                c_key_modified = c_key[:-1]
-            else:
-                c_key_modified = c_key
+        if c_key.endswith(')'):
+            c_key_modified = c_key[:-1]
+        else:
+            c_key_modified = c_key
+
+        matching_r_keys = []
+        for r_key in rust_dict.keys():
             if r_key.startswith(c_key_modified):
-                found_match = True
-                rust_dir = os.path.join(rust_base, r_key)
-                rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
+                matching_r_keys.append(r_key)
 
-                max_len = max(len(c_files), len(rust_files)) if c_files and rust_files else 0
 
-                for i in range(max_len):
-                    if not c_files:
-                        continue
-                    if not rust_files:
-                        continue
+        if matching_r_keys:
+            best_r_key = min(matching_r_keys, key=len)
+            found_match = True
 
-                    if i < len(c_files):
-                        c_file_path = c_files[i]
-                    else:
-                        c_file_path = c_files[-1]
+            rust_dir = os.path.join(rust_base, best_r_key)
+            rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
 
-                    if i < len(rust_files):
-                        rust_file_path = rust_files[i]
-                    else:
-                        rust_file_path = rust_files[-1]
+            max_len = max(len(c_files), len(rust_files)) if c_files and rust_files else 0
 
-                    if os.path.exists(rust_file_path) and os.path.exists(c_file_path):
-                        G1 = load_graph_from_dot(rust_file_path)
-                        G2 = load_graph_from_dot(c_file_path)
+            for i in range(max_len):
+                if not c_files:
+                    continue
+                if not rust_files:
+                    continue
 
-                        if G1 and G2:
-                            distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
-                            if distance is not None and normdistance is not None:
-                                if max_edit_distance is None or distance > max_edit_distance:
-                                    max_edit_distance = distance
+
+                if i < len(c_files):
+                    c_file_path = c_files[i]
+                else:
+                    c_file_path = c_files[-1]
+
+                if i < len(rust_files):
+                    rust_file_path = rust_files[i]
+                else:
+                    rust_file_path = rust_files[-1]
+
+                if os.path.exists(rust_file_path) and os.path.exists(c_file_path):
+                    G1 = load_graph_from_dot(rust_file_path)
+                    G2 = load_graph_from_dot(c_file_path)
+
+                    if G1 and G2:
+                        distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
+                        if distance is not None and normdistance is not None:
+                            if max_edit_distance is None or distance > max_edit_distance:
+                                max_edit_distance = distance
+        else:
+            found_match = False
 
         if not found_match or max_edit_distance is None:
             max_edit_distance_str = "rust empty"
