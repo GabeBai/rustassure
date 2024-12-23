@@ -78,7 +78,13 @@ def emitLLVMBitcodes(individualFuncPath, logger):
                 file.writelines(content)
 
         # First, annotate the Rust function with "#[no_mangle]" to prevent it getting removed
-        sed_cmd = f"sed -i '' '/^[[:space:]]*fn /i \\\n#[no_mangle]' {filename}"
+        sed_cmd = (
+            f"sed -i '' -e '/^[[:space:]]*fn /i \\\n#[no_mangle]' "
+            f"-e '/^[[:space:]]*pub extern \"C\" fn /i \\\n#[no_mangle]' "
+            f"-e '/^[[:space:]]*pub fn /i \\\n#[no_mangle]' {filename}"
+        )
+        subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
         subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         sed_cmd = f"sed -i '' '/^struct /i \\\n#[repr(C, packed)]' {filename}"
