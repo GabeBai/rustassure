@@ -169,7 +169,10 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         found_match = False   
 
         for r_key, r_dot_files in rust_dict.items():
-            c_key_modified = c_key[:-1]
+            if c_key.endswith(')'):
+                c_key_modified = c_key[:-1]
+            else:
+                c_key_modified = c_key
             if r_key.startswith(c_key_modified):
                 found_match = True
                 rust_dir = os.path.join(rust_base, r_key)
