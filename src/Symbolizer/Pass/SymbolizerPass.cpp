@@ -101,6 +101,7 @@ namespace {
 
 	struct Symbolizer : PassInfoMixin<Symbolizer> {
 
+		//TODO : @gabe Delete this logic
 		std::vector<StructType*> visited_struct_types;
 		json ParsedJson;
 
@@ -465,6 +466,26 @@ namespace {
 			// If it's not a pointer (not an LLVM pointer, basically a loadInst)
 			// then just pass it directly
 			// and return.
+
+			if (StructType* struct_type = dyn_cast<StructType>(arg_value->getType())) {
+					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
+						Type* field_type = struct_type->getElementType(i);
+						Value *gep = Builder.CreateExtractValue(arg_value, {i});
+						if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
+							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
+						} else {
+							std::vector<Value*> args_vec;
+							
+							std::string new_label = label + "." + "field_" + std::to_string(i);
+							std::string label_name = std::string("*(" + new_label + ")");
+
+							args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label_name + " : "));
+							args_vec.push_back(gep);
+							Builder.CreateCall(klee_print_expr_function, args_vec);
+						}
+					}
+					return;
+			}
 			
 			if (!isa<PointerType>(arg_value->getType())) {
 				std::vector<Value*> args_vec;
@@ -555,7 +576,7 @@ namespace {
 				Builder.SetInsertPoint(loopBlock);
 
 				Type *elementType = arg_value->getType()->getPointerElementType();
-				for (int i = 0; i < 1; ++i) {
+				for (int i = 0; i < 5; ++i) {
 					// Create the GEP for the current index
 					Value *index = Builder.getInt32(i);
 					Value *ptr = Builder.CreateGEP(elementType, arg_value, index, "gep" + std::to_string(i));
