@@ -624,12 +624,12 @@ namespace {
 				if (F.getName() == "main" || F.getName().startswith("symbolic_dummy")) 
 					continue; // The main is the driver and symbolic_dummy's are the ones we inserted
 
-				std::vector<CallInst *> call_insts;
+				std::vector<CallBase *> call_insts;
 
 				// Collect all CallInsts in the function
 				for (BasicBlock &basic_block : F) {
 					for (Instruction &instruction : basic_block) {
-						if (auto *call_inst = dyn_cast<CallInst>(&instruction)) {
+						if (auto *call_inst = dyn_cast<CallBase>(&instruction)) {
 							if (call_inst->getCalledFunction() && call_inst->getCalledFunction()->isIntrinsic()) { 
 								// intrinsics are functions that are provided by the compiler
 								// No need to replace them as their definitions will always
@@ -643,6 +643,10 @@ namespace {
 								// stop working.
 								continue;
 							}
+							if (call_inst->getCalledFunction() && call_inst->getCalledFunction()->getName() == "__strcpy_chk") {
+								llvm::outs() << "Skipping strcpy call: " << *call_inst << "\n";
+								continue;
+							}
 							call_insts.push_back(call_inst);
 						}
 					}
@@ -650,14 +654,14 @@ namespace {
 				
 				int count = 0;
 				// Transform each CallInst
-				for (CallInst *call_inst : call_insts) {
+				for (CallBase *call_inst : call_insts) {
 					FunctionType *func_type = call_inst->getFunctionType();
 					std::vector<Type *> param_types(func_type->param_begin(), func_type->param_end());
 
 					// Create a new function with the same signature
 					Function *dummy_func = Function::Create(
-							func_type, Function::ExternalLinkage,
-							"symbolic_dummy" + std::to_string(count++), M);
+						func_type, Function::ExternalLinkage,
+						"symbolic_dummy" + std::to_string(count++), M);
 
 					// Create the function body
 					BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
@@ -667,33 +671,46 @@ namespace {
 					if (return_type->isVoidTy()) {
 						Builder.CreateRetVoid();
 					} else {
-						// Create a global variable of the return type
+						// Create a global variable for the return value
 						GlobalVariable *symbolic_ret_val = new GlobalVariable(
-								M, return_type, false, GlobalValue::PrivateLinkage,
-								Constant::getNullValue(return_type), "symbolic_ret");
+							M, return_type, false, GlobalValue::PrivateLinkage,
+							Constant::getNullValue(return_type), "symbolic_ret");
 
 						// Call klee_make_symbolic
 						Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
-						assert(klee_make_symbolic && "Can't find klee functions!");
+						assert(klee_make_symbolic && "Can't find klee_make_symbolic function!");
 
 						Builder.CreateCall(
-								klee_make_symbolic,
-								{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
-								ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
-								Builder.CreateGlobalStringPtr("symbolic_var")});
+							klee_make_symbolic,
+							{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
+							ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
+							Builder.CreateGlobalStringPtr("symbolic_var")});
 
 						// Return the global variable
 						Builder.CreateRet(Builder.CreateLoad(return_type, symbolic_ret_val));
 					}
 
-					// Replace the original CallInst
-					SmallVector<Value *, 8> args; // Adjust size based on expected number of arguments
-					for (auto &arg : call_inst->args()) {
-						args.push_back(arg.get());
+					// Handle CallInst
+					if (auto *call_instruction = dyn_cast<CallInst>(call_inst)) {
+						SmallVector<Value *, 8> args;
+						for (auto &arg : call_instruction->args()) {
+							args.push_back(arg.get());
+						}
+						IRBuilder<> CallBuilder(call_instruction);
+						call_instruction->replaceAllUsesWith(CallBuilder.CreateCall(dummy_func, args));
+						call_instruction->eraseFromParent();
+					} else if (auto *invoke_instruction = dyn_cast<InvokeInst>(call_inst)) {
+						SmallVector<Value *, 8> args;
+						for (auto &arg : invoke_instruction->args()) {
+							args.push_back(arg.get());
+						}
+						IRBuilder<> InvokeBuilder(invoke_instruction);
+						InvokeInst *new_invoke = InvokeBuilder.CreateInvoke(
+							dummy_func, invoke_instruction->getNormalDest(),
+							invoke_instruction->getUnwindDest(), args);
+						invoke_instruction->replaceAllUsesWith(new_invoke);
+						invoke_instruction->eraseFromParent();
 					}
-					IRBuilder<> CallBuilder(call_inst);
-					call_inst->replaceAllUsesWith(CallBuilder.CreateCall(dummy_func, args));
-					call_inst->eraseFromParent();
 				}
 			}
 		}
