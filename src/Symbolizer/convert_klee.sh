@@ -3,7 +3,6 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-./build.sh
 if [ -e compare_graph_output_log.log ]; then
     rm compare_graph_output_log.log
 fi
@@ -31,9 +30,6 @@ create_json() {
     },
     "csv_fwrite" : {
         "0" : "File"
-    },
-    "r" : {
-        "0" : "File"
     }
 }' > input.json
 }
@@ -45,6 +41,9 @@ prepare_directory() {
         mkdir -p "$1"
     fi
     mkdir -p "$1/C" "$1/Rust" 
+    if [ -f "process_log.log" ]; then
+        rm process_log.log
+    fi
 }
 
 # Prepare directories
@@ -101,10 +100,10 @@ for c_file in testcase/C/*.i; do
     opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "klee_bc/C/${base_name}.ll" -S -o "klee_ir_files/C/${base_name}_klee.ll"
     
     # Run KLEE on the generated LLVM IR and extract SYM VALUE lines
-    klee --libc=klee --max-time=15 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
+    klee --libc=klee --max-time=100 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
     
     #only for debug, we need to know all the execution error of KLEE 
-    klee --libc=klee --max-time=30 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/KLEE: ERROR/' > "klee_symbol_error_log/C/${base_name}_error_log.txt"
+    klee --libc=klee --max-time=60 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/KLEE: ERROR/' > "klee_symbol_error_log/C/${base_name}_error_log.txt"
 
     echo "Processed $c_file and saved log to klee_symbol_log/C/${base_name}_klee_log.txt"
     
@@ -164,7 +163,7 @@ for r_file in testcase/Rust/*.bc; do
 
     opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
     
-    klee --libc=klee --max-time=250 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
+    klee --libc=klee --max-time=300 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
 
     echo "Processed $r_file and saved log to klee_symbol_log/Rust/${base_name}_klee_log.txt"
     

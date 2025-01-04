@@ -576,7 +576,7 @@ namespace {
 				Builder.SetInsertPoint(loopBlock);
 
 				Type *elementType = arg_value->getType()->getPointerElementType();
-				for (int i = 0; i < 5; ++i) {
+				for (int i = 0; i < 1; ++i) {
 					// Create the GEP for the current index
 					Value *index = Builder.getInt32(i);
 					Value *ptr = Builder.CreateGEP(elementType, arg_value, index, "gep" + std::to_string(i));
@@ -667,7 +667,9 @@ namespace {
 							if (call_inst->getCalledFunction() && (call_inst->getCalledFunction()->getName() == "strcpy" || call_inst->getCalledFunction()->getName() == "__strcpy_chk")) {
 								continue;
 							}
-							llvm::outs() << "replace call: " << call_inst->getCalledFunction()->getName() << "\n";
+							if (call_inst->getCalledFunction()) {
+								outs() << "replace call: " << call_inst->getCalledFunction()->getName() << "\n";
+							}
 							call_insts.push_back(call_inst);
 						}
 					}
