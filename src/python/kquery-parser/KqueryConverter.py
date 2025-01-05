@@ -62,18 +62,24 @@ def extract_values(processed_lines):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print('wrong input')
+        result = process_sym_values('/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/klee_symbol_log/C/csv_increase_buffer_klee_log.txt')
+        directory_name = 'csv_increase_buffer'
+        proccess_c = True
     else:
         result = process_sym_values(sys.argv[1])
         directory_name = sys.argv[2]
+        proccess_c = (sys.argv[3] == 'c')
 
-        # Check if the directory exists
-        if os.path.exists(directory_name):
-            # Delete all contents in the directory
-            shutil.rmtree(directory_name)
+    # Check if the directory exists
+    if os.path.exists(directory_name):
+        # Delete all contents in the directory
+        shutil.rmtree(directory_name)
 
-        os.makedirs(directory_name)
-        os.chdir(directory_name)
-
-        for key, values in result.items():
-            convert_kquery_to_graph(values, "", key)
+    os.makedirs(directory_name)
+    os.chdir(directory_name)
+    for key, values in result.items():
+        seen_graph = []
+        # if (directory_name == 'csv_increase_buffer' and key == '*(arg_value_0.field_5)' and (not proccess_c)):
+        #     convert_kquery_to_graph(values, "", key, seen_graph, False)
+        # else:
+        convert_kquery_to_graph(values, "", key, seen_graph, False)

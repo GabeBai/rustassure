@@ -6,14 +6,17 @@ from KqueryParser import KqueryParser
 from KqueryVisitor import KqueryVisitor
 from networkx.drawing.nx_pydot import write_dot
 import os
+import sys
 import subprocess
 from PostProcess import process_graph
 from PostProcess import process_graph_ZExt
 from Node import Node
 import logging
-
-
 import networkx as nx
+
+module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(module_path)
+from distance import *
 
 
 # Command to generate the classes (need to do this because versions can be different.
@@ -315,7 +318,14 @@ class KqueryASTVisitor(KqueryVisitor):
             return self.visit(ctx)
         
 
-def convert_kquery_to_graph(expressions, function_name, output_dir):
+def is_duplicate_graph(new_graph, seen_list):
+    for old_graph in seen_list:
+        ged, norm_ged = compare_graph_optimize_edit_distance(new_graph, old_graph, 1)
+        if ged == 0:
+            return True
+    return False
+
+def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs, dedup = True):
     # Create the directory if it doesn't exist
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -333,11 +343,6 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
         tree = parser.prog()
         print(tree.toStringTree(recog=parser))
 
-        """
-        listener = KqueryGrapher()
-        walker = ParseTreeWalker()
-        walker.walk(listener, tree)
-        """ 
         # Create and apply the custom visitor
         visitor = KqueryASTVisitor()
         visitor.visit(tree)
@@ -345,6 +350,9 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
 
+        if dedup:
+            if is_duplicate_graph(visitor.G, seen_graphs):
+                continue
         # Save the output to the specified directory
         output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(i) + ".dot")
         current_dir = os.getcwd() 
@@ -354,12 +362,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir):
             logging.info(f"{current_dir}/{output_file} - removed_zext is True")
         write_dot(visitor.G, output_file)
 
-        # Convert to the PNG automatically
-        """
-        png_cmd = "dot -Tpng " + output_file + " -o " + output_file+".png"
-        print(png_cmd)
-        result = subprocess.getoutput(png_cmd)
-        """
+        seen_graphs.append(visitor.G)
 
 
 

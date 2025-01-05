@@ -118,7 +118,7 @@ for c_file in testcase/C/*.i; do
 
         cd graph_output/C
         # Run the Python parser on the KLEE log
-        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/C/${base_name}_klee_log.txt" "${base_name}"
+        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/C/${base_name}_klee_log.txt" "${base_name}" "c"
         cd ../..
 
         echo "C/$c_file has been processed successfully"
@@ -127,13 +127,7 @@ done
 
 wait
 
-base_dir="graph_output/C"
-if [ -d "$base_dir" ]; then
-    find "$base_dir" -type d | while read -r subdir; do
-        manage_dot_files "$subdir"
-    done
-fi
-
+python3 helper.py 'c'
 
 for file in graph_output/C/**/**/*.dot; do
     if [ ! -e "$file" ]; then
@@ -174,7 +168,7 @@ for r_file in testcase/Rust/*.bc; do
 
         cd graph_output/Rust
         # Run the Python parser on the KLEE log
-        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/Rust/${base_name}_klee_log.txt" "${base_name}"
+        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/Rust/${base_name}_klee_log.txt" "${base_name}" "Rust"
         cd ../..
 
         echo "Rust/$r_file has been processed successfully"
@@ -183,13 +177,7 @@ done
 
 wait
 
-
-base_dir="graph_output/rust"
-if [ -d "$base_dir" ]; then
-    find "$base_dir" -type d | while read -r subdir; do
-        manage_dot_files "$subdir"
-    done
-fi
+python3 helper.py 'rust'
 
 for file in graph_output/Rust/**/**/*.dot; do
     if [ ! -e "$file" ]; then

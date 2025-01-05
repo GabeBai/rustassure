@@ -117,7 +117,7 @@ def traverse_two_levels_c():
 
     return path_to_file_dict
 
-def compare_graph_optimize_edit_distance(G1, G2):
+def compare_graph_optimize_edit_distance(G1, G2, max_iterations = 4):
     logger = SingletonLogger()
     logger.info("Graph1: number of nodes: %f, edges: %f", len(G1), len(G1.edges()))
     logger.info("Graph2: number of nodes: %f, edges: %f", len(G2), len(G2.edges()))
@@ -125,7 +125,6 @@ def compare_graph_optimize_edit_distance(G1, G2):
     print("Graph2: number of nodes:", len(G2), ", edges:", len(G2.edges()))
     ged_generator = nx.optimize_graph_edit_distance(G1, G2, node_match=matchNodes)  #
     ged = 0
-    max_iterations = 4
     count = 0
     for g in ged_generator:
         print("ged = %f" % g)
