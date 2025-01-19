@@ -128,6 +128,7 @@ namespace {
 		//TODO : @gabe Delete this logic
 		std::vector<StructType*> visited_struct_types;
 		json ParsedJson;
+		std::map<int, std::string> argumentsMap;
 
 		void create_function(Module& M, Type* return_type, Function* function) {
 			LLVMContext& ctx = M.getContext();
@@ -384,6 +385,10 @@ namespace {
 			for (Argument& arg: target_function->args()) {
 				// If it's a C pointer type, then we must create a stack object (AllocaInst) of the base type, mark it symbolic, and pass it directly to the function
 				// If it's a scalar, then we must create a stack object, load it and pass it to the function
+				if (arg.hasAttribute(Attribute::StructRet)) {
+					argumentsMap[arg.getArgNo()] = "Ret";
+				}
+				
 				Value* stackArg = nullptr;
 				unsigned argIndex = arg.getArgNo();
 				bool needReplace = false;
@@ -462,11 +467,22 @@ namespace {
 				if (needIgnore) {
 					continue;
 				}
+				std::string prefix = "arg_value_";
+				if (argumentsMap.find(i) != argumentsMap.end() && argumentsMap[i] == "Ret") {
+					prefix = "ret_value";
+				}
+				
+				int index = i;
+				for (const auto& [key, value] : argumentsMap) {
+					if (key < i && value == "Ret") {
+						index--;
+					}
+				}
 
 				if (needReplace) {
-					print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(arg_value, targetType), std::string("arg_value_") + std::to_string(i));
+					print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(arg_value, targetType), prefix + std::to_string(index));
 				} else {
-					print_nested_klee_exprs(M, Builder, arg_value, std::string("arg_value_") + std::to_string(i));
+					print_nested_klee_exprs(M, Builder, arg_value, prefix + std::to_string(index));
 				}
 			}
 
