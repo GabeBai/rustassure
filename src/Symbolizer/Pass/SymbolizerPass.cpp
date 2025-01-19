@@ -50,6 +50,30 @@ void strip_new_line(std::string& str) {
 	}
 }
 
+bool compareStrings(const std::string& str1, const std::string& str2)
+{
+	if (str1 == str2) {
+		return true;
+	}
+
+	auto normalize = [](const std::string& s) {
+		std::string result;
+		result.reserve(s.size());  // 预先分配足够的空间
+		for (char c : s) {
+			if (c != '_') {
+				// 转换为小写
+				result.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+			}
+		}
+		return result;
+	};
+
+	std::string normStr1 = normalize(str1);
+	std::string normStr2 = normalize(str2);
+
+	return (normStr1 == normStr2);
+}
+
 
 // Function to split a string by "::"
 std::vector<std::string> splitString(const std::string& str, const std::string& delimiter) {
@@ -149,13 +173,9 @@ namespace {
 				llvm::errs() << "Filename without extension: " << filename_without_extension << "\n";
 				llvm::errs() << "Equals = " << (filename_without_extension == function_name) << "\n";
 				*/
-
-				if (filename_without_extension != function_name) {
+				if (!compareStrings(function_name, filename_without_extension)) {
 					remove_functions.push_back(&F);
-					//F.eraseFromParent();
-					//llvm::errs() << "Found match: " << function_name << " : " << F.getName() << "\n";
 				}
-				
 			}
 			for (Function* F: remove_functions) {
 				F->deleteBody();

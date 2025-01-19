@@ -93,25 +93,21 @@ manage_dot_files() {
   wait
 }
 
+python3 ../python/llvmBitcodeEmitter.py testcase/c
 
-# Loop through each .c file in the directory
-for c_file in testcase/C/*.i; do
+for c_file in testcase/C/*.bc; do
     limit_jobs
     (
         echo "start process $c_file"
 
         # Extract the base filename without extension
-        base_name=$(basename "$c_file" .i)
-        
-        # Compile the .c file to LLVM bitcode
-        # don't use -g currently, -g will cause some klee error
-        clang -c -S -O0 -emit-llvm "$c_file" -o "klee_bc/C/${base_name}.ll"
+        base_name=$(basename "$c_file" .i.bc)
         
         # Run optimization pass on the bitcode
-        opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "klee_bc/C/${base_name}.ll" -S -o "klee_ir_files/C/${base_name}_klee.ll"
+        opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$c_file" -S -o "klee_ir_files/C/${base_name}_klee.ll"
         
         # Run KLEE on the generated LLVM IR and extract SYM VALUE lines
-        klee --libc=klee --max-time=100 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
+        klee --libc=klee --max-time=400 --max-tests=50 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
         
         #only for debug, we need to know all the execution error of KLEE 
         # klee --libc=klee --max-time=60 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/KLEE: ERROR/' > "klee_symbol_error_log/C/${base_name}_error_log.txt"
@@ -127,7 +123,7 @@ done
 
 wait
 
-python3 helper.py 'c'
+python3 deduplicate.py 'c'
 
 for file in graph_output/C/**/**/*.dot; do
     if [ ! -e "$file" ]; then
@@ -164,7 +160,7 @@ for r_file in testcase/Rust/*.bc; do
 
         opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
         
-        klee --libc=klee --max-time=400 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
+        klee --libc=klee --max-time=400 --max-tests=50 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
 
         cd graph_output/Rust
         # Run the Python parser on the KLEE log
@@ -177,7 +173,7 @@ done
 
 wait
 
-python3 helper.py 'rust'
+python3 deduplicate.py 'rust'
 
 for file in graph_output/Rust/**/**/*.dot; do
     if [ ! -e "$file" ]; then

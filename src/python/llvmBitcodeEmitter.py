@@ -16,6 +16,17 @@ from datetime import datetime
 
 from loggerFactory import getLogger
 
+def remove_static_and_inline_from_file(filename):
+
+    with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
+        content = f.read()
+
+    pattern = re.compile(r'\b(static|inline)\b')
+    new_content = pattern.sub('', content)
+
+    with open(filename, 'w', encoding='utf-8', errors='ignore') as f:
+        f.write(new_content)
+
 def remove_no_mangle_before_main(filename):
     with open(filename, 'r') as file:
         lines = file.readlines()
@@ -123,7 +134,10 @@ def emitLLVMBitcodes(individualFuncPath, logger):
             successRustFiles = successRustFiles + 1
             logger.info ("Compilation succeeded for %s", filename)
     for filename in glob.iglob(cSrcPattern, recursive=True):
+        
         logger.debug("Compiling C file %s ", filename)
+
+        remove_static_and_inline_from_file(filename)
         emitBitcodeCmd = "clang -c -femit-all-decls -emit-llvm -o " + filename + ".bc " + filename
         logger.debug("Running command %s", emitBitcodeCmd)
 
