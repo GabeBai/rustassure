@@ -304,7 +304,15 @@ namespace {
 				if (struct_symbol_type && struct_symbol_type->isOpaque()) {
 					// Create a dummy struct type of two ints
 					struct_symbol_type->setBody({llvm::Type::getInt8Ty(ctx), llvm::Type::getInt8Ty(ctx)});
-				} 
+				}
+
+				if (auto *arrayTy = llvm::dyn_cast<llvm::ArrayType>(type)) {
+					Type *elementTy = arrayTy->getElementType();
+					if (arrayTy->getNumElements() == 0) {
+						type = ArrayType::get(elementTy, 100);
+						needCast = true;
+					}
+				}
 				stack_arg = Builder.CreateAlloca(type, 0, name);
 				// Any inner objects, should also be initialized
 				initialize_inner_objects(M, Builder, stack_arg);
@@ -317,6 +325,7 @@ namespace {
 					mark_symbolic(M, stack_arg, Builder);
 				}
 				if (cast_to_integer) {
+					// TODO : @gab fix me !
 					IntegerType* integer_type = dyn_cast<IntegerType>(originalType);
 					Type* void_ptr_type;
 					if (integer_type->getBitWidth() == 8) {
@@ -479,11 +488,25 @@ namespace {
 					}
 				}
 
+				Value *target_value = arg_value;
 				if (needReplace) {
-					print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(arg_value, targetType), prefix + std::to_string(index));
-				} else {
-					print_nested_klee_exprs(M, Builder, arg_value, prefix + std::to_string(index));
+					target_value = Builder.CreateBitCast(arg_value, targetType);
 				}
+
+				if (auto *pointer_type = dyn_cast<PointerType>(arg_value->getType())) {
+					Type *element_type = pointer_type->getPointerElementType();
+					if (auto *arrTy = dyn_cast<ArrayType>(element_type)) {
+						Type *arrElmTy = arrTy->getElementType();
+						if (arrTy->getNumElements() == 0) {
+							if (auto *intTy = dyn_cast<IntegerType>(arrElmTy)) {
+								Type *intPtrTy = PointerType::get(intTy, 0);
+								target_value = Builder.CreateBitCast(arg_value, intPtrTy, "cast");
+							}
+						}
+					}
+				}
+
+				print_nested_klee_exprs(M, Builder, target_value, prefix + std::to_string(index));
 			}
 
 			// The return value
