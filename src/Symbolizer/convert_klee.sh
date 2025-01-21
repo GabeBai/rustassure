@@ -30,6 +30,9 @@ create_json() {
     },
     "csv_fwrite" : {
         "0" : "File"
+    },
+    "url_free" : {
+        "0" : "UrlData"
     }
 }' > input.json
 }
@@ -107,7 +110,7 @@ for c_file in testcase/C/*.bc; do
         opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$c_file" -S -o "klee_ir_files/C/${base_name}_klee.ll"
         
         # Run KLEE on the generated LLVM IR and extract SYM VALUE lines
-        klee --libc=klee --max-time=400 --max-tests=50 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
+        klee --libc=klee --max-time=600 --max-tests=50 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
         
         #only for debug, we need to know all the execution error of KLEE 
         # klee --libc=klee --max-time=60 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/KLEE: ERROR/' > "klee_symbol_error_log/C/${base_name}_error_log.txt"
@@ -160,7 +163,7 @@ for r_file in testcase/Rust/*.bc; do
 
         opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
         
-        klee --libc=klee --max-time=400 --max-tests=50 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
+        klee --libc=klee --max-time=600 --max-tests=50 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
 
         cd graph_output/Rust
         # Run the Python parser on the KLEE log
