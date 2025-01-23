@@ -145,7 +145,10 @@ namespace {
 			"core::ptr::drop_in_place<core::option::Option<alloc::string::String>>",
 			"<str as alloc::string::ToString>::to_string",
 			"core::str::<impl str>::find",
-			"core::result::Result<T,E>::expect"
+			"core::result::Result<T,E>::expect",
+			"core::slice::<impl [T]>::is_empty",
+			"core::ptr::metadata::from_raw_parts_mut",
+			"core::result::Result<T,E>::ok"
 		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
