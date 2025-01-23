@@ -166,21 +166,42 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         max_edit_distance = None
         found_match = False
 
-        if c_key.endswith(')'):
-            c_key_modified = c_key[:-1]
-        else:
-            c_key_modified = c_key
-
-        matching_r_keys = []
+        best_r_key = None
         for r_key in rust_dict.keys():
-            if r_key.startswith(c_key_modified):
-                matching_r_keys.append(r_key)
+            if r_key.startswith(c_key):
+                best_r_key = r_key
+                found_match = True
+                break
 
+        if not found_match:
+            if c_key.endswith(')'):
+                # case : lib_csv : csv_error
+                c_key_modified = c_key[:-1]
+            else:
+                c_key_modified = c_key
 
-        if matching_r_keys:
-            best_r_key = min(matching_r_keys, key=len)
-            found_match = True
+            matching_r_keys = []
+            for r_key in rust_dict.keys():
+                if r_key.startswith(c_key_modified) and function_name in r_key:
+                    matching_r_keys.append(r_key)
+                elif "ret_value" in c_key_modified:
+                    # case : url_parser : url_get_port
+                    if "ret_value" in r_key and function_name in r_key:
+                        matching_r_keys.append(r_key)
+                else:
+                    # case : url_parser : decode_percent
+                    slash_index = c_key.find('/')
+                    if slash_index != -1:
+                        temp_c_key = c_key_modified[:slash_index + 1] + '*(' + c_key_modified[slash_index + 1:]
+                        if r_key.startswith(temp_c_key) and function_name in r_key:
+                            matching_r_keys.append(r_key)
 
+            if matching_r_keys:
+                best_r_key = max(matching_r_keys, key=len)
+                found_match = True
+
+        if found_match:
+            print(f"gabb c is {c_key}, rust is {best_r_key}")
             rust_dir = os.path.join(rust_base, best_r_key)
             rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
 
@@ -212,8 +233,6 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                         if distance is not None and normdistance is not None:
                             if max_edit_distance is None or distance > max_edit_distance:
                                 max_edit_distance = distance
-        else:
-            found_match = False
 
         if not found_match or max_edit_distance is None:
             max_edit_distance_str = "rust empty"
