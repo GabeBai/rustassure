@@ -92,25 +92,30 @@ std::vector<std::string> splitString(const std::string& str, const std::string& 
 }
 
 // Function to execute rustfilt and capture the output
-std::string exec_rustfilt(const std::string& mangled_name) {
-	std::array<char, 128> buffer;
-	std::string result;
-	std::string command = "rustfilt " + mangled_name;
+std::string exec_rustfilt(const std::string& mangled) {
+	// Build the shell command
+	// Using single quotes around 'mangled' to help protect special chars.
+	// If you expect user input (and want to avoid shell injection),
+	// additional sanitization/escaping is strongly advised.
+	std::string command = "echo '" + mangled + "' | rustfilt";
 
-	// Open a pipe to run the rustfilt command
+	// Prepare a buffer and a string to capture output
+	std::array<char, 128> buffer{};
+	std::string result;
+
+	// Use a unique_ptr to ensure the pipe is closed automatically
 	std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
 
-	// Check if the pipe was successfully opened
-	if (!pipe) {
-		exit(-1);
-	}
-
-	// Read the output of rustfilt from the pipe
-	while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+	// Read the output line by line into result
+	while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) {
 		result += buffer.data();
 	}
 
-	strip_new_line(result);
+	// Strip trailing newline if present
+	if (!result.empty() && result.back() == '\n') {
+		result.pop_back();
+	}
+
 	return result;
 }
 
@@ -129,6 +134,19 @@ namespace {
 		std::vector<StructType*> visited_struct_types;
 		json ParsedJson;
 		std::map<int, std::string> argumentsMap;
+		std::list<std::string> keep_list = {
+			"strcpy",
+			"__strcpy_chk"
+		};
+		std::list<std::string> removed_list = {
+			"<alloc::string::String as core::ops::deref::Deref>::deref",
+			"core::ptr::drop_in_place<alloc::boxed::Box<r::UrlData>>",
+			"core::ptr::read_unaligned",
+			"core::ptr::drop_in_place<core::option::Option<alloc::string::String>>",
+			"<str as alloc::string::ToString>::to_string",
+			"core::str::<impl str>::find",
+			"core::result::Result<T,E>::expect"
+		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
 			LLVMContext& ctx = M.getContext();
@@ -166,17 +184,13 @@ namespace {
 					continue;
 				}
 				std::string demangled_name = exec_rustfilt(F.getName().str());
-				//llvm::errs() << "Demangled name: " << demangled_name << "\n";
-				std::vector<std::string> result = splitString(demangled_name, "::");
-				std::string function_name = result[result.size() -1];
-				/*
-				llvm::errs() << "Demangled function name without namespace: " << function_name << "\n";
-				llvm::errs() << "Filename without extension: " << filename_without_extension << "\n";
-				llvm::errs() << "Equals = " << (filename_without_extension == function_name) << "\n";
-				*/
-				if (!compareStrings(function_name, filename_without_extension)) {
+			
+				auto it = std::find(removed_list.begin(), removed_list.end(), demangled_name);
+				if (it != removed_list.end()) {
 					remove_functions.push_back(&F);
+					outs() << "removed function: " << demangled_name << "\n";
 				}
+
 			}
 			for (Function* F: remove_functions) {
 				F->deleteBody();
@@ -358,8 +372,19 @@ namespace {
 			// Find the other function in the file
 			Function* target_function = nullptr;
 			for (Function& F: M.functions()) {
+				if (!F.hasName()) {
+					continue;
+				}
 				if (!F.isDeclaration()) {
-					target_function = &F;
+					std::string filename = M.getModuleIdentifier();std::filesystem::path filepath(filename);
+					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+
+					std::string demangled_name = exec_rustfilt(F.getName().str());
+					std::vector<std::string> result = splitString(demangled_name, "::");
+					std::string function_name = result[result.size() -1];
+					if (compareStrings(function_name, filename_without_extension)) {
+						target_function = &F;
+					}
 				}
 			}
 
@@ -723,13 +748,30 @@ namespace {
 								// stop working.
 								continue;
 							}
-							if (call_inst->getCalledFunction() && (call_inst->getCalledFunction()->getName() == "strcpy" || call_inst->getCalledFunction()->getName() == "__strcpy_chk")) {
-								continue;
-							}
 							if (call_inst->getCalledFunction()) {
-								outs() << "replace call: " << call_inst->getCalledFunction()->getName() << "\n";
+								//function that doesn't have implementation
+								if (call_inst->getCalledFunction()->isDeclaration()) {
+									auto it = std::find(keep_list.begin(), keep_list.end(), call_inst->getCalledFunction()->getName());
+									if (it != keep_list.end()) {
+										continue;
+									}
+									call_insts.push_back(call_inst);
+									outs() << "replace call: " << exec_rustfilt(call_inst->getCalledFunction()->getName().str()) << "\n";
+								} else {
+									// Debug Useage
+									// outs() << "keep call:" << exec_rustfilt(call_inst->getCalledFunction()->getName().str()) << "\n";
+								}
+							} else {
+								//function pointer
+								Value *calledValue = call_inst->getCalledOperand();
+								Type *calledType = calledValue->getType();
+								if (calledType->isPointerTy()) {
+									Type *pointeeType = calledType->getPointerElementType();
+									if (pointeeType->isFunctionTy()) {
+										call_insts.push_back(call_inst);
+									}
+								}
 							}
-							call_insts.push_back(call_inst);
 						}
 					}
 				}
