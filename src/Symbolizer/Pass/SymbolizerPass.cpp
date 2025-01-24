@@ -136,7 +136,9 @@ namespace {
 		std::map<int, std::string> argumentsMap;
 		std::list<std::string> keep_list = {
 			"strcpy",
-			"__strcpy_chk"
+			"__strcpy_chk",
+			"malloc",
+			"strlen",
 		};
 		std::list<std::string> removed_list = {
 			"<alloc::string::String as core::ops::deref::Deref>::deref",
@@ -144,12 +146,16 @@ namespace {
 			"core::ptr::drop_in_place<alloc::boxed::Box<url_free::UrlData>>",
 			"core::ptr::read_unaligned",
 			"core::ptr::drop_in_place<core::option::Option<alloc::string::String>>",
-			"<str as alloc::string::ToString>::to_string",
 			"core::str::<impl str>::find",
 			"core::result::Result<T,E>::expect",
 			"core::slice::<impl [T]>::is_empty",
 			"core::ptr::metadata::from_raw_parts_mut",
-			"core::result::Result<T,E>::ok"
+			"core::result::Result<T,E>::ok",
+
+			// must include otherwise KLEE will have memeory issue
+				//1) "<str as alloc::string::ToString>::to_string",
+			// Rust empty lib function (also a neccessary function)
+				//1) "<alloc::string::String as core::clone::Clone>::clone"
 		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
