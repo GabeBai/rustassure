@@ -141,7 +141,6 @@ namespace {
 			"strlen",
 		};
 		std::list<std::string> removed_list = {
-			"<alloc::string::String as core::ops::deref::Deref>::deref",
 			"core::ptr::drop_in_place<alloc::boxed::Box<r::UrlData>>",
 			"core::ptr::drop_in_place<alloc::boxed::Box<url_free::UrlData>>",
 			"core::ptr::read_unaligned",
