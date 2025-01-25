@@ -150,12 +150,17 @@ namespace {
 			"core::result::Result<T,E>::expect",
 			"core::slice::<impl [T]>::is_empty",
 			"core::ptr::metadata::from_raw_parts_mut",
-			"core::result::Result<T,E>::ok",
+			"core::result::Result<T,E>::ok"
+
+
+
 
 			// must include otherwise KLEE will have memeory issue
-				//1) "<str as alloc::string::ToString>::to_string",
+				//1) "<str as alloc::string::ToString>::to_string", (eg : Url_get_port)
 			// Rust empty lib function (also a neccessary function)
-				//1) "<alloc::string::String as core::clone::Clone>::clone"
+				//1) "<alloc::string::String as core::clone::Clone>::clone" (Url_get_port)
+				//"core::result::Result<T,E>::ok", need to be removed, because we don't have the #2 implementation (Strdup)
+				//2) "<&str as alloc::ffi::c_str::CString::new::SpecNewImpl>::spec_new_impl"
 		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
