@@ -50,43 +50,30 @@ def sanitize(self, functionName):
     self.logger.debug("Sanitized function %s to %s", functionName, functionNameSanitized)
     return functionNameSanitized
 
-def matchNodes(N1, N2):
-    label1 = N1.get('label', "")
-    label2 = N2.get('label', "")
-    pattern = r'\\{(.*?)\\}'
-    N1ArgIndex = ""
-    N1FunctionName = ""
-    N2ArgIndex = ""
-    N2FunctionName = ""
-    match = re.search(pattern, label1)
-    if match:
-        val = match.group(1)
-        # self.logger.info("label1 match = %s", val)
-        if " arg " in val:
-            N1ArgIndex = val.split()[0]
-            N1FunctionName = val.split()[2]
-    match = re.search(pattern, label2)
-    if match:
-        val = match.group(1)
-        # self.logger.info("label2 match = %s", val)
-        if " arg " in val:
-            N2ArgIndex = val.split()[0]
-            N2FunctionName = sanitize(val.split()[2])
 
-    # If one of the nodes is an argument, then it must match only with the corresponding argument of the translated function
-    # With every other node it must return false
-    # For any other node pair, we can say the nodes are equal, aka. they match (and return true)
-    #       In this case, it would rely on the incoming, outgoing edges to determine the edit distance
+def matchNodes(node1, node2):
 
-    # self.logger.info("%s, %s, %s, %s", N1ArgIndex, N1FunctionName, N2ArgIndex, N2FunctionName)
+    label1 = node1.get('label')
+    label2 = node2.get('label')
 
-    if len(N1FunctionName) > 0 or len(N2FunctionName) > 0:
-        if N1FunctionName == N2FunctionName and N1ArgIndex == N2ArgIndex:
-            return True
-        else:
-            return False
-    else:
+    is_label1_numeric = label1.isdigit() if isinstance(label1, str) else False
+    is_label2_numeric = label2.isdigit() if isinstance(label2, str) else False
+
+    is_label1_bool = label1 in {"true", "false"} if isinstance(label1, str) else False
+    is_label2_bool = label2 in {"true", "false"} if isinstance(label2, str) else False
+
+    if is_label1_numeric and is_label2_numeric:
         return True
+
+    if is_label1_bool and is_label2_bool:
+        return True
+
+    if (is_label1_numeric and is_label2_bool) or (is_label1_bool and is_label2_numeric):
+        return False
+
+    return True
+
+
 
 def traverse_two_levels_rust():
     path_to_file_dict = {}
