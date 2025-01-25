@@ -151,7 +151,10 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
     rust_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/rust"
     c_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/graph_output/C"
 
-    results = []
+    results_max = []
+    results_min = []
+    results_all = []
+
 
     for c_key, c_dot_files in c_dict.items():
         if '/' in c_key:
@@ -164,9 +167,12 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         c_files = sorted(glob.glob(os.path.join(c_dir, "*.dot")))
 
         max_edit_distance = None
-        found_match = False
+        min_edit_distance = None
+        all_edit_distances = set()
 
+        found_match = False
         best_r_key = None
+
         for r_key in rust_dict.keys():
             if r_key.startswith(c_key):
                 best_r_key = r_key
@@ -231,23 +237,41 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                     if G1 and G2:
                         distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
                         if distance is not None and normdistance is not None:
+                            all_edit_distances.add(distance)
                             if max_edit_distance is None or distance > max_edit_distance:
                                 max_edit_distance = distance
+                            if min_edit_distance is None or distance < min_edit_distance:
+                                min_edit_distance = distance
 
         if not found_match or max_edit_distance is None:
             max_edit_distance_str = "rust empty"
+            min_edit_distance_str = "rust empty"
+            all_distances_str = "rust empty"
         else:
             max_edit_distance_str = str(max_edit_distance)
+            min_edit_distance_str = str(min_edit_distance)
+            all_distances_str = ", ".join(map(str, sorted(all_edit_distances)))
 
-        results.append((function_name, argument_name, max_edit_distance_str))
+        results_max.append((function_name, argument_name, max_edit_distance_str))
+        results_min.append((function_name, argument_name, min_edit_distance_str))
+        results_all.append((function_name, argument_name, all_distances_str))
 
-    with open(output_csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+    os.makedirs(output_csv_path, exist_ok=True)
+
+    with open(os.path.join(output_csv_path, 'max_edit_distance.csv'), 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(["function_name", "argument_name", "max_edit_distance"])
-        for row in results:
-            writer.writerow(row)
+        writer.writerows(results_max)
 
+    with open(os.path.join(output_csv_path, 'min_edit_distance.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["function_name", "argument_name", "min_edit_distance"])
+        writer.writerows(results_min)
 
+    with open(os.path.join(output_csv_path, 'all_edit_distances.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["function_name", "argument_name", "all_edit_distances"])
+        writer.writerows(results_all)
 
                         
 
@@ -255,4 +279,4 @@ if __name__ == "__main__":
     logger = SingletonLogger()
     result_C = traverse_two_levels_c()
     result_Rust = traverse_two_levels_rust()
-    compare_and_export_csv(result_C, result_Rust, "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/output.csv")
+    compare_and_export_csv(result_C, result_Rust, "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/edit_distance")
