@@ -33,7 +33,22 @@ create_json() {
     },
     "url_free" : {
         "0" : "UrlData"
-    }
+    },
+    "url_get_host": {
+        "0": "alloc::string::String"
+    },
+    "url_get_path": {
+        "0": "alloc::string::String"
+    },
+    "url_get_port": {
+        "0": "alloc::string::String"
+    },
+    "url_get_protocol": {
+        "0": "alloc::string::String"
+    },
+    "url_get_scheme": {
+        "0": "alloc::string::String"
+    },
 }' > input.json
 }
 
