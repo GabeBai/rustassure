@@ -139,6 +139,7 @@ namespace {
 			"__strcpy_chk",
 			"malloc",
 			"strlen",
+			"memcmp"
 		};
 		std::list<std::string> removed_list = {
 			"core::ptr::drop_in_place<alloc::boxed::Box<r::UrlData>>",
