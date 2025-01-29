@@ -616,6 +616,17 @@ namespace {
 			// then just pass it directly
 			// and return.
 
+			if (auto *pointer_type = dyn_cast<PointerType>(arg_value->getType())) {
+				Type *element_type = pointer_type->getPointerElementType();
+				if (auto *arrTy = dyn_cast<ArrayType>(element_type)) {
+					Type *arrElmTy = arrTy->getElementType();
+					if (arrTy->getNumElements() == 0) {
+						Type *integer_type = PointerType::get(arrElmTy, 0);
+						arg_value = Builder.CreateBitCast(arg_value, integer_type, "cast_size");
+					}
+				}
+			}
+
 			if (StructType* struct_type = dyn_cast<StructType>(arg_value->getType())) {
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
 						Type* field_type = struct_type->getElementType(i);
