@@ -50,6 +50,58 @@ void strip_new_line(std::string& str) {
 	}
 }
 
+bool startsWith(const std::string& str, const std::string& prefix) {
+	return str.compare(0, prefix.size(), prefix) == 0;
+}
+
+bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
+	for (auto &func : module) {
+		if (func.getName() == "main") {
+			continue;
+		}
+		for (auto &bb : func) {
+			for (auto &inst : bb) {
+				if (auto *gep = dyn_cast<GetElementPtrInst>(&inst)) {
+					if (gep->getSourceElementType() == structType) {
+						if (gep->getNumOperands() > 2) {
+							if (auto *constIndex = dyn_cast<ConstantInt>(gep->getOperand(2))) {
+								if (constIndex->getZExtValue() == fieldIndex) {
+									// llvm::errs() << inst << "\n";
+									return false;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if (fieldIndex == 0) {
+		for (auto &func : module) {
+			if (func.getName() == "main") {
+				continue;
+			}
+			for (auto &bb : func) {
+				for (auto &inst : bb) {
+					if (auto *bitCastInst = dyn_cast<BitCastInst>(&inst)) {
+						if (bitCastInst->getOperand(0)->getType() == structType->getPointerTo()) {
+							if (fieldIndex < structType->getNumElements()) {
+								Type *fieldType = structType->getElementType(fieldIndex);
+								if (bitCastInst->getType() == fieldType->getPointerTo()) {
+									llvm::errs() << inst << "\n";
+									return false;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return true;
+}
+
+
 bool compareStrings(const std::string& str1, const std::string& str2)
 {
 	if (str1 == str2) {
@@ -58,10 +110,9 @@ bool compareStrings(const std::string& str1, const std::string& str2)
 
 	auto normalize = [](const std::string& s) {
 		std::string result;
-		result.reserve(s.size());  // 预先分配足够的空间
+		result.reserve(s.size());
 		for (char c : s) {
 			if (c != '_') {
-				// 转换为小写
 				result.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
 			}
 		}
@@ -145,6 +196,7 @@ namespace {
 			"core::ptr::drop_in_place<alloc::boxed::Box<r::UrlData>>",
 			"core::ptr::drop_in_place<alloc::boxed::Box<url_free::UrlData>>",
 			"core::ptr::read_unaligned",
+			"core::ptr::drop_in_place<r::UrlData>",
 			"core::ptr::drop_in_place<core::option::Option<alloc::string::String>>",
 			"core::str::<impl str>::find",
 			"core::result::Result<T,E>::expect",
@@ -300,7 +352,7 @@ namespace {
 									struct_type, 
 									pointer, 
 									i,
-									"gep");
+								"gep");
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", nested_pointers);
 						}
 					}
@@ -605,6 +657,11 @@ namespace {
 
 			if (StructType* struct_type = dyn_cast<StructType>(arg_value->getType()->getPointerElementType())) {
 				for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
+					if (!startsWith(label, "ret_value") && isFieldUnused(struct_type, i, M)) {
+						std::string new_label = label + "." + "field_" + std::to_string(i);
+						outs() << "Arguments have not been used: " << new_label << "\n";
+						continue;
+					}
 					Type* field_type = struct_type->getElementType(i);
 					Value* gep = Builder.CreateStructGEP(
 							struct_type, 
