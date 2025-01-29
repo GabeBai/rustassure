@@ -6,6 +6,7 @@ from KqueryParser import KqueryParser
 from KqueryVisitor import KqueryVisitor
 from networkx.drawing.nx_pydot import write_dot
 import os
+import re
 import sys
 import subprocess
 from PostProcess import process_graph
@@ -26,6 +27,20 @@ logging.basicConfig(filename='/Users/gab/repo/Rust/rustify-validator/src/Symboli
                     level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     )
+
+def extract_unique_numbers_from_string(s):
+    """
+    Extracts numbers following '=' from a given string, removes duplicates,
+    and returns them as a sorted comma-separated string.
+
+    :param s: Input string
+    :return: A string of unique numbers sorted in ascending order
+    """
+    # Extract numbers after '=' and remove duplicates
+    numbers = set(re.findall(r'=(\d+)', s))
+
+    # Return the sorted numbers as a comma-separated string
+    return ','.join(sorted(numbers, key=int))
 
 class KqueryASTVisitor(KqueryVisitor):
 
@@ -303,7 +318,10 @@ class KqueryASTVisitor(KqueryVisitor):
     def visitVersion(self, ctx):
         # We don't parse version any deeper. TODO?
         version = ctx.getText()
+        if not extract_unique_numbers_from_string(version) == "":
+            version = "update list" + extract_unique_numbers_from_string(version)
         node = Node(version, "", self.G)
+        self.G.add_node(node)
         return node
 
     def visitExpr(self, ctx):
@@ -367,7 +385,22 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(ReadLSB w32 0 unnamed)"""
+    kquery_expression = r"""(ReadLSB w64 16 
+    U0:[
+        (Extract w32 0 
+            (Add w64 18446742456654364673 
+                N0:(ReadLSB w64 0 symbolic_var)
+            )
+        ) = 2,
+
+        (Extract w32 0 
+            (Add w64 18446742456654364672 
+                N0
+            )
+        ) = 1
+    ] 
+    @ const_arr1
+)"""
 
     expressions = [
         kquery_expression
