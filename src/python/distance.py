@@ -141,6 +141,7 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
     results_max = []
     results_min = []
     results_all = []
+    results_best = []
 
 
     for c_key, c_dot_files in c_dict.items():
@@ -156,6 +157,7 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         max_edit_distance = None
         min_edit_distance = None
         all_edit_distances = set()
+        node_num_not_match = False
 
         found_match = False
         best_r_key = None
@@ -194,41 +196,39 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                 found_match = True
 
         if found_match:
-            print(f"gabb c is {c_key}, rust is {best_r_key}")
+            print(f" c is {c_key}, rust is {best_r_key}")
             rust_dir = os.path.join(rust_base, best_r_key)
             rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
 
-            max_len = max(len(c_files), len(rust_files)) if c_files and rust_files else 0
+            for i, c_file_path in enumerate(c_files):
+                G1 = load_graph_from_dot(c_file_path)
+                num_nodes_c = len(G1.nodes)
 
-            for i in range(max_len):
-                if not c_files:
-                    continue
-                if not rust_files:
-                    continue
+                match_found = False
+                for rust_file_path in rust_files:
+                    G2 = load_graph_from_dot(rust_file_path)
+                    num_nodes_r = len(G2.nodes)
 
+                    if num_nodes_c == num_nodes_r:
+                        match_found = True
 
-                if i < len(c_files):
-                    c_file_path = c_files[i]
-                else:
-                    c_file_path = c_files[-1]
-
-                if i < len(rust_files):
-                    rust_file_path = rust_files[i]
-                else:
-                    rust_file_path = rust_files[-1]
-
-                if os.path.exists(rust_file_path) and os.path.exists(c_file_path):
-                    G1 = load_graph_from_dot(rust_file_path)
-                    G2 = load_graph_from_dot(c_file_path)
-
-                    if G1 and G2:
                         distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
                         if distance is not None and normdistance is not None:
                             all_edit_distances.add(distance)
-                            if max_edit_distance is None or distance > max_edit_distance:
-                                max_edit_distance = distance
-                            if min_edit_distance is None or distance < min_edit_distance:
-                                min_edit_distance = distance
+                            max_edit_distance = max(max_edit_distance, distance) if max_edit_distance else distance
+                            min_edit_distance = min(min_edit_distance, distance) if min_edit_distance else distance
+                        break
+
+                if not match_found:
+                    node_num_not_match = True
+                    rust_file_path = rust_files[-1]
+                    G2 = load_graph_from_dot(rust_file_path)
+
+                    distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
+                    if distance is not None and normdistance is not None:
+                        all_edit_distances.add(distance)
+                        max_edit_distance = max(max_edit_distance, distance) if max_edit_distance else distance
+                        min_edit_distance = min(min_edit_distance, distance) if min_edit_distance else distance
 
         if not found_match or max_edit_distance is None:
             max_edit_distance_str = "rust empty"
@@ -242,6 +242,11 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         results_max.append((function_name, argument_name, max_edit_distance_str))
         results_min.append((function_name, argument_name, min_edit_distance_str))
         results_all.append((function_name, argument_name, all_distances_str))
+
+        if node_num_not_match:
+            results_best.append((function_name, argument_name, all_distances_str))
+        else:
+            results_best.append((function_name, argument_name, min_edit_distance_str))
 
     os.makedirs(output_csv_path, exist_ok=True)
 
@@ -259,6 +264,11 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         writer = csv.writer(csvfile)
         writer.writerow(["function_name", "argument_name", "all_edit_distances"])
         writer.writerows(results_all)
+
+    with open(os.path.join(output_csv_path, 'best_edit_distances.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["function_name", "argument_name", "best_edit_distances"])
+        writer.writerows(results_best)
 
                         
 

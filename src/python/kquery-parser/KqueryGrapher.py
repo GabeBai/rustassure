@@ -44,7 +44,7 @@ class KqueryASTVisitor(KqueryVisitor):
         # print("Number")
         number = ctx.getText()
         node =  Node(number, "", self.G)
-        self.G.add_node(node)
+        self.G.add_node(node, label=number)
         return node
 
     def visitDefinition(self, ctx):
@@ -367,9 +367,10 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
+    kquery_expression = r"""(ReadLSB w32 0 unnamed)"""
+
     expressions = [
-    # "(ReadLSB w16 0 unnamed)",
-    "0",
+        kquery_expression
     ]          
-    convert_kquery_to_graph(expressions, "abc", "text")
+    convert_kquery_to_graph(expressions, "abc", "text", [])
 
