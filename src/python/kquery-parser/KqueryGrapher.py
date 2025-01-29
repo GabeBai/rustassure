@@ -28,19 +28,17 @@ logging.basicConfig(filename='/Users/gab/repo/Rust/rustify-validator/src/Symboli
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     )
 
+
 def extract_unique_numbers_from_string(s):
-    """
-    Extracts numbers following '=' from a given string, removes duplicates,
-    and returns them as a sorted comma-separated string.
+    numbers_after_eq = set(re.findall(r'=(\d+)', s))
 
-    :param s: Input string
-    :return: A string of unique numbers sorted in ascending order
-    """
-    # Extract numbers after '=' and remove duplicates
-    numbers = set(re.findall(r'=(\d+)', s))
+    if numbers_after_eq:
+        return ','.join(sorted(numbers_after_eq, key=int))
 
-    # Return the sorted numbers as a comma-separated string
-    return ','.join(sorted(numbers, key=int))
+    numbers_before_eq = set(re.findall(r'(\d+)=', s))
+
+    # 返回按数值排序的唯一数字字符串
+    return ','.join(sorted(numbers_before_eq, key=int)) if numbers_before_eq else ""
 
 class KqueryASTVisitor(KqueryVisitor):
 
@@ -320,6 +318,8 @@ class KqueryASTVisitor(KqueryVisitor):
         version = ctx.getText()
         if not extract_unique_numbers_from_string(version) == "":
             version = "update list" + extract_unique_numbers_from_string(version)
+        elif len(version) > 20:
+            version = "abnormal update list"
         node = Node(version, "", self.G)
         self.G.add_node(node)
         return node
@@ -385,22 +385,23 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(ReadLSB w64 16 
-    U0:[
-        (Extract w32 0 
-            (Add w64 18446742456654364673 
-                N0:(ReadLSB w64 0 symbolic_var)
-            )
-        ) = 2,
-
-        (Extract w32 0 
-            (Add w64 18446742456654364672 
-                N0
-            )
-        ) = 1
-    ] 
-    @ const_arr1
-)"""
+    kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446742428737077248
+                                  (ReadLSB w64 0 U0:[(Extract w32 0 (Add w64 18446742437327011840
+                                                                             N0:(ReadLSB w64 0 unnamed_1)))=(Read w8 0 unnamed),
+                                                     15=(Extract w8 24 N1:(Add w32 4294967295
+                                                                                   (ReadLSB w32 12 unnamed_1))),
+                                                     14=(Extract w8 16 N1),
+                                                     13=(Extract w8 8 N1),
+                                                     12=(Extract w8 0 N1),
+                                                     7=(Extract w8 56 N2:(Add w64 1 N0)),
+                                                     6=(Extract w8 48 N2),
+                                                     5=(Extract w8 40 N2),
+                                                     4=(Extract w8 32 N2),
+                                                     3=(Extract w8 24 N2),
+                                                     2=(Extract w8 16 N2),
+                                                     1=(Extract w8 8 N2),
+                                                     0=(Extract w8 0 N2)] @ unnamed_1)))
+          unnamed)"""
 
     expressions = [
         kquery_expression
