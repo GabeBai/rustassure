@@ -227,8 +227,8 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                     distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
                     if distance is not None and normdistance is not None:
                         all_edit_distances.add(distance)
-                        max_edit_distance = max(max_edit_distance, distance) if max_edit_distance else distance
-                        min_edit_distance = min(min_edit_distance, distance) if min_edit_distance else distance
+                        max_edit_distance = max(max_edit_distance, distance) if max_edit_distance is not None else distance
+                        min_edit_distance = min(min_edit_distance, distance) if min_edit_distance is not None else distance
 
         if not found_match or max_edit_distance is None:
             max_edit_distance_str = "rust empty"
