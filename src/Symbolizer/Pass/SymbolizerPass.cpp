@@ -54,6 +54,15 @@ bool startsWith(const std::string& str, const std::string& prefix) {
 	return str.compare(0, prefix.size(), prefix) == 0;
 }
 
+Type* getLLVMType(LLVMContext &context, const std::string &typeStr) {
+	if (typeStr == "Integer_8") {
+		return Type::getInt8PtrTy(context);  // i8*
+	} else if (typeStr == "Integer_32") {
+		return Type::getInt32PtrTy(context); // i32*
+	}
+	return nullptr;
+}
+
 bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 	for (auto &func : module) {
 		if (func.getName() == "main") {
@@ -201,7 +210,10 @@ namespace {
 			"core::str::<impl str>::find",
 			"core::result::Result<T,E>::expect",
 			"core::slice::<impl [T]>::is_empty",
-			"core::result::Result<T,E>::ok"
+			"core::result::Result<T,E>::ok",
+			// interesting, actually we has this function, but cannot get result with it..see good case..
+			"alloc::slice::<impl [T]>::into_vec",
+			"core::ptr::metadata::from_raw_parts_mut"
 
 
 
@@ -405,6 +417,9 @@ namespace {
 				}
 				if (cast_to_integer) {
 					// TODO : @gab fix me !
+					if (needCast) {
+						return Builder.CreateBitCast(stack_arg, originType);
+					}
 					IntegerType* integer_type = dyn_cast<IntegerType>(originalType);
 					Type* void_ptr_type;
 					if (integer_type->getBitWidth() == 8) {
@@ -509,11 +524,16 @@ namespace {
 				Type* originalType = targetType;
 				if (needReplace) {
 					Type* structType = StructType::getTypeByName(M.getContext(), targetName);
-					//If the defination of the struct is empty
-					if (!structType) {
-						structType = StructType::create(M.getContext(), targetName);
+					if (structType) {
+						targetType = PointerType::get(structType, 0);
+					} else {
+						if (getLLVMType(ctx, targetName)) {
+							targetType = getLLVMType(ctx, targetName);
+						} else {
+							structType = StructType::create(M.getContext(), targetName);
+							targetType = PointerType::get(structType, 0);
+						}
 					}
-					targetType = PointerType::get(structType, 0);
 				}
 			
 				if (isa<PointerType>(targetType) && targetType->getPointerElementType()) {
@@ -561,7 +581,16 @@ namespace {
                 Type* targetType = arg_value->getType();
                 if (needReplace) {
 					Type* structType = StructType::getTypeByName(M.getContext(), targetName);
-					targetType = PointerType::get(structType, 0);
+                	if (structType) {
+                		targetType = PointerType::get(structType, 0);
+                	} else {
+                		if (getLLVMType(ctx, targetName)) {
+                			targetType = getLLVMType(ctx, targetName);
+                		} else {
+                			structType = StructType::create(M.getContext(), targetName);
+                			targetType = PointerType::get(structType, 0);
+                		}
+                	}
                 }
 				if (needIgnore) {
 					continue;
@@ -668,12 +697,20 @@ namespace {
 
 			if (StructType* struct_type = dyn_cast<StructType>(arg_value->getType()->getPointerElementType())) {
 				for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
+					Type* field_type = struct_type->getElementType(i);
+					bool need_cast = false;
+					// 100 is a magic number, we use it to represent a field in the struct
+					if (!ParsedJson.empty() && ParsedJson.contains(std::to_string(i + 100))) {
+						std::string target_string = ParsedJson[std::to_string(i + 100)];
+						Type *target_type = getLLVMType(ctx, target_string);
+						field_type = PointerType::get(target_type, 0);
+						need_cast = true;
+					}
 					if (!startsWith(label, "ret_value") && isFieldUnused(struct_type, i, M)) {
 						std::string new_label = label + "." + "field_" + std::to_string(i);
 						outs() << "Arguments have not been used: " << new_label << "\n";
 						continue;
 					}
-					Type* field_type = struct_type->getElementType(i);
 					Value* gep = Builder.CreateStructGEP(
 							struct_type, 
 							arg_value, 
@@ -688,7 +725,11 @@ namespace {
 								continue;
 							}
 						}
-						print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
+						if (need_cast) {
+							print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, field_type), label + "." + "field_" + std::to_string(i));
+						} else {
+							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
+						}
 					} else {
 						
 						// Create a load
