@@ -19,7 +19,8 @@ create_json() {
         "0" : "CsvParser"
     },
     "csv_fini" : {
-        "0" : "CsvParser"
+        "0" : "CsvParser",
+        "103" : "Integer_8"
     },
     "csv_set_space_func" : {
         "1" : "function",
@@ -30,6 +31,15 @@ create_json() {
     },
     "csv_fwrite" : {
         "0" : "File"
+    },
+    "csv_increase_buffer" : {
+        "103" : "Integer_8"
+    },
+    "csv_init" : {
+        "103" : "Integer_8"
+    },
+    "csv_free" : {
+        "103" : "Integer_8"
     },
     "url_free" : {
         "0" : "UrlData"
