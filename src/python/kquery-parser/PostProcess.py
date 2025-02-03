@@ -18,6 +18,9 @@ def is_zext_node(node_label: Node) -> bool:
     return node_label.value == "ZExt" or node_label.value == "SExt"
     # return "value = ZExt" in node_label
 
+def is_add_node(node_label: Node) -> bool:
+    return node_label.value == "Add"
+
 def is_readlsb_w64(node_label: Node) -> bool:
     return node_label.value == "ReadLSB" and node_label.type_value == "w64"
     # return ("value = ReadLSB" in node_label) and ("type = w64" in node_label)
@@ -89,6 +92,44 @@ def find_subtree_with_two_zext_branches(G: nx.DiGraph, root: Node) -> bool:
         if subtree_contains_zext(G, left) and subtree_contains_zext(G, right):
             return True
     return False
+
+
+def process_graph_sub(G: nx.DiGraph):
+    for extract_node in list(G.nodes()):
+        if not is_extract_node(extract_node):
+            continue
+
+        extract_children = list(G.successors(extract_node))
+        if len(extract_children) < 2:
+            continue
+
+        add_candidates = [c for c in extract_children if is_add_node(c)]
+        if len(add_candidates) != 1:
+            continue
+        add_node = add_candidates[0]
+
+        to_delete_subtree = [c for c in extract_children if c != add_node]
+
+        add_children = list(G.successors(add_node))
+        sext_candidates = [c for c in add_children if is_zext_node(c)]
+        if len(sext_candidates) != 1:
+            continue
+        sext_node = sext_candidates[0]
+
+        sext_children = list(G.successors(sext_node))
+
+        for subtree_root in to_delete_subtree:
+            remove_subtree(G, subtree_root)
+
+        for sc in sext_children:
+            rewire_parent_to_child(G, sext_node, sc)
+
+        rewire_parent_to_child(G, extract_node, add_node)
+
+        return True
+
+    return False
+
 
 def process_graph_ZExt(G: nx.DiGraph):
     extract_nodes = [n for n in G.nodes() if is_extract_node(n)]

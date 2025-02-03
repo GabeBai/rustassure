@@ -11,6 +11,7 @@ import sys
 import subprocess
 from PostProcess import process_graph
 from PostProcess import process_graph_ZExt
+from PostProcess import process_graph_sub
 from Node import Node
 import logging
 import networkx as nx
@@ -367,6 +368,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
+        removed_sub = process_graph_sub(visitor.G)
 
         if dedup:
             if is_duplicate_graph(visitor.G, seen_graphs):
@@ -378,6 +380,8 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
             logging.info(f"{current_dir}/{output_file} - removed is True")
         if (removed_zext):
             logging.info(f"{current_dir}/{output_file} - removed_zext is True")
+        if (removed_sub):
+            logging.info(f"{current_dir}/{output_file} - removed_sub is True")
         write_dot(visitor.G, output_file)
 
         seen_graphs.append(visitor.G)
@@ -385,23 +389,32 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446742428737077248
-                                  (ReadLSB w64 0 U0:[(Extract w32 0 (Add w64 18446742437327011840
-                                                                             N0:(ReadLSB w64 0 unnamed_1)))=(Read w8 0 unnamed),
-                                                     15=(Extract w8 24 N1:(Add w32 4294967295
-                                                                                   (ReadLSB w32 12 unnamed_1))),
-                                                     14=(Extract w8 16 N1),
-                                                     13=(Extract w8 8 N1),
-                                                     12=(Extract w8 0 N1),
-                                                     7=(Extract w8 56 N2:(Add w64 1 N0)),
-                                                     6=(Extract w8 48 N2),
-                                                     5=(Extract w8 40 N2),
-                                                     4=(Extract w8 32 N2),
-                                                     3=(Extract w8 24 N2),
-                                                     2=(Extract w8 16 N2),
-                                                     1=(Extract w8 8 N2),
-                                                     0=(Extract w8 0 N2)] @ unnamed_1)))
-          unnamed)"""
+    kquery_expression = r"""(ReadLSB w32 
+    N0:(
+        Extract w32 0 
+            (Add w64 18446742428737077248 
+                N1:(ReadLSB w64 0 unnamed)
+            )
+    ) 
+    U0:[
+        (Add w32 3 
+            N2:(
+                Extract w32 0 
+                    (Add w64 18446742428737077252 N1)
+            )
+        ) = 0,
+
+        (Add w32 2 N2) = 0,
+        (Add w32 1 N2) = 0,
+        N2 = 2,
+
+        N3:(Add w32 3 N0) = 0,
+        N4:(Add w32 2 N0) = 0,
+        N5:(Add w32 1 N0) = 0,
+        N0 = 1
+    ] 
+    @ field
+)"""
 
     expressions = [
         kquery_expression
