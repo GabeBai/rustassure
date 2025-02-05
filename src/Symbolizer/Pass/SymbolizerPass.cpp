@@ -194,6 +194,7 @@ namespace {
 		std::vector<StructType*> visited_struct_types;
 		json ParsedJson;
 		std::map<int, std::string> argumentsMap;
+		std::unordered_set<StructType*> visited_structs;
 		std::list<std::string> keep_list = {
 			"strcpy",
 			"__strcpy_chk",
@@ -325,6 +326,9 @@ namespace {
 			// llvm::errs() << "Created and stored: " << *stack_object << " of type " << *(ptr_type->getPointerElementType()) << " to " << *pointer << "\n";
 			// If the ptr_type was a pointer or a struct type (with potentially nested pointers) we
 			// will allocate objects and mark them symbolic for the nested pointers tooooo....
+
+
+			//@Gab : I don't think we need this logic, delete & test to see the result?
 			if (isa<PointerType>(ptr_type->getPointerElementType())) {
 				nested_pointers.push_back(stack_object);
 			}	 
@@ -365,6 +369,12 @@ namespace {
 									pointer, 
 									i,
 								"gep");
+							if (StructType *inner_struct_type = dyn_cast<StructType>(field_ptr_type->getPointerElementType())) {
+								if (visited_structs.count(struct_type)) {
+									return;
+								}
+								visited_structs.insert(struct_type);
+							}
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", nested_pointers);
 						}
 					}
