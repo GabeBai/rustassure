@@ -107,15 +107,36 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 			}
 		}
 	}
+	if (structType->getName() == "core::ffi::c_str::CStr" && fieldIndex == 0) {
+		return false;
+	}
 	return true;
 }
 
+std::set<std::string> tokenizeByUnderscore(const std::string& str) {
+	std::set<std::string> result;
+	std::stringstream ss(str);
+	std::string token;
 
-bool compareStrings(const std::string& str1, const std::string& str2)
-{
-	if (str1 == str2) {
-		return true;
+	std::string lowerStr;
+	lowerStr.reserve(str.size());
+	std::transform(str.begin(), str.end(), std::back_inserter(lowerStr),
+				   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+	for (char& c : lowerStr) {
+		if (c == '_') {
+			c = ' ';
+		}
 	}
+	ss.str(lowerStr);
+	while (ss >> token) {
+		result.insert(token);
+	}
+	return result;
+}
+
+
+bool compareStrings(const std::string& filenameWithoutExt, const std::string& functionName) {
 
 	auto normalize = [](const std::string& s) {
 		std::string result;
@@ -128,10 +149,24 @@ bool compareStrings(const std::string& str1, const std::string& str2)
 		return result;
 	};
 
-	std::string normStr1 = normalize(str1);
-	std::string normStr2 = normalize(str2);
+	std::string normStr1 = normalize(filenameWithoutExt);
+	std::string normStr2 = normalize(functionName);
 
-	return (normStr1 == normStr2);
+	if (normStr1 == normStr2) {
+		return true;
+	}
+
+	std::set<std::string> fileTokens = tokenizeByUnderscore(filenameWithoutExt);
+
+	std::set<std::string> funcTokens = tokenizeByUnderscore(functionName);
+
+	for (const auto& token : funcTokens) {
+		if (fileTokens.find(token) == fileTokens.end()) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 
@@ -212,18 +247,20 @@ namespace {
 			"core::result::Result<T,E>::expect",
 			"core::slice::<impl [T]>::is_empty",
 			"core::result::Result<T,E>::ok",
+			"core::ptr::metadata::from_raw_parts_mut",
 			// interesting, actually we has this function, but cannot get result with it..see good case..
 			"alloc::slice::<impl [T]>::into_vec",
-			"core::ptr::metadata::from_raw_parts_mut"
-
-
+			"core::result::Result<T,E>::unwrap_or",
+			"core::str::<impl str>::ends_with",
+			"__maskrune",
 
 			// must include otherwise KLEE will have memeory issue
-				//1) "<str as alloc::string::ToString>::to_string", (eg : Url_get_port)
+				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
 			// Rust empty lib function (And, they are also neccessary functions)
-				//1) "<alloc::string::String as core::clone::Clone>::clone" (Url_get_port)
-				//"core::result::Result<T,E>::ok", need to be removed, because we don't have the #2 implementation (Strdup)
+				//1) "<alloc::string::String as core::clone::Clone>::clone" (urlparser : Url_get_port)
+				//"core::result::Result<T,E>::ok", need to be removed, because we don't have the #2 implementation (urlparser :Strdup)
 				//2) "<&str as alloc::ffi::c_str::CString::new::SpecNewImpl>::spec_new_impl"
+				//3) core::ffi::c_str::CStr::to_str,(opipng : app_print_cntrl keep will crash becasue of invalid memory)
 		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
@@ -248,10 +285,6 @@ namespace {
 			// In the case of Rust, it adds a bunch of functions that we don't care about
 			// We will only consider the function that has the same name as the file.
 			// Note: we have separated out each function in its own file so this isn't a problem
-			std::string filename = M.getModuleIdentifier();
-
-			std::filesystem::path filepath(filename);
-			std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 
 			std::vector<Function*> remove_functions;
 
@@ -425,28 +458,12 @@ namespace {
 					// as symbolic
 					mark_symbolic(M, stack_arg, Builder);
 				}
-				if (cast_to_integer) {
-					// TODO : @gab fix me !
-					if (needCast) {
-						return Builder.CreateBitCast(stack_arg, originType);
-					}
+				if (needCast) {
+					return Builder.CreateBitCast(stack_arg, originType);
+				} else if (cast_to_integer) {
 					IntegerType* integer_type = dyn_cast<IntegerType>(originalType);
-					Type* void_ptr_type;
-					if (integer_type->getBitWidth() == 8) {
-						void_ptr_type = PointerType::get(IntegerType::getInt8Ty(ctx), 0);
-					} else if (integer_type->getBitWidth() == 16) {
-						void_ptr_type = PointerType::get(IntegerType::getInt16Ty(ctx), 0);
-					} else if (integer_type->getBitWidth() == 32) {
-						void_ptr_type = PointerType::get(IntegerType::getInt32Ty(ctx), 0);
-					} else if (integer_type->getBitWidth() == 64) {
-						void_ptr_type = PointerType::get(IntegerType::getInt64Ty(ctx), 0);
-					} else {
-						//error
-					}
+					Type* void_ptr_type = PointerType::get(IntegerType::get(ctx, integer_type->getBitWidth()), 0);
 					return (Builder.CreateBitCast(stack_arg, void_ptr_type));
-				} else if (needCast) {
-					// need cast back to origninal type
-					return (Builder.CreateBitCast(stack_arg, originType));
 				} else {
 					return stack_arg;
 				}
@@ -466,13 +483,14 @@ namespace {
 					continue;
 				}
 				if (!F.isDeclaration()) {
-					std::string filename = M.getModuleIdentifier();std::filesystem::path filepath(filename);
+					std::string filename = M.getModuleIdentifier();
+					std::filesystem::path filepath(filename);
 					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 
 					std::string demangled_name = exec_rustfilt(F.getName().str());
 					std::vector<std::string> result = splitString(demangled_name, "::");
 					std::string function_name = result[result.size() -1];
-					if (compareStrings(function_name, filename_without_extension)) {
+					if (compareStrings(filename_without_extension, function_name)) {
 						target_function = &F;
 					}
 				}
