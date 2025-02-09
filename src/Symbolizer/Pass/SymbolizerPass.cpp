@@ -55,12 +55,24 @@ bool startsWith(const std::string& str, const std::string& prefix) {
 }
 
 Type* getLLVMType(LLVMContext &context, const std::string &typeStr) {
+	if (typeStr == "core::ffi::c_str::CStr") {
+		ArrayType *arrTy = ArrayType::get(Type::getInt8Ty(context), 100);
+		StructType *myStructTy = StructType::create(context, "CStr_struct");
+		myStructTy->setBody(arrTy);
+		return PointerType::get(myStructTy, 0);;
+	}
+
+	if (StructType::getTypeByName(context, typeStr)) {
+		return PointerType::get(StructType::getTypeByName(context, typeStr), 0);
+	}
+
 	if (typeStr == "Integer_8") {
 		return Type::getInt8PtrTy(context);  // i8*
 	} else if (typeStr == "Integer_32") {
 		return Type::getInt32PtrTy(context); // i32*
 	}
-	return nullptr;
+
+	return PointerType::get(StructType::create(context, typeStr), 0);
 }
 
 bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
@@ -108,6 +120,9 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 		}
 	}
 	if (structType->getName() == "core::ffi::c_str::CStr" && fieldIndex == 0) {
+		return false;
+	}
+	if (structType->getName().find("CStr_struct") == 0) {
 		return false;
 	}
 	return true;
@@ -253,6 +268,7 @@ namespace {
 			"core::result::Result<T,E>::unwrap_or",
 			"core::str::<impl str>::ends_with",
 			"__maskrune",
+			"core::ptr::drop_in_place<core::result::Result<u64,std::io::error::Error>>",
 
 			// must include otherwise KLEE will have memeory issue
 				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
@@ -551,17 +567,7 @@ namespace {
 				Type* targetType = arg.getType();
 				Type* originalType = targetType;
 				if (needReplace) {
-					Type* structType = StructType::getTypeByName(M.getContext(), targetName);
-					if (structType) {
-						targetType = PointerType::get(structType, 0);
-					} else {
-						if (getLLVMType(ctx, targetName)) {
-							targetType = getLLVMType(ctx, targetName);
-						} else {
-							structType = StructType::create(M.getContext(), targetName);
-							targetType = PointerType::get(structType, 0);
-						}
-					}
+					targetType = getLLVMType(ctx, targetName);
 				}
 			
 				if (isa<PointerType>(targetType) && targetType->getPointerElementType()) {
@@ -608,17 +614,7 @@ namespace {
 
                 Type* targetType = arg_value->getType();
                 if (needReplace) {
-					Type* structType = StructType::getTypeByName(M.getContext(), targetName);
-                	if (structType) {
-                		targetType = PointerType::get(structType, 0);
-                	} else {
-                		if (getLLVMType(ctx, targetName)) {
-                			targetType = getLLVMType(ctx, targetName);
-                		} else {
-                			structType = StructType::create(M.getContext(), targetName);
-                			targetType = PointerType::get(structType, 0);
-                		}
-                	}
+                	targetType = getLLVMType(ctx, targetName);
                 }
 				if (needIgnore) {
 					continue;
@@ -866,6 +862,33 @@ namespace {
 			FunctionType* klee_print_expr_type = FunctionType::get(FunctionType::getVoidTy(ctx), argTypes2, true); 
 			Function::Create(klee_print_expr_type, Function::ExternalLinkage, "klee_print_expr", M);
 		}
+		
+		void convert_unreachable_conditions(Module &M) {
+			for (Function &F : M) {
+				if (F.isDeclaration())
+					continue;
+
+				for (BasicBlock &BB : F) {
+					for (auto II = BB.begin(); II != BB.end();) {
+						Instruction &I = *II++;
+						if (auto *SW = dyn_cast<SwitchInst>(&I)) {
+							BasicBlock *DefaultBB = SW->getDefaultDest();
+							if (SW->getNumCases() > 0) {
+								if (DefaultBB->size() == 1 && isa<UnreachableInst>(DefaultBB->front())) {
+									BasicBlock *FirstCaseBB = SW->case_begin()->getCaseSuccessor();
+
+									SW->setDefaultDest(FirstCaseBB);
+									if (!DefaultBB->hasNPredecessorsOrMore(1)) {
+										DefaultBB->dropAllReferences();
+										DefaultBB->eraseFromParent();
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 
 		void convert_function_calls(Module& M) {
 			LLVMContext &ctx = M.getContext();
@@ -994,6 +1017,7 @@ namespace {
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);
 			convert_function_calls(M);
+			convert_unreachable_conditions(M);
 			//M.dump();
 			return PreservedAnalyses::none();
 		}
