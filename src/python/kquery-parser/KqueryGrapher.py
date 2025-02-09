@@ -201,8 +201,10 @@ class KqueryASTVisitor(KqueryVisitor):
             
             node.children.append(child1)
             node.children.append(child2)
-            self.G.add_edge(node, child1)
-            self.G.add_edge(node, child2)
+            if child1:
+                self.G.add_edge(node, child1)
+            if child2:
+                self.G.add_edge(node, child2)
         else:
             node = Node(expr_kind, "", self.G)
 
@@ -389,32 +391,10 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(ReadLSB w32 
-    N0:(
-        Extract w32 0 
-            (Add w64 18446742428737077248 
-                N1:(ReadLSB w64 0 unnamed)
-            )
-    ) 
-    U0:[
-        (Add w32 3 
-            N2:(
-                Extract w32 0 
-                    (Add w64 18446742428737077252 N1)
-            )
-        ) = 0,
-
-        (Add w32 2 N2) = 0,
-        (Add w32 1 N2) = 0,
-        N2 = 2,
-
-        N3:(Add w32 3 N0) = 0,
-        N4:(Add w32 2 N0) = 0,
-        N5:(Add w32 1 N0) = 0,
-        N0 = 1
-    ] 
-    @ field
-)"""
+    kquery_expression = r"""(Concat w64 (Read w8 15 unnamed)
+             (Concat w56 (Read w8 14 unnamed)
+                         (Concat w48 (Read w8 13 unnamed)
+                                     (Concat w40 (Read w8 12 unnamed) (w32 0)))))"""
 
     expressions = [
         kquery_expression
