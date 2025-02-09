@@ -16,6 +16,81 @@ from datetime import datetime
 
 from loggerFactory import getLogger
 
+def remove_specific_line(filename):
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        
+        new_lines = [line for line in lines if line.strip() != '1];']
+        
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.writelines(new_lines)
+    except Exception as e:
+        print(f"{e}")
+
+# special handle...
+import os
+
+def special_handle(filename):
+    base_name = os.path.basename(filename)
+
+    functions_map = {
+        "zrand.i": r"""void zrand_fd() {};
+void zrand_libc_rand();
+void zrand_libc_random();
+void zrand_libc_rand48();
+""",
+        "process_files.i": r"""void app_printf(const char *fmt, ...);
+void app_print_cntrl(int cntrl_code);
+void app_progress(unsigned long current_step, unsigned long total_steps);
+void panic(const char *msg);
+""",
+        "opng_rangeset2bitset.i": r"""char * opng_strltrim(const char *str);
+""",
+        "err_option_arg.i": r"""char * opng_strltrim(const char *str);
+""",
+        "opng_str2ulong.i": r"""char * opng_strltrim(const char *str);
+""",
+        "opng_write_file.i": r"""struct dummyStruct{
+    int field_0;
+};
+void opng_error(struct dummyStruct * png_ptr, const char * msg);
+void opng_warning(struct dummyStruct * png_ptr, const char * msg);
+void opng_write_data(struct dummyStruct * png_ptr, unsigned char * data, long unsigned int length);
+void opng_read_data(struct dummyStruct * png_ptr, unsigned char * data, long unsigned int length);
+""",
+        "opng_copy_file.i": r"""struct dummyStruct{
+    int field_0;
+};
+void opng_error(struct dummyStruct * png_ptr, const char * msg);
+void opng_warning(struct dummyStruct * png_ptr, const char * msg);
+void opng_write_data(struct dummyStruct * png_ptr, unsigned char * data, long unsigned int length);
+void opng_read_data(struct dummyStruct * png_ptr, unsigned char * data, long unsigned int length);
+""",
+        "opng_read_file.i": r"""struct dummyStruct{
+    int field_0;
+};
+void opng_error(struct dummyStruct * png_ptr, const char * msg);
+void opng_warning(struct dummyStruct * png_ptr, const char * msg);
+void opng_write_data(struct dummyStruct * png_ptr, unsigned char * data, long unsigned int length);
+void opng_read_data(struct dummyStruct * png_ptr, unsigned char * data, long unsigned int length);
+""",
+        "parse_args.i": r"""char * opng_strpbrk_digit(const char *str);
+"""
+    }
+
+    if base_name in functions_map:
+        functions_code = functions_map[base_name]
+
+        with open(filename, 'r', encoding='utf-8') as f:
+            original_content = f.readlines()
+
+        if not original_content or not original_content[0].strip().startswith(functions_code.split("\n")[0].strip()):
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(functions_code + "\n" + "".join(original_content))
+
+
+
 def remove_static_and_inline_from_file(filename):
 
     with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
@@ -90,9 +165,12 @@ def emitLLVMBitcodes(individualFuncPath, logger):
 
         # First, annotate the Rust function with "#[no_mangle]" to prevent it getting removed
         sed_cmd = (
-            f"sed -i '' -e '/^[[:space:]]*fn /i \\\n#[no_mangle]' "
+            f"sed -i '' "
+            f"-e '/^[[:space:]]*unsafe fn /i \\\n#[no_mangle]' "
             f"-e '/^[[:space:]]*pub extern \"C\" fn /i \\\n#[no_mangle]' "
-            f"-e '/^[[:space:]]*pub fn /i \\\n#[no_mangle]' {filename}"
+            f"-e '/^[[:space:]]*pub fn /i \\\n#[no_mangle]' "
+            f"-e '/^[[:space:]]*fn /i \\\n#[no_mangle]' "
+            f"{filename}"
         )
         subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -138,6 +216,8 @@ def emitLLVMBitcodes(individualFuncPath, logger):
         logger.debug("Compiling C file %s ", filename)
 
         remove_static_and_inline_from_file(filename)
+        remove_specific_line(filename)
+        special_handle(filename)
         emitBitcodeCmd = "clang -c -femit-all-decls -emit-llvm -o " + filename + ".bc " + filename
         logger.debug("Running command %s", emitBitcodeCmd)
 
