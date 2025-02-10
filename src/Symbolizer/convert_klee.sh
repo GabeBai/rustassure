@@ -59,6 +59,26 @@ create_json() {
     "url_get_scheme": {
         "0": "alloc::string::String"
     },
+    "opng_rangeset2bitset": {
+        "1": "core::ffi::c_str::CStr"
+    },
+    "scan_option": {
+        "0": "core::ffi::c_str::CStr"
+    },
+    "osys_path_chdir": {
+        "2": "core::ffi::c_str::CStr",
+        "4": "core::ffi::c_str::CStr"
+    },
+    "opng_ullratio_to_factor_string": {
+        "0": "alloc::string::String"
+    },
+    "opng_ulratio_to_percent_string": {
+        "0": "alloc::string::String"
+    },
+    "opng_ullratio_to_percent_string": {
+        "0": "alloc::string::String"
+    }
+
 }' > input.json
 }
 
@@ -130,22 +150,17 @@ for c_file in testcase/C/*.bc; do
 
         # Extract the base filename without extension
         base_name=$(basename "$c_file" .i.bc)
-        
-        # Run optimization pass on the bitcode
-        opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$c_file" -S -o "klee_ir_files/C/${base_name}_klee.ll"
-        
-        # Run KLEE on the generated LLVM IR and extract SYM VALUE lines
-        klee --libc=klee --max-time=600 --max-tests=50 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt"
-        
-        #only for debug, we need to know all the execution error of KLEE 
-        # klee --libc=klee --max-time=60 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/KLEE: ERROR/' > "klee_symbol_error_log/C/${base_name}_error_log.txt"
-
-        cd graph_output/C
-        # Run the Python parser on the KLEE log
-        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/C/${base_name}_klee_log.txt" "${base_name}" "c"
-        cd ../..
-
-        echo "C/$c_file has been processed successfully"
+            
+        if opt -load-pass-plugin ./build/Pass/SymbolizerPass.so -O0 "$c_file" -S -o "klee_ir_files/C/${base_name}_klee.ll" && \
+        klee --libc=klee --max-time=600 --max-tests=50 "klee_ir_files/C/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/C/${base_name}_klee_log.txt" && \
+        cd graph_output/C && \
+        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/C/${base_name}_klee_log.txt" "${base_name}" "c"; then
+            cd ../..
+            echo "C/$c_file has been processed successfully"
+        else
+            cd ../..
+            echo "Error processing C/$c_file" >&2
+        fi
     ) &
 done
 
@@ -186,16 +201,17 @@ for r_file in testcase/Rust/*.bc; do
         # Extract the base filename without extension
         base_name=$(basename "$r_file" .rs.bc)
 
-        opt -load-pass-plugin ./build/Pass/libSymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll"
-        
-        klee --libc=klee --max-time=800 --max-tests=50 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt"
-
-        cd graph_output/Rust
-        # Run the Python parser on the KLEE log
-        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/Rust/${base_name}_klee_log.txt" "${base_name}" "Rust"
-        cd ../..
-
-        echo "Rust/$r_file has been processed successfully"
+        # Run optimization pass on the bitcode
+        if opt -load-pass-plugin ./build/Pass/SymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll" && \
+        klee --libc=klee --max-time=800 --max-tests=50 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt" && \
+        cd graph_output/Rust && \
+        python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/Rust/${base_name}_klee_log.txt" "${base_name}" "Rust"; then
+            cd ../..
+            echo "Rust/$r_file has been processed successfully"
+        else
+            cd ../..
+            echo "Error processing Rust/$r_file" >&2 
+        fi
     ) &
 done
 
