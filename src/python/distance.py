@@ -63,6 +63,8 @@ def matchNodes(node1, node2):
         return True
 
     if (is_label1_numeric and is_label2_bool) or (is_label1_bool and is_label2_numeric):
+        if label1 in {"0" , "1"} or label2 in {"0" , "1"}:
+            return True
         return False
 
     return True
