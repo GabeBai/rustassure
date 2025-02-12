@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+start_time=$(date +%s) 
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 
@@ -168,32 +170,11 @@ wait
 
 python3 deduplicate.py 'c'
 
-for file in graph_output/C/**/**/*.dot; do
-    if [ ! -e "$file" ]; then
-        echo "No .dot files found in graph_output."
-        break
-    fi
-
-    limit_jobs
-    {
-        base_name=$(basename "$file" .dot)
-        dir_name=$(dirname "$file")
-        
-        dot -Tpng "$file" -o "${dir_name}/${base_name}.png"
-        echo "Converted $file to ${dir_name}/${base_name}.png"
-        gcount=$((gcount + 1))
-    } &
-done
-
-# Wait for all parallel jobs to finish before exiting the script
-wait
-
+python3 convertGraph.py 'c'
 
 create_json
 
 python3 ../python/llvmBitcodeEmitter.py testcase/rust
-
-
 
 for r_file in testcase/Rust/*.bc; do
     limit_jobs
@@ -219,22 +200,11 @@ wait
 
 python3 deduplicate.py 'rust'
 
-for file in graph_output/Rust/**/**/*.dot; do
-    if [ ! -e "$file" ]; then
-        echo "No .dot files found in graph_output."
-        break
-    fi
-
-    limit_jobs
-    {
-        base_name=$(basename "$file" .dot)
-        dir_name=$(dirname "$file")
-        
-        dot -Tpng "$file" -o "${dir_name}/${base_name}.png"
-        echo "Converted $file to ${dir_name}/${base_name}.png"
-    } &
-done
-
-wait
+python3 convertGraph.py 'rust'
 
 python3 ../python/distance.py
+
+end_time=$(date +%s)   
+
+elapsed_time=$((end_time - start_time)) 
+echo "Script execution time: $elapsed_time seconds"
