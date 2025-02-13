@@ -269,6 +269,8 @@ namespace {
 			"core::str::<impl str>::ends_with",
 			"__maskrune",
 			"core::ptr::drop_in_place<core::result::Result<u64,std::io::error::Error>>",
+			"std::io::error::repr_bitpacked::decode_repr::{{closure}}",
+			"alloc::vec::from_elem"
 
 			// must include otherwise KLEE will have memeory issue
 				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
