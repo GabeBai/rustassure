@@ -177,11 +177,11 @@ def emitLLVMBitcodes(individualFuncPath, logger):
         subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         sed_cmd = f"sed -i '' '/^struct /i \\\n#[repr(C, packed)]' {filename}"
-        # sed_cmd = f"sed -i '' '/^struct /i \\\n#[repr(C, packed)]\\\n#[derive(Debug)]' {filename}"
-
+        sed_cmd_pub = f"sed -i '' '/^pub struct /i \\\n#[repr(C, packed)]' {filename}"
         remove_no_mangle_main(filename)
 
         subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(sed_cmd_pub, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # Compile it and generate the bitcode file
         logger.debug("Compiling Rust file %s ", filename)
