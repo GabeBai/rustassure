@@ -61,6 +61,14 @@ Type* getLLVMType(LLVMContext &context, const std::string &typeStr) {
 		myStructTy->setBody(arrTy);
 		return PointerType::get(myStructTy, 0);;
 	}
+	if (typeStr == "BmpImg") {
+		Type *field_type_0 = StructType::getTypeByName(context, "BmpHeader");
+		Type *field_type_1 = PointerType::get(PointerType::get(StructType::getTypeByName(context, "BmpPixel"), 0), 0);
+		StructType *myStructTy = StructType::create(context, "BmpPixel_struct");
+		std::vector<Type*> fields = {field_type_0, field_type_1};
+		myStructTy->setBody(fields);
+		return PointerType::get(myStructTy, 0);
+	}
 
 	if (StructType::getTypeByName(context, typeStr)) {
 		return PointerType::get(StructType::getTypeByName(context, typeStr), 0);
@@ -123,6 +131,9 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 		return false;
 	}
 	if (structType->getName().find("CStr_struct") == 0) {
+		return false;
+	}
+	if (structType->getName().find("BmpPixel_struct") == 0) {
 		return false;
 	}
 	return true;
@@ -270,7 +281,7 @@ namespace {
 			"__maskrune",
 			"core::ptr::drop_in_place<core::result::Result<u64,std::io::error::Error>>",
 			"std::io::error::repr_bitpacked::decode_repr::{{closure}}",
-			"alloc::vec::from_elem"
+			"alloc::vec::from_elem",
 
 			// must include otherwise KLEE will have memeory issue
 				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
@@ -279,6 +290,25 @@ namespace {
 				//"core::result::Result<T,E>::ok", need to be removed, because we don't have the #2 implementation (urlparser :Strdup)
 				//2) "<&str as alloc::ffi::c_str::CString::new::SpecNewImpl>::spec_new_impl"
 				//3) core::ffi::c_str::CStr::to_str,(opipng : app_print_cntrl keep will crash becasue of invalid memory)
+		};
+		std::list<std::string> special_handle_list = {
+			"isalnum",
+			"isalpha",
+			"isblank",
+			"isdigit",
+			"isgraph",
+			"ishexnumber",
+			"isideogram",
+			"islower",
+			"isnumber",
+			"isphonogram",
+			"isprint",
+			"ispunct",
+			"isrune",
+			"isspace",
+			"isspecial",
+			"isupper",
+			"isxdigit",
 		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
@@ -318,6 +348,16 @@ namespace {
 				if (it != removed_list.end()) {
 					remove_functions.push_back(&F);
 					outs() << "removed function: " << demangled_name << "\n";
+				}
+				
+				std::string filename = M.getModuleIdentifier();
+				std::filesystem::path filepath(filename);
+				std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+				if (filename_without_extension == "bmp_img_read") {
+					// TODO : @gabe remove this logic
+					if (demangled_name == "alloc") {
+						remove_functions.push_back(&F);
+					}
 				}
 
 			}
@@ -967,8 +1007,15 @@ namespace {
 					Builder.SetInsertPoint(basic_block);
 
 					Type *return_type = func_type->getReturnType();
+					std::string filename = M.getModuleIdentifier();
+					std::filesystem::path filepath(filename);
+					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+					auto it = std::find(special_handle_list.begin(), special_handle_list.end(), filename_without_extension);
 					if (return_type->isVoidTy()) {
 						Builder.CreateRetVoid();
+					} else if (it != special_handle_list.end() && return_type->isIntegerTy(32)) {
+						Value *retVal = ConstantInt::get(return_type, 1);
+						Builder.CreateRet(retVal);
 					} else {
 						// Create a global variable for the return value
 						GlobalVariable *symbolic_ret_val = new GlobalVariable(
