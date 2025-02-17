@@ -5,6 +5,10 @@ from networkx.drawing.nx_pydot import write_dot
 from Node import Node
 import os
 
+
+def is_single_node_subtree(g: nx.DiGraph, n) -> bool:
+    return len(list(g.successors(n))) == 0
+
 def dot_str_to_nx_graph(dot_str: str) -> nx.DiGraph:
     (pydot_graph,) = pydot.graph_from_dot_data(dot_str)
     G = nx.DiGraph(nx.nx_pydot.from_pydot(pydot_graph))
@@ -13,6 +17,9 @@ def dot_str_to_nx_graph(dot_str: str) -> nx.DiGraph:
 def is_extract_node(node_label: Node) -> bool:
     return node_label.value == "Extract"
     # return "value = Extract" in node_label
+
+def is_empty_type_extract_node(node_label: Node) -> bool:
+    return node_label.value == "Extract" and node_label.type_value == ""
 
 def is_zext_node(node_label: Node) -> bool:
     return node_label.value == "ZExt" or node_label.value == "SExt"
@@ -151,6 +158,43 @@ def process_graph_ZExt(G: nx.DiGraph):
     for z in zext_nodes:
         remove_node_keep_children(G, z)
     return True
+
+def process_root_zext_eq_only(G: nx.DiGraph) -> bool:
+    for node in list(G.nodes()):
+        if G.in_degree(node) == 0 and is_zext_node(node):
+            children = list(G.successors(node))
+            if len(children) == 1:
+                eq_node = children[0]
+                if eq_node.value == "Eq":
+                    remove_node_keep_children(G, node)
+                    return True
+    return False
+
+
+def process_extract_with_single_node_subtree(G: nx.DiGraph) -> bool:
+    changed = False
+
+    for node in list(G.nodes()):
+        if is_empty_type_extract_node(node):
+            children = list(G.successors(node))
+            if len(children) == 2:
+                child_a, child_b = children
+                single_subtree = None
+                keep_child = None
+
+                if is_single_node_subtree(G, child_a):
+                    single_subtree = child_a
+                    keep_child = child_b
+                elif is_single_node_subtree(G, child_b):
+                    single_subtree = child_b
+                    keep_child = child_a
+
+                if single_subtree and keep_child:
+                    remove_subtree(G, single_subtree)
+                    rewire_parent_to_child(G, node, keep_child)
+                    changed = True
+
+    return changed
 
 
 def process_graph(G: nx.DiGraph):

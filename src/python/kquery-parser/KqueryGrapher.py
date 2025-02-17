@@ -12,6 +12,8 @@ import subprocess
 from PostProcess import process_graph
 from PostProcess import process_graph_ZExt
 from PostProcess import process_graph_sub
+from PostProcess import process_root_zext_eq_only
+from PostProcess import process_extract_with_single_node_subtree
 from Node import Node
 import logging
 import networkx as nx
@@ -371,6 +373,8 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
         removed_sub = process_graph_sub(visitor.G)
+        removed_zext_eq = process_root_zext_eq_only(visitor.G)
+        removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
 
         if dedup:
             if is_duplicate_graph(visitor.G, seen_graphs):
@@ -391,10 +395,8 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Concat w64 (Read w8 15 unnamed)
-             (Concat w56 (Read w8 14 unnamed)
-                         (Concat w48 (Read w8 13 unnamed)
-                                     (Concat w40 (Read w8 12 unnamed) (w32 0)))))"""
+    kquery_expression = r"""(Extract 0 (ZExt w8 (Eq 9
+                         (ReadLSB w32 0 c))))"""
 
     expressions = [
         kquery_expression
