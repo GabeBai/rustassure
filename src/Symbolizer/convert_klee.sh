@@ -79,6 +79,12 @@ create_json() {
     },
     "opng_ullratio_to_percent_string": {
         "0": "alloc::string::String"
+    },
+    "bmp_img_read": {
+        "0": "BmpImg"
+    },
+    "bmp_img_write": {
+        "0": "BmpImg"
     }
 
 }' > input.json
