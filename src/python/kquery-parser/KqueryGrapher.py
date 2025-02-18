@@ -373,8 +373,8 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
         removed_sub = process_graph_sub(visitor.G)
-        removed_zext_eq = process_root_zext_eq_only(visitor.G)
         removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
+        removed_zext_eq = process_root_zext_eq_only(visitor.G)
 
         if dedup:
             if is_duplicate_graph(visitor.G, seen_graphs):
@@ -395,8 +395,9 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Extract 0 (ZExt w8 (Eq 9
-                         (ReadLSB w32 0 c))))"""
+    kquery_expression = r"""(Extract 0 (ZExt w8 (Eq false
+                         (Eq 0
+                             (ReadLSB w32 0 symbolic_var)))))"""
 
     expressions = [
         kquery_expression
