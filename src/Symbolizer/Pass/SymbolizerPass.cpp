@@ -309,6 +309,7 @@ namespace {
 			"isspecial",
 			"isupper",
 			"isxdigit",
+			"opng_ulratio_to_factor_string",
 		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
