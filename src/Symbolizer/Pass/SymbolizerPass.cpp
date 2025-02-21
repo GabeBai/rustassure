@@ -335,11 +335,13 @@ namespace {
 			// We will only consider the function that has the same name as the file.
 			// Note: we have separated out each function in its own file so this isn't a problem
 
-			std::vector<Function*> remove_functions;
-
+			std::unordered_set<Function*> remove_functions;
+			std::string filename = M.getModuleIdentifier();
+			std::filesystem::path filepath(filename);
+			std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 			for (Function& F: M.functions()) {
 				if (!F.hasName()) {
-					remove_functions.push_back(&F);
+					remove_functions.insert(&F);
 					//F.eraseFromParent();
 					continue;
 				}
@@ -347,7 +349,7 @@ namespace {
 			
 				auto it = std::find(removed_list.begin(), removed_list.end(), demangled_name);
 				if (it != removed_list.end()) {
-					remove_functions.push_back(&F);
+					remove_functions.insert(&F);
 					outs() << "removed function: " << demangled_name << "\n";
 				}
 				
@@ -357,7 +359,7 @@ namespace {
 				if (filename_without_extension == "bmp_img_read") {
 					// TODO : @gabe remove this logic
 					if (demangled_name == "alloc") {
-						remove_functions.push_back(&F);
+						remove_functions.insert(&F);
 					}
 				}
 
@@ -905,32 +907,61 @@ namespace {
 			FunctionType* klee_print_expr_type = FunctionType::get(FunctionType::getVoidTy(ctx), argTypes2, true); 
 			Function::Create(klee_print_expr_type, Function::ExternalLinkage, "klee_print_expr", M);
 		}
-		
+
 		void convert_unreachable_conditions(Module &M) {
-			for (Function &F : M) {
-				if (F.isDeclaration())
-					continue;
+		    for (Function &F : M) {
+		        if (F.isDeclaration())
+		            continue;
 
-				for (BasicBlock &BB : F) {
-					for (auto II = BB.begin(); II != BB.end();) {
-						Instruction &I = *II++;
-						if (auto *SW = dyn_cast<SwitchInst>(&I)) {
-							BasicBlock *DefaultBB = SW->getDefaultDest();
-							if (SW->getNumCases() > 0) {
-								if (DefaultBB->size() == 1 && isa<UnreachableInst>(DefaultBB->front())) {
-									BasicBlock *FirstCaseBB = SW->case_begin()->getCaseSuccessor();
+		        Type *RetTy = F.getReturnType();
+		        Constant *DefaultRetVal = nullptr;
+		        if (!RetTy->isVoidTy()) {
+		            DefaultRetVal = Constant::getNullValue(RetTy);
+		        }
+		        for (BasicBlock &BB : F) {
+		            SmallVector<Instruction*, 8> Insts;
+		            for (auto &I : BB) {
+		                Insts.push_back(&I);
+		            }
+		            for (Instruction *I : Insts) {
+		                if (auto *SW = dyn_cast<SwitchInst>(I)) {
+		                    BasicBlock *DefaultBB = SW->getDefaultDest();
+		                    if (SW->getNumCases() > 0) {
+		                        if (DefaultBB->size() == 1 && isa<UnreachableInst>(DefaultBB->front())) {
+		                            BasicBlock *FirstCaseBB = SW->case_begin()->getCaseSuccessor();
+		                            SW->setDefaultDest(FirstCaseBB);
 
-									SW->setDefaultDest(FirstCaseBB);
-									if (!DefaultBB->hasNPredecessorsOrMore(1)) {
-										DefaultBB->dropAllReferences();
-										DefaultBB->eraseFromParent();
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		                            if (!DefaultBB->hasNPredecessorsOrMore(1)) {
+		                                DefaultBB->dropAllReferences();
+		                                DefaultBB->eraseFromParent();
+		                            }
+		                        }
+		                    }
+		                } else if (auto *UI = dyn_cast<UnreachableInst>(I)) {
+		                    BasicBlock *CurBB = UI->getParent();
+		                    bool IsSwitchDefault = false;
+		                    for (auto *U : CurBB->users()) {
+		                        if (auto *SW = dyn_cast<SwitchInst>(U)) {
+		                            if (SW->getDefaultDest() == CurBB) {
+		                                IsSwitchDefault = true;
+		                                break;
+		                            }
+		                        }
+		                    }
+
+		                    if (!IsSwitchDefault) {
+		                        IRBuilder<> Builder(UI);
+		                        if (RetTy->isVoidTy()) {
+		                            Builder.CreateRetVoid();
+		                        } else {
+		                            Builder.CreateRet(DefaultRetVal);
+		                        }
+		                        UI->eraseFromParent();
+		                    }
+		                }
+		            }
+		        }
+		    }
 		}
 
 		void convert_function_calls(Module& M) {
