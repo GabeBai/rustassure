@@ -190,7 +190,8 @@ for r_file in testcase/Rust/*.bc; do
 
         # Run optimization pass on the bitcode
         if opt -load-pass-plugin ./build/Pass/SymbolizerPass.so -O0 "$r_file" -S -o "klee_ir_files/Rust/${base_name}_klee.ll" && \
-        klee --libc=klee --max-time=800 --max-tests=50 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt" && \
+        opt -S -internalize -internalize-public-api-list=main -globaldce "klee_ir_files/Rust/${base_name}_klee.ll" -o "klee_ir_files/Rust/${base_name}_klee.ll" && \
+        klee --libc=klee --max-time=800 --max-tests=500 "klee_ir_files/Rust/${base_name}_klee.ll" 2>&1 | awk '/SYM VALUE:/,/^[[:space:]]*$/' > "klee_symbol_log/Rust/${base_name}_klee_log.txt" && \
         cd graph_output/Rust && \
         python3 ../../../python/kquery-parser/KqueryConverter.py "../../klee_symbol_log/Rust/${base_name}_klee_log.txt" "${base_name}" "Rust"; then
             cd ../..
