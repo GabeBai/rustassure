@@ -16,6 +16,29 @@ from datetime import datetime
 
 from loggerFactory import getLogger
 
+def remove_no_mangle_main(filename):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+
+    updated_lines = []
+    pattern = re.compile(r'^\s*#\s*\[\s*no_mangle\s*\]\s*fn\s+main\s*\(.*\)\s*\{')
+
+    skip_next = False
+    for line in lines:
+        if pattern.match(line):
+            skip_next = True
+            continue
+
+        if skip_next:
+            if re.match(r'^\s*\{', line):
+                skip_next = False
+            continue
+
+        updated_lines.append(line)
+
+    with open(filename, 'w') as file:
+        file.writelines(updated_lines)
+
 def remove_specific_line(filename):
     try:
         with open(filename, 'r', encoding='utf-8') as file:
@@ -27,9 +50,6 @@ def remove_specific_line(filename):
             file.writelines(new_lines)
     except Exception as e:
         print(f"{e}")
-
-# special handle...
-import os
 
 def special_handle(filename):
     base_name = os.path.basename(filename)
@@ -89,8 +109,6 @@ void opng_read_data(struct dummyStruct * png_ptr, unsigned char * data, long uns
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(functions_code + "\n" + "".join(original_content))
 
-
-
 def remove_static_and_inline_from_file(filename):
 
     with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
@@ -102,48 +120,64 @@ def remove_static_and_inline_from_file(filename):
     with open(filename, 'w', encoding='utf-8', errors='ignore') as f:
         f.write(new_content)
 
-def remove_no_mangle_before_main(filename):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
+def remove_main_function(filepath: str) -> None:
 
-    updated_lines = []
+    with open(filepath, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+    output_lines = []
+
+    in_main_function = False
+    brace_count = 0
+
+    pattern_main = re.compile(r'\bfn\s+main\s*\(')
+
     i = 0
     while i < len(lines):
         line = lines[i]
-        if re.match(r'^\s*#\s*\[\s*no_mangle\s*\]\s*$', line):
-            if i + 1 < len(lines) and re.match(r'^\s*fn\s+main\s*\(', lines[i + 1]):
-                i += 1
-                continue
 
-        updated_lines.append(line)
+        if not in_main_function:
+            if pattern_main.search(line):
+
+                brace_pos = line.find('{')
+                if brace_pos == -1:
+                    in_main_function = True
+                    brace_count = 0
+                else:
+                    in_main_function = True
+                    brace_count = 1
+            else:
+                output_lines.append(line)
+        else:
+            for ch in line:
+                if ch == '{':
+                    brace_count += 1
+                elif ch == '}':
+                    brace_count -= 1
+            if brace_count <= 0:
+                in_main_function = False
+                brace_count = 0
         i += 1
 
+    # 把处理过的内容写回文件
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.writelines(output_lines)
 
-    with open(filename, 'w') as file:
-        file.writelines(updated_lines)
+    print(f"已从 {os.path.basename(filepath)} 中移除 main() 函数。")
 
-def remove_no_mangle_main(filename):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
+def remove_no_mangle_lines(filepath: str) -> None:
 
-    updated_lines = []
-    pattern = re.compile(r'^\s*#\s*\[\s*no_mangle\s*\]\s*fn\s+main\s*\(.*\)\s*\{')
+    with open(filepath, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
 
-    skip_next = False 
+    filtered_lines = []
     for line in lines:
-        if pattern.match(line):
-            skip_next = True
+        if line.strip() == '#[no_mangle]':
             continue
+        filtered_lines.append(line)
 
-        if skip_next:
-            if re.match(r'^\s*\{', line):  
-                skip_next = False
-            continue
-
-        updated_lines.append(line)
-
-    with open(filename, 'w') as file:
-        file.writelines(updated_lines)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.writelines(filtered_lines)
 
 def emitLLVMBitcodes(individualFuncPath, logger):
     rustSrcPattern = os.path.join(individualFuncPath, "*.rs")
@@ -178,8 +212,6 @@ def emitLLVMBitcodes(individualFuncPath, logger):
 
         sed_cmd = f"sed -i '' '/^struct /i \\\n#[repr(C, packed)]' {filename}"
         sed_cmd_pub = f"sed -i '' '/^pub struct /i \\\n#[repr(C, packed)]' {filename}"
-        remove_no_mangle_main(filename)
-
         subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(sed_cmd_pub, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
