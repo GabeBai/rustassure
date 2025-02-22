@@ -1,4 +1,0 @@
-Error: failed external call: _ZN3std2rt19lang_start_internal17h6612c8a7a6861b8bE
-Stack: 
-	#000000217 in _ZN3std2rt10lang_start17hed0ec7ce63817969E(main=140366532161536, argc=1, argv=140382487293952)
-	#100001572 in main(1, 140382487293952)

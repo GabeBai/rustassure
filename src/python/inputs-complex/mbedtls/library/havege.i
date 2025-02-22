@@ -1,2 +1,0 @@
-typedef int mbedtls_iso_c_forbids_empty_translation_units;
-
