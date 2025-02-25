@@ -50,6 +50,9 @@ create_json() {
     "url_free" : {
         "0" : "UrlData"
     },
+    "url_get_query_value" : {
+        "1" : "core::ffi::c_str::CStr"
+    },
     "url_get_host": {
         "0": "alloc::string::String"
     },
