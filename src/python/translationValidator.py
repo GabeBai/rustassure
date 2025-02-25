@@ -15,7 +15,8 @@ import time
 from datetime import datetime
 
 from loggerFactory import getLogger
-from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translator, TranslatorModes, Translator, Claude_3_5_Translator
+from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translator, TranslatorModes, Translator, \
+    Claude_3_5_Translator, Gpt4MiniTranslator
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 from typedefFilter import TypedefFilter
 from progPropertyEvaluator import ProgPropertyEvaluator
@@ -26,12 +27,20 @@ CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell
 MAX_THREADS=40
 
 
-def createTranslator(logger, useGpt4, useClaude, translatorMode, fineTunedModel):
+def createTranslator(logger, useGpt4, useGpt4mini, useClaude, translatorMode, fineTunedModel):
     # url = http://172.31.224.1:12345/v1 for LMStudio
     with open("system.prompt") as f:
         systemPrompt = f.read()
     logger.info("Using system prompt: %s", systemPrompt)
 
+    if useGpt4mini:
+        translator = Gpt4MiniTranslator(logger,
+                                        os.environ.get('OPENAI_KEY'),
+                                        "C",
+                                        "Rust",
+                                        systemPrompt,
+                                        translatorMode)
+        return translator
     if useGpt4:
         translator = Gpt4Translator(logger,
             os.environ.get('OPENAI_KEY'),
@@ -108,7 +117,7 @@ def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
     typedefFilter.filterUnusedTypedefs(c_path)
 
 
-def processCodebase(codebasePath, useGpt4, useClaude, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile, multiThreading):
+def processCodebase(codebasePath, useGpt4, useGpt4mini, useClaude, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile, multiThreading):
     fileList = []
     if fileListFile is not None and len(fileListFile) > 0:
         with open(fileListFile) as f:
@@ -119,7 +128,7 @@ def processCodebase(codebasePath, useGpt4, useClaude, fineTunedModel, preanalysi
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
     
     extractor = FunctionAndDepsExtractor(logger)
-    translator = createTranslator(logger, useGpt4, useClaude, translatorMode, fineTunedModel)
+    translator = createTranslator(logger, useGpt4, useGpt4mini, useClaude, translatorMode, fineTunedModel)
 
     fingerPrintModel(logger, codebasePath, translator)
 
@@ -180,7 +189,7 @@ def processCodebase(codebasePath, useGpt4, useClaude, fineTunedModel, preanalysi
     if not preanalysisOnly:
         translator.translateAll(funcMap, individualFuncPath, multiThreading)
 
-    emitLLVMBitcodes(individualFuncPath, logger)
+    # emitLLVMBitcodes(individualFuncPath, logger)
 
     # Invoke the Program Property Evaluator (commented for now)
     # PPE = ProgPropertyEvaluator(logger, individualFuncPath)
@@ -239,6 +248,7 @@ if __name__ == "__main__":
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")
+    parser.add_argument("--use-gpt4mini", type=bool, default=False, help="Use GPT4Mini")
 
     parser.add_argument("--translator-mode", type=str, default="feedback", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
@@ -259,4 +269,4 @@ if __name__ == "__main__":
 
     logger.info("Command line options: %s", args)
 
-    processCodebase(args.src, args.use_gpt4, args.use_claude, args.fine_tuned_model, args.preanalysis_only, Translator.getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src, args.use_gpt4, args.use_gpt4mini, args.use_claude, args.fine_tuned_model, args.preanalysis_only, Translator.getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"

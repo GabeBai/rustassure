@@ -25,6 +25,10 @@ GPT4_MODEL="gpt-4o"
 GPT4_CTX_WINDOW_LEN=128*1024
 GPT4_MAX_COMPLETION_TOKENS=4096 
 
+GPT4_MINI_MODEL="gpt-4o-mini"
+GPT4_MINI_CTX_WINDOW_LEN=128*1024
+GPT4_MINI_MAX_COMPLETION_TOKENS=4096
+
 COMPILATION_RETRIES=5
 MAX_THREADS=40
 
@@ -603,7 +607,12 @@ class Gpt3Translator(Translator):
 class Gpt4Translator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
         super().__init__(logger, "", apiKey, GPT4_CTX_WINDOW_LEN, GPT4_MAX_COMPLETION_TOKENS, 
-                srcLang, dstLang, GPT4_MODEL, systemPrompt, translatorMode) 
+                srcLang, dstLang, GPT4_MODEL, systemPrompt, translatorMode)
+
+class Gpt4MiniTranslator(Translator):
+    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
+        super().__init__(logger, "", apiKey, GPT4_MINI_CTX_WINDOW_LEN, GPT4_MINI_MAX_COMPLETION_TOKENS,
+                srcLang, dstLang, GPT4_MINI_MODEL, systemPrompt, translatorMode)
 
 class FineTunedGPT3Translator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, modelName, systemPrompt, translatorMode):
