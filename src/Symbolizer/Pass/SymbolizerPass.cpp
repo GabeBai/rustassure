@@ -282,6 +282,8 @@ namespace {
 			"core::ptr::drop_in_place<core::result::Result<u64,std::io::error::Error>>",
 			"std::io::error::repr_bitpacked::decode_repr::{{closure}}",
 			"alloc::vec::from_elem",
+			//add for 4o-mini model
+			"core::result::Result<T,E>::unwrap"//(url_parser : url_get_port)//(why?)
 
 			// must include otherwise KLEE will have memeory issue
 				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
@@ -699,7 +701,14 @@ namespace {
 
 			// The return value
 			if (!call_with_symb_args->getType()->isVoidTy()) {
-				print_nested_klee_exprs(M, Builder, call_with_symb_args, std::string("ret_value"));
+				std::string targetName;
+				if (!ParsedJson.empty() && ParsedJson.contains("ret_value")) {
+					targetName = ParsedJson["ret_value"];
+					Type* targetType = getLLVMType(ctx, targetName);
+					print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(call_with_symb_args, targetType), std::string("ret_value"));
+				} else {
+					print_nested_klee_exprs(M, Builder, call_with_symb_args, std::string("ret_value"));
+				}
 			}
 
 			Builder.CreateRetVoid();
@@ -733,11 +742,8 @@ namespace {
 							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
 						} else {
 							std::vector<Value*> args_vec;
-							
 							std::string new_label = label + "." + "field_" + std::to_string(i);
-							std::string label_name = std::string("*(" + new_label + ")");
-
-							args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label_name + " : "));
+							args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + new_label + " : "));
 							args_vec.push_back(gep);
 							Builder.CreateCall(klee_print_expr_function, args_vec);
 						}
@@ -847,7 +853,7 @@ namespace {
 				BasicBlock *nullBlock = BasicBlock::Create(Builder.getContext(), "null_block", Builder.GetInsertBlock()->getParent());
 
 				Builder.CreateCondBr(isNotNull, loopBlock, nullBlock);
-				
+
 				Builder.SetInsertPoint(loopBlock);
 
 				Type *elementType = arg_value->getType()->getPointerElementType();
