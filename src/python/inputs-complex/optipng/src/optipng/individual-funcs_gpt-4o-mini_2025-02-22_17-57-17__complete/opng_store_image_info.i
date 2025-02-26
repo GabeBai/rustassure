@@ -1,0 +1,200 @@
+typedef int __int32_t;
+typedef long unsigned int __darwin_size_t;
+typedef long __darwin_time_t;
+typedef __darwin_size_t size_t;
+struct __sbuf {
+ unsigned char *_base;
+ int _size;
+};
+struct __sFILEX;
+union sigval {
+ int sival_int;
+ void *sival_ptr;
+};
+union __sigaction_u {
+ void (*__sa_handler)(int);
+ void (*__sa_sigaction)(int, struct __siginfo *,
+     void *);
+};
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+struct _OSUnalignedU16 {
+ volatile uint16_t __val;
+} __attribute__((__packed__));
+struct _OSUnalignedU32 {
+ volatile uint32_t __val;
+} __attribute__((__packed__));
+struct _OSUnalignedU64 {
+ volatile uint64_t __val;
+} __attribute__((__packed__));
+union wait {
+ int w_status;
+ struct {
+  unsigned int w_Termsig:7,
+      w_Coredump:1,
+      w_Retcode:8,
+      w_Filler:16;
+ } w_T;
+ struct {
+  unsigned int w_Stopval:8,
+      w_Stopsig:8,
+      w_Filler:16;
+ } w_S;
+};
+typedef unsigned int opng_bitset_t;
+enum
+{
+    OPNG_BITSET_ELT_MIN = 0,
+    OPNG_BITSET_ELT_MAX = (int)((sizeof(opng_bitset_t) * 8) - 1)
+};
+ typedef unsigned char png_byte;
+   typedef unsigned short png_uint_16;
+   typedef unsigned int png_uint_32;
+typedef size_t png_size_t;
+typedef png_byte * png_bytep;
+typedef const png_byte * png_const_bytep;
+typedef png_uint_16 * png_uint_16p;
+typedef const png_uint_16 * png_const_uint_16p;
+typedef const char * png_const_charp;
+typedef png_byte * * png_bytepp;
+typedef struct png_struct_def png_struct;
+typedef png_struct * png_structp;
+typedef struct png_info_def png_info;
+typedef png_info * png_infop;
+typedef png_struct * restrict png_structrp;
+typedef const png_struct * restrict png_const_structrp;
+typedef png_info * restrict png_inforp;
+typedef struct png_color_struct
+{
+   png_byte red;
+   png_byte green;
+   png_byte blue;
+} png_color;
+typedef png_color * png_colorp;
+typedef const png_color * png_const_colorp;
+typedef struct png_color_16_struct
+{
+   png_byte index;
+   png_uint_16 red;
+   png_uint_16 green;
+   png_uint_16 blue;
+   png_uint_16 gray;
+} png_color_16;
+typedef png_color_16 * png_color_16p;
+typedef const png_color_16 * png_const_color_16p;
+typedef struct png_color_8_struct
+{
+   png_byte red;
+   png_byte green;
+   png_byte blue;
+   png_byte gray;
+   png_byte alpha;
+} png_color_8;
+typedef png_color_8 * png_color_8p;
+typedef const png_color_8 * png_const_color_8p;
+typedef struct png_unknown_chunk_t
+{
+    png_byte name[5];
+    png_byte *data;
+    png_size_t size;
+    png_byte location;
+}
+png_unknown_chunk;
+typedef png_unknown_chunk * png_unknown_chunkp;
+typedef const png_unknown_chunk * png_const_unknown_chunkp;
+extern void ( png_set_rows) (png_const_structrp png_ptr, png_inforp info_ptr, png_bytepp row_pointers);
+extern void ( png_set_bKGD) (png_const_structrp png_ptr, png_inforp info_ptr, png_const_color_16p background);
+extern void ( png_set_hIST) (png_const_structrp png_ptr, png_inforp info_ptr, png_const_uint_16p hist);
+extern void ( png_set_IHDR) (png_const_structrp png_ptr, png_inforp info_ptr, png_uint_32 width, png_uint_32 height, int bit_depth, int color_type, int interlace_method, int compression_method, int filter_method);
+extern void ( png_set_PLTE) (png_structrp png_ptr, png_inforp info_ptr, png_const_colorp palette, int num_palette);
+extern void ( png_set_sBIT) (png_const_structrp png_ptr, png_inforp info_ptr, png_const_color_8p sig_bit);
+extern void ( png_set_tRNS) (png_structrp png_ptr, png_inforp info_ptr, png_const_bytep trans_alpha, int num_trans, png_const_color_16p trans_color);
+extern void ( png_set_unknown_chunks) (png_const_structrp png_ptr, png_inforp info_ptr, png_const_unknown_chunkp unknowns, int num_unknowns);
+extern void ( png_set_unknown_chunk_location) (png_const_structrp png_ptr, png_inforp info_ptr, int chunk, int location);
+typedef struct fd_set {
+ __int32_t fds_bits[((((1024) % ((sizeof(__int32_t) * 8))) == 0) ? ((1024) / ((sizeof(__int32_t) * 8))) : (((1024) / ((sizeof(__int32_t) * 8))) + 1))];
+} fd_set;
+struct timespec
+{
+ __darwin_time_t tv_sec;
+ long tv_nsec;
+};
+struct fssearchblock;
+struct searchstate;
+struct internal_state;
+typedef int jmp_buf[((14 + 8 + 2) * 2)];
+struct exception_context { jmp_buf *penv; int caught; volatile struct { const char * etmp; } v; };
+enum
+{
+    INPUT_IS_PNG_FILE = 0x0001,
+    INPUT_HAS_PNG_DATASTREAM = 0x0002,
+    INPUT_HAS_PNG_SIGNATURE = 0x0004,
+    INPUT_HAS_DIGITAL_SIGNATURE = 0x0008,
+    INPUT_HAS_MULTIPLE_IMAGES = 0x0010,
+    INPUT_HAS_APNG = 0x0020,
+    INPUT_HAS_STRIPPED_DATA = 0x0040,
+    INPUT_HAS_JUNK = 0x0080,
+    INPUT_HAS_ERRORS = 0x0100,
+    OUTPUT_NEEDS_NEW_FILE = 0x1000,
+    OUTPUT_NEEDS_NEW_IDAT = 0x2000,
+    OUTPUT_HAS_ERRORS = 0x4000
+};
+static struct opng_image_struct
+{
+    png_uint_32 width;
+    png_uint_32 height;
+    int bit_depth;
+    int color_type;
+    int compression_type;
+    int filter_type;
+    int interlace_type;
+    png_bytepp row_pointers;
+    png_colorp palette;
+    int num_palette;
+    png_color_16p background_ptr;
+    png_color_16 background;
+    png_uint_16p hist;
+    png_color_8p sig_bit_ptr;
+    png_color_8 sig_bit;
+    png_bytep trans_alpha;
+    int num_trans;
+    png_color_16p trans_color_ptr;
+    png_color_16 trans_color;
+    png_unknown_chunkp unknowns;
+    int num_unknowns;
+} image;
+static void (*usr_panic)(const char *msg);
+static png_structp write_ptr;
+static png_infop write_info_ptr;
+static void
+opng_store_image_info(png_structp png_ptr, png_infop info_ptr, int store_meta)
+{
+    { if (!(image.row_pointers != ((void*)0))) usr_panic("No info in image"); };
+    png_set_IHDR(png_ptr, info_ptr,
+        image.width, image.height, image.bit_depth, image.color_type,
+        image.interlace_type, image.compression_type, image.filter_type);
+    png_set_rows(write_ptr, write_info_ptr, image.row_pointers);
+    if (image.palette != ((void*)0))
+        png_set_PLTE(png_ptr, info_ptr, image.palette, image.num_palette);
+    if (image.trans_alpha != ((void*)0) || image.trans_color_ptr != ((void*)0))
+        png_set_tRNS(png_ptr, info_ptr,
+            image.trans_alpha, image.num_trans, image.trans_color_ptr);
+    if (!store_meta)
+        return;
+    if (image.background_ptr != ((void*)0))
+        png_set_bKGD(png_ptr, info_ptr, image.background_ptr);
+    if (image.hist != ((void*)0))
+        png_set_hIST(png_ptr, info_ptr, image.hist);
+    if (image.sig_bit_ptr != ((void*)0))
+        png_set_sBIT(png_ptr, info_ptr, image.sig_bit_ptr);
+    if (image.num_unknowns != 0)
+    {
+        int i;
+        png_set_unknown_chunks(png_ptr, info_ptr,
+            image.unknowns, image.num_unknowns);
+        for (i = 0; i < image.num_unknowns; ++i)
+            png_set_unknown_chunk_location(png_ptr, info_ptr,
+                i, image.unknowns[i].location);
+    }
+}

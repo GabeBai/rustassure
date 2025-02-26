@@ -1,0 +1,46 @@
+union sigval {
+ int sival_int;
+ void *sival_ptr;
+};
+union __sigaction_u {
+ void (*__sa_handler)(int);
+ void (*__sa_sigaction)(int, struct __siginfo *,
+     void *);
+};
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+struct _OSUnalignedU16 {
+ volatile uint16_t __val;
+} __attribute__((__packed__));
+struct _OSUnalignedU32 {
+ volatile uint32_t __val;
+} __attribute__((__packed__));
+struct _OSUnalignedU64 {
+ volatile uint64_t __val;
+} __attribute__((__packed__));
+union wait {
+ int w_status;
+ struct {
+  unsigned int w_Termsig:7,
+      w_Coredump:1,
+      w_Retcode:8,
+      w_Filler:16;
+ } w_T;
+ struct {
+  unsigned int w_Stopval:8,
+      w_Stopsig:8,
+      w_Filler:16;
+ } w_S;
+};
+struct __sbuf {
+ unsigned char *_base;
+ int _size;
+};
+struct __sFILEX;
+struct url_key_value;
+char *
+url_get_fragment (const char* url);
+inline
+char *
+url_get_hash (const char* url) { return url_get_fragment(url); }

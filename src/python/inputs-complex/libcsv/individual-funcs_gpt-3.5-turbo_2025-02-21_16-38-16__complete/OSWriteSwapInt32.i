@@ -1,0 +1,32 @@
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+typedef unsigned long uintptr_t;
+union sigval {
+ int sival_int;
+ void *sival_ptr;
+};
+union __sigaction_u {
+ void (*__sa_handler)(int);
+ void (*__sa_sigaction)(int, struct __siginfo *,
+     void *);
+};
+struct _OSUnalignedU16 {
+ volatile uint16_t __val;
+} __attribute__((__packed__));
+struct _OSUnalignedU32 {
+ volatile uint32_t __val;
+} __attribute__((__packed__));
+struct _OSUnalignedU64 {
+ volatile uint64_t __val;
+} __attribute__((__packed__));
+static inline
+void
+OSWriteSwapInt32(
+ volatile void * _base,
+ uintptr_t _offset,
+ uint32_t _data
+ )
+{
+ ((struct _OSUnalignedU32 *)((uintptr_t)_base + _offset))->__val = _OSSwapInt32(_data);
+}
