@@ -18,12 +18,6 @@ create_json() {
         "1" : "function",
         "2" : "function"
     },
-    "csv_fwrite2" : {
-        "0" : "File"
-    },
-    "csv_fwrite" : {
-        "0" : "File"
-    },
     "csv_increase_buffer" : {
         "103" : "Integer_8"
     },
@@ -35,9 +29,6 @@ create_json() {
     },
     "url_free" : {
         "0" : "UrlData"
-    },
-    "url_get_query_value" : {
-        "1" : "core::ffi::c_str::CStr"
     },
     "url_get_host": {
         "0": "alloc::string::String"

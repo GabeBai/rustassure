@@ -32,12 +32,6 @@ create_json() {
         "1" : "function",
         "2" : "function"
     },
-    "csv_fwrite2" : {
-        "0" : "File"
-    },
-    "csv_fwrite" : {
-        "0" : "File"
-    },
     "csv_increase_buffer" : {
         "103" : "Integer_8"
     },
