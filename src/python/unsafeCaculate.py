@@ -191,5 +191,5 @@ if __name__ == "__main__":
                 if sub_dir.startswith("individual"):
                     analyze_rs_files(
                         root_dir=level_three_path,
-                        csv_file_path=level_two_path + "unsafe_calculate" + ".csv")
+                        csv_file_path=level_three_path + "unsafe_calculate" + ".csv")
                     break
