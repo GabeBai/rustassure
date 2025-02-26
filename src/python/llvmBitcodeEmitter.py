@@ -206,6 +206,7 @@ def emitLLVMBitcodes(individualFuncPath, logger):
             f"-e '/^[[:space:]]*pub fn /i \\\n#[no_mangle]' "
             f"-e '/^[[:space:]]*fn /i \\\n#[no_mangle]' "
             f"-e '/^[[:space:]]*pub unsafe fn /i \\\n#[no_mangle]' "
+            f"-e '/^[[:space:]]*pub unsafe extern \"C\" fn /i \\\n#[no_mangle]' "
             f"{filename}"
         )
         subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
