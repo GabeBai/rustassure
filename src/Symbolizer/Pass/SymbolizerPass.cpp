@@ -283,7 +283,9 @@ namespace {
 			"std::io::error::repr_bitpacked::decode_repr::{{closure}}",
 			"alloc::vec::from_elem",
 			//add for 4o-mini model
-			"core::result::Result<T,E>::unwrap"//(url_parser : url_get_port)//(why?)
+			"core::result::Result<T,E>::unwrap",//(url_parser : url_get_port)//(why?)
+			//add for calude model
+			"alloc::vec::Vec<T,A>::clear",//bmp_img_free
 
 			// must include otherwise KLEE will have memeory issue
 				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
