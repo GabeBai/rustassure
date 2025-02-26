@@ -53,6 +53,7 @@ def main(directory):
         
         icov = parse_icov_from_output(result.stdout)
         if icov is not None:
+            print(f"{out_dir} : {icov}")
             icov_values.append(icov)
         else:
             print(f"cannot parse {out_dir} ICov(%)")
@@ -66,6 +67,6 @@ def main(directory):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        main("/Users/gab/repo/evaluation/coverage/libcsv/klee_ir_files/c")
+        main("/Users/gab/repo/evaluation/Analysis-libcsv/claude-3-5-sonnet/V0/klee_ir_files/Rust")
     
-    main(sys.argv[1])
+    # main(sys.argv[1])
