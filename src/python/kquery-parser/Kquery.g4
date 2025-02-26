@@ -35,8 +35,9 @@ MUL: 'Mul';
 UDIV: 'UDiv';
 UREM: 'URem';
 SDIV: 'SDiv';
+SREM: 'SRem';
 
-arithmetic_expr_kind : ( ADD | SUB | MUL | UDIV | UREM | SDIV );
+arithmetic_expr_kind : ( ADD | SUB | MUL | UDIV | UREM | SDIV | SREM);
 
 // Bitwise operations
 

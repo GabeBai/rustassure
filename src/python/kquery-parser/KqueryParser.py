@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,54,241,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,55,241,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,
         7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,
@@ -30,8 +30,8 @@ def serializedATN():
         10,28,12,28,225,9,28,1,29,1,29,3,29,229,8,29,1,29,1,29,1,29,1,29,
         1,29,1,29,3,29,237,8,29,3,29,239,8,29,1,29,0,0,30,0,2,4,6,8,10,12,
         14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,
-        58,0,6,1,0,22,27,1,0,29,34,1,0,35,44,1,0,45,46,1,0,47,48,1,0,52,
-        53,236,0,64,1,0,0,0,2,71,1,0,0,0,4,73,1,0,0,0,6,87,1,0,0,0,8,89,
+        58,0,6,1,0,22,28,1,0,30,35,1,0,36,45,1,0,46,47,1,0,48,49,1,0,53,
+        54,236,0,64,1,0,0,0,2,71,1,0,0,0,4,73,1,0,0,0,6,87,1,0,0,0,8,89,
         1,0,0,0,10,91,1,0,0,0,12,94,1,0,0,0,14,98,1,0,0,0,16,101,1,0,0,0,
         18,103,1,0,0,0,20,105,1,0,0,0,22,107,1,0,0,0,24,109,1,0,0,0,26,111,
         1,0,0,0,28,113,1,0,0,0,30,115,1,0,0,0,32,117,1,0,0,0,34,119,1,0,
@@ -41,18 +41,18 @@ def serializedATN():
         0,0,61,62,5,13,0,0,62,63,5,1,0,0,63,65,3,0,0,0,64,60,1,0,0,0,64,
         61,1,0,0,0,65,1,1,0,0,0,66,72,5,2,0,0,67,68,5,3,0,0,68,69,3,0,0,
         0,69,70,5,4,0,0,70,72,1,0,0,0,71,66,1,0,0,0,71,67,1,0,0,0,72,3,1,
-        0,0,0,73,74,5,5,0,0,74,75,5,54,0,0,75,77,5,3,0,0,76,78,5,13,0,0,
+        0,0,0,73,74,5,5,0,0,74,75,5,55,0,0,75,77,5,3,0,0,76,78,5,13,0,0,
         77,76,1,0,0,0,77,78,1,0,0,0,78,79,1,0,0,0,79,80,5,4,0,0,80,81,5,
         6,0,0,81,82,5,21,0,0,82,83,5,7,0,0,83,84,5,21,0,0,84,85,5,8,0,0,
         85,86,3,2,1,0,86,5,1,0,0,0,87,88,7,0,0,0,88,7,1,0,0,0,89,90,7,1,
         0,0,90,9,1,0,0,0,91,92,7,2,0,0,92,11,1,0,0,0,93,95,3,54,27,0,94,
         93,1,0,0,0,95,96,1,0,0,0,96,94,1,0,0,0,96,97,1,0,0,0,97,13,1,0,0,
         0,98,99,5,21,0,0,99,100,5,13,0,0,100,15,1,0,0,0,101,102,7,3,0,0,
-        102,17,1,0,0,0,103,104,7,4,0,0,104,19,1,0,0,0,105,106,5,49,0,0,106,
-        21,1,0,0,0,107,108,5,50,0,0,108,23,1,0,0,0,109,110,5,51,0,0,110,
-        25,1,0,0,0,111,112,7,5,0,0,112,27,1,0,0,0,113,114,5,54,0,0,114,29,
+        102,17,1,0,0,0,103,104,7,4,0,0,104,19,1,0,0,0,105,106,5,50,0,0,106,
+        21,1,0,0,0,107,108,5,51,0,0,108,23,1,0,0,0,109,110,5,52,0,0,110,
+        25,1,0,0,0,111,112,7,5,0,0,112,27,1,0,0,0,113,114,5,55,0,0,114,29,
         1,0,0,0,115,116,5,13,0,0,116,31,1,0,0,0,117,118,5,21,0,0,118,33,
-        1,0,0,0,119,120,5,54,0,0,120,121,5,6,0,0,121,122,3,54,27,0,122,35,
+        1,0,0,0,119,120,5,55,0,0,120,121,5,6,0,0,121,122,3,54,27,0,122,35,
         1,0,0,0,123,124,5,9,0,0,124,125,3,6,3,0,125,126,3,32,16,0,126,127,
         3,54,27,0,127,128,3,54,27,0,128,129,5,10,0,0,129,37,1,0,0,0,130,
         131,5,9,0,0,131,133,3,8,4,0,132,134,3,32,16,0,133,132,1,0,0,0,133,
@@ -86,7 +86,7 @@ def serializedATN():
         222,1,0,0,0,221,216,1,0,0,0,222,225,1,0,0,0,223,221,1,0,0,0,223,
         224,1,0,0,0,224,57,1,0,0,0,225,223,1,0,0,0,226,228,5,3,0,0,227,229,
         3,56,28,0,228,227,1,0,0,0,228,229,1,0,0,0,229,230,1,0,0,0,230,231,
-        5,4,0,0,231,232,5,11,0,0,232,239,3,58,29,0,233,236,5,54,0,0,234,
+        5,4,0,0,231,232,5,11,0,0,232,239,3,58,29,0,233,236,5,55,0,0,234,
         235,5,6,0,0,235,237,3,54,27,0,236,234,1,0,0,0,236,237,1,0,0,0,237,
         239,1,0,0,0,238,226,1,0,0,0,238,233,1,0,0,0,239,59,1,0,0,0,13,64,
         71,77,96,133,142,151,181,211,223,228,236,238
@@ -107,11 +107,11 @@ class KqueryParser ( Parser ):
                      "<INVALID>", "'true'", "'false'", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "'Add'", "'Sub'", "'Mul'", "'UDiv'", "'URem'", "'SDiv'", 
-                     "'Not'", "'And'", "'Or'", "'Xor'", "'Shl'", "'LShr'", 
-                     "'AShr'", "'Eq'", "'Ne'", "'Ult'", "'Ule'", "'Ugt'", 
-                     "'Uge'", "'Slt'", "'Sle'", "'Sgt'", "'Sge'", "'Concat'", 
-                     "'Extract'", "'ZExt'", "'SExt'", "'Read'", "'Select'", 
-                     "'Neg'", "'ReadLSB'", "'ReadMSB'" ]
+                     "'SRem'", "'Not'", "'And'", "'Or'", "'Xor'", "'Shl'", 
+                     "'LShr'", "'AShr'", "'Eq'", "'Ne'", "'Ult'", "'Ule'", 
+                     "'Ugt'", "'Uge'", "'Slt'", "'Sle'", "'Sgt'", "'Sge'", 
+                     "'Concat'", "'Extract'", "'ZExt'", "'SExt'", "'Read'", 
+                     "'Select'", "'Neg'", "'ReadLSB'", "'ReadMSB'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
@@ -119,10 +119,11 @@ class KqueryParser ( Parser ):
                       "WS", "NUMBER", "TRUE", "FALSE", "SIGNED_CONSTANT", 
                       "DEC_CONSTANT", "BIN_CONSTANT", "OCT_CONSTANT", "HEX_CONSTANT", 
                       "TYPE", "ADD", "SUB", "MUL", "UDIV", "UREM", "SDIV", 
-                      "NOT", "AND", "OR", "XOR", "SHL", "LSHR", "ASHR", 
-                      "EQ", "NE", "ULT", "ULE", "UGT", "UGE", "SLT", "SLE", 
-                      "SGT", "SGE", "CONCAT", "EXTRACT", "ZEXT", "SEXT", 
-                      "READ", "SELECT", "NEG", "READLSB", "READMSB", "IDENTIFIER" ]
+                      "SREM", "NOT", "AND", "OR", "XOR", "SHL", "LSHR", 
+                      "ASHR", "EQ", "NE", "ULT", "ULE", "UGT", "UGE", "SLT", 
+                      "SLE", "SGT", "SGE", "CONCAT", "EXTRACT", "ZEXT", 
+                      "SEXT", "READ", "SELECT", "NEG", "READLSB", "READMSB", 
+                      "IDENTIFIER" ]
 
     RULE_number_list = 0
     RULE_array_initializer = 1
@@ -193,33 +194,34 @@ class KqueryParser ( Parser ):
     UDIV=25
     UREM=26
     SDIV=27
-    NOT=28
-    AND=29
-    OR=30
-    XOR=31
-    SHL=32
-    LSHR=33
-    ASHR=34
-    EQ=35
-    NE=36
-    ULT=37
-    ULE=38
-    UGT=39
-    UGE=40
-    SLT=41
-    SLE=42
-    SGT=43
-    SGE=44
-    CONCAT=45
-    EXTRACT=46
-    ZEXT=47
-    SEXT=48
-    READ=49
-    SELECT=50
-    NEG=51
-    READLSB=52
-    READMSB=53
-    IDENTIFIER=54
+    SREM=28
+    NOT=29
+    AND=30
+    OR=31
+    XOR=32
+    SHL=33
+    LSHR=34
+    ASHR=35
+    EQ=36
+    NE=37
+    ULT=38
+    ULE=39
+    UGT=40
+    UGE=41
+    SLT=42
+    SLE=43
+    SGT=44
+    SGE=45
+    CONCAT=46
+    EXTRACT=47
+    ZEXT=48
+    SEXT=49
+    READ=50
+    SELECT=51
+    NEG=52
+    READLSB=53
+    READMSB=54
+    IDENTIFIER=55
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -475,6 +477,9 @@ class KqueryParser ( Parser ):
         def SDIV(self):
             return self.getToken(KqueryParser.SDIV, 0)
 
+        def SREM(self):
+            return self.getToken(KqueryParser.SREM, 0)
+
         def getRuleIndex(self):
             return KqueryParser.RULE_arithmetic_expr_kind
 
@@ -504,7 +509,7 @@ class KqueryParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 87
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 264241152) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 532676608) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -572,7 +577,7 @@ class KqueryParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 89
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 33822867456) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 67645734912) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -652,7 +657,7 @@ class KqueryParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 91
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 35150012350464) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 70300024700928) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -716,7 +721,7 @@ class KqueryParser ( Parser ):
                 self.state = 96 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if not ((((_la) & ~0x3f) == 0 and ((1 << _la) & 18014398509490728) != 0)):
+                if not ((((_la) & ~0x3f) == 0 and ((1 << _la) & 36028797018972712) != 0)):
                     break
 
         except RecognitionException as re:
@@ -822,7 +827,7 @@ class KqueryParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 101
             _la = self._input.LA(1)
-            if not(_la==45 or _la==46):
+            if not(_la==46 or _la==47):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -878,7 +883,7 @@ class KqueryParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 103
             _la = self._input.LA(1)
-            if not(_la==47 or _la==48):
+            if not(_la==48 or _la==49):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -1075,7 +1080,7 @@ class KqueryParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 111
             _la = self._input.LA(1)
-            if not(_la==52 or _la==53):
+            if not(_la==53 or _la==54):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -2257,7 +2262,7 @@ class KqueryParser ( Parser ):
                 self.state = 228
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & 18014398509490728) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & 36028797018972712) != 0):
                     self.state = 227
                     self.update_list()
 
@@ -2269,7 +2274,7 @@ class KqueryParser ( Parser ):
                 self.state = 232
                 self.version()
                 pass
-            elif token in [54]:
+            elif token in [55]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 233
                 self.match(KqueryParser.IDENTIFIER)

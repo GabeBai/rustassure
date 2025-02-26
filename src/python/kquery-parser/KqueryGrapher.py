@@ -395,9 +395,10 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Extract 0 (ZExt w8 (Eq false
-                         (Eq 0
-                             (ReadLSB w32 0 symbolic_var)))))"""
+    kquery_expression = r"""(Extract w32 0 (Mul w64 (Add w64 (Mul w64 3
+                                           (SExt w64 N0:(ReadLSB w32 0 unnamed_1)))
+                                  (SExt w64 (SRem w32 N0 4)))
+                         (SExt w64 (ReadLSB w32 0 symbolic_var))))"""
 
     expressions = [
         kquery_expression
