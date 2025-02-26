@@ -113,10 +113,20 @@ def count_unsafe_lines_in_body(body):
     return has_unsafe_block, total_unsafe_lines
 
 
+def calculate_percentage(numerator, denominator):
+    if denominator == 0:
+        return "wrong"
+    percentage = (numerator / denominator) * 100
+    return f"{percentage:.2f}%"
+
 def analyze_rs_files(root_dir, csv_file_path):
     with open(csv_file_path, 'w', encoding='utf-8', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["function_name", "has_unsafe_block", "unsafe_lines"])
+        writer.writerow(["function_name", "has_unsafe_block", "unsafe_lines", "total_lines", "percentage"])
+
+        overall_unsafe_sum = 0
+        overall_lines_sum = 0
+
 
         for root, dirs, files in os.walk(root_dir):
             for file in files:
@@ -134,6 +144,7 @@ def analyze_rs_files(root_dir, csv_file_path):
                     else:
                         total_unsafe_lines_all = 0
                         has_unsafe_any = False
+                        total_lines_all = sum(len(body.split("\n")) for body in function_bodies)
 
                         for body in function_bodies:
                             has_unsafe_block, unsafe_lines = count_unsafe_lines_in_body(body)
@@ -144,15 +155,41 @@ def analyze_rs_files(root_dir, csv_file_path):
                         writer.writerow([
                             func_name,
                             has_unsafe_any,
-                            total_unsafe_lines_all
+                            total_unsafe_lines_all,
+                            total_lines_all,
+                            calculate_percentage(total_unsafe_lines_all, total_lines_all)
                         ])
+                        overall_unsafe_sum += total_unsafe_lines_all
+                        overall_lines_sum += total_lines_all
+            overall_percentage = calculate_percentage(overall_unsafe_sum, overall_lines_sum)
+            writer.writerow([
+                "Overall",
+                "",
+                overall_unsafe_sum,
+                overall_lines_sum,
+                overall_percentage
+            ])
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="stastic unsafe rust functions.")
-    parser.add_argument("input_path", type=str, help="Path to the input directory or file.")
+    for dir_name in os.listdir("/Users/gab/repo/evaluation"):
+        level_one_path = os.path.join("/Users/gab/repo/evaluation", dir_name)
 
-    # args = parser.parse_args()
-    # input_path = args.input_path
-    analyze_rs_files(root_dir="inputs-complex/u8c/test/individual-funcs_gpt-4o_2025-02-11_19-37-59__complete", csv_file_path="/Users/gab/repo/Rust/rustify-validator/src/calculate/result.csv")
-    print("execution finish")
+        if not os.path.isdir(level_one_path):
+            continue
+
+        for sub_dir_name in os.listdir(level_one_path):
+            level_two_path = os.path.join(level_one_path, sub_dir_name)
+
+
+
+            if not os.path.isdir(level_two_path):
+                continue
+
+            for sub_dir in os.listdir(level_two_path):
+                level_three_path = os.path.join(level_two_path, sub_dir)
+                if sub_dir.startswith("individual"):
+                    analyze_rs_files(
+                        root_dir=level_three_path,
+                        csv_file_path=level_two_path + "unsafe_calculate" + ".csv")
+                    break
