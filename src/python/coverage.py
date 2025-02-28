@@ -67,6 +67,6 @@ def main(directory):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        main("/Users/gab/repo/evaluation/Analysis-libcsv/claude-3-5-sonnet/V0/klee_ir_files/Rust")
+        main("/Users/gab/repo/evaluation/Analysis-libbmp/claude-3-5-sonnet/V0/klee_ir_files/Rust")
     
     # main(sys.argv[1])
