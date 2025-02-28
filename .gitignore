@@ -18,3 +18,8 @@ src/python/inputs-complex/others/
 src/Symbolizer/Pass/helper.cpp
 src/Symbolizer/compare_graph_output_log.log
 src/python/myenv/
+src/python/inputs-complex/optipng/.DS_Store
+src/python/inputs-complex/optipng/src/.DS_Store
+src/python/inputs-complex/optipng/src/optipng/.DS_Store
+src/Symbolizer/r.ll
+src/Symbolizer/r.rs
