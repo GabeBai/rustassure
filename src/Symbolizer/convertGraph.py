@@ -5,7 +5,6 @@ import sys
 from glob import glob
 from concurrent.futures import ThreadPoolExecutor
 
-# 大小阈值(字节)，比如 5 MB
 FILE_SIZE_THRESHOLD = 5 * 1024 * 1024
 
 def transitive_reduce(dot_file: str, reduced_dot_file: str):
