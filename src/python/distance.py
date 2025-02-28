@@ -100,7 +100,7 @@ def traverse_two_levels_c():
 
     return path_to_file_dict
 
-def compare_graph_optimize_edit_distance(G1, G2, max_iterations = 4):
+def compare_graph_optimize_edit_distance(G1, G2, max_iterations = 1):
     logger = SingletonLogger()
     logger.info("Graph1: number of nodes: %f, edges: %f", len(G1), len(G1.edges()))
     logger.info("Graph2: number of nodes: %f, edges: %f", len(G2), len(G2.edges()))
