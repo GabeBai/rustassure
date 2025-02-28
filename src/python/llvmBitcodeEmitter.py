@@ -280,4 +280,3 @@ if __name__ == "__main__":
     input_path = args.input_path
 
     emitLLVMBitcodes(input_path, logger)
-    # emitLLVMBitcodes("/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/testcase/rust1", logger)
