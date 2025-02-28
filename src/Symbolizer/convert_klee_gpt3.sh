@@ -46,17 +46,11 @@ create_json() {
     "url_get_path": {
         "0": "alloc::string::String"
     },
-    "url_get_port": {
-        "0": "alloc::string::String"
-    },
     "url_get_protocol": {
         "0": "alloc::string::String"
     },
     "url_get_scheme": {
         "0": "alloc::string::String"
-    },
-    "opng_rangeset2bitset": {
-        "1": "core::ffi::c_str::CStr"
     },
     "scan_option": {
         "0": "core::ffi::c_str::CStr"

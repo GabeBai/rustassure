@@ -45,21 +45,6 @@ create_json() {
     "url_get_scheme": {
         "0": "alloc::string::String"
     },
-    "opng_rangeset2bitset": {
-        "1": "core::ffi::c_str::CStr"
-    },
-    "scan_option": {
-        "0": "core::ffi::c_str::CStr"
-    },
-    "opng_ullratio_to_factor_string": {
-        "0": "alloc::string::String"
-    },
-    "opng_ulratio_to_percent_string": {
-        "0": "alloc::string::String"
-    },
-    "opng_ullratio_to_percent_string": {
-        "0": "alloc::string::String"
-    },
     "bmp_img_read": {
         "0": "BmpImg"
     },
