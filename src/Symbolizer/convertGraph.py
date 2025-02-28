@@ -9,27 +9,15 @@ from concurrent.futures import ThreadPoolExecutor
 FILE_SIZE_THRESHOLD = 5 * 1024 * 1024
 
 def transitive_reduce(dot_file: str, reduced_dot_file: str):
-    """
-    调用 tred 对 dot_file 进行传递性约简，输出到 reduced_dot_file。
-    """
     with open(reduced_dot_file, 'w') as out_f:
         subprocess.run(["tred", dot_file], stdout=out_f, check=True)
     print(f"[TRED] {dot_file} -> {reduced_dot_file}")
 
 def convert_to_png(input_dot: str, output_png: str):
-    """
-    调用 dot -Tpng 将 input_dot 转为 output_png。
-    """
     subprocess.run(["dot", "-Tpng", input_dot, "-o", output_png], check=True)
     print(f"[CONVERT] {input_dot} -> {output_png}")
 
 def process_dot_file(dot_file: str):
-    """
-    判断 .dot 文件大小：
-    1. 若超过 FILE_SIZE_THRESHOLD，则先用 tred 简化得到 reduced.dot；
-    2. 再调用 dot 生成 png；
-    3. 否则直接调用 dot 转成 png。
-    """
     if not os.path.isfile(dot_file):
         return
 
@@ -52,8 +40,6 @@ def main():
     if not dot_files:
         print("No .dot files found in graph_output.")
         return
-
-    # 可按需改为单线程处理；此处示例使用线程池并发处理
     with ThreadPoolExecutor(max_workers=4) as executor:
         for dot_file in dot_files:
             executor.submit(process_dot_file, dot_file)
