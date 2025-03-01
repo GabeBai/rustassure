@@ -13,7 +13,11 @@ The overview of this tool is as follows. The script in `src/python/translationVa
 
 4. The output is typically inside a directory named `individual-funcs_<options>`, where `options` contains the model used and the timestamp. Every time we execute the script, it will create a new directory so and not cobble the old result directory.
 
-5. The script `src/python/symbolic_executor.py` has the initial code for triggering the symbolic execution using KLEE for one such result directory. TODO: This has to be integrated with the rest of the toolchain.
+5. Then, It will compile the each .i and .rs files into LLVM IR and symbolized it. We will mark every input arguments and return values as  symbols and print the corresponding KLEE Symbolic value.
+
+6. Then, we will use KLEE to execute the symbolized IR and gathers all of the output graph and calculate the edit distance between C results and Rust results.
+
+
 
 NOTE: IMPORTANT: 
 
@@ -58,6 +62,13 @@ This will generate a bunch of `.i` files in the source directory. We want those.
 NOTE: The clang wrapper assumes that the Makefile commands compile a single file at a time. This is the common case. But if you have something that tries to compile multiple files (and link) in the same command, such as `$(CC) a.c b.c -o a.out`, the wrapper won't work. Please let me know in case it's not easy to adjust the Makefile.
 
 ### Running the entire toolchain
+
+
+
+### Run frontend of the toolchain
+
+
+### Run backend of the tool chain
 
 You can either run the entire toolchain
 `python3 translationValidator.py --src=<SRC_DIR>`.

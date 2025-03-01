@@ -25,8 +25,10 @@ from distance import *
 
 # Command to generate the classes (need to do this because versions can be different.
 # antlr4 -Dlanguage=Python3 -visitor Kquery.g4
+current_dir = os.path.dirname(os.path.abspath(__file__))
+log_file = os.path.join(current_dir, "post_process_log.log")
 
-logging.basicConfig(filename='/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/process_log.log', 
+logging.basicConfig(filename=log_file,
                     level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     )

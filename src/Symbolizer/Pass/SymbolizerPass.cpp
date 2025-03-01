@@ -566,8 +566,9 @@ namespace {
     			return; 
 			}
 
-			std::string fixedJsonPath = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/input.json";
+			std::string fixedJsonPath = "input.json";
 			if (std::filesystem::exists(fixedJsonPath)) {
+				llvm::errs() << "json founded " << fixedJsonPath << "\n";
 				std::ifstream jsonFile(fixedJsonPath);
 				if (!jsonFile.is_open()) {
 					llvm::errs() << "Error: Could not open JSON file: " << fixedJsonPath << "\n";

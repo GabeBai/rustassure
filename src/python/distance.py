@@ -7,6 +7,9 @@ import logging
 import csv
 import glob
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
 class SingletonLogger:
     _instance = None
 
@@ -75,7 +78,7 @@ def matchNodes(node1, node2):
 
 def traverse_two_levels_rust():
     path_to_file_dict = {}
-    base_dir = '../Symbolizer/graph_output/Rust'
+    base_dir = 'graph_output/Rust'
     for root, dirs, files in os.walk(base_dir):
         rel_path = os.path.relpath(root, base_dir)
         
@@ -88,7 +91,7 @@ def traverse_two_levels_rust():
 
 def traverse_two_levels_c():
     path_to_file_dict = {}
-    base_dir = '../Symbolizer/graph_output/C'
+    base_dir = 'graph_output/C'
     for root, dirs, files in os.walk(base_dir):
         rel_path = os.path.relpath(root, base_dir)
         
@@ -131,8 +134,8 @@ def load_graph_from_dot(file_path):
 
 
 def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
-    rust_base = "../Symbolizer/graph_output/rust"
-    c_base = "../Symbolizer/graph_output/C"
+    rust_base = "graph_output/rust"
+    c_base = "graph_output/C"
 
     results_max = []
     results_min = []
@@ -272,4 +275,4 @@ if __name__ == "__main__":
     logger = SingletonLogger()
     result_C = traverse_two_levels_c()
     result_Rust = traverse_two_levels_rust()
-    compare_and_export_csv(result_C, result_Rust, "../Symbolizer/edit_distance")
+    compare_and_export_csv(result_C, result_Rust, "edit_distance")

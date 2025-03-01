@@ -117,7 +117,18 @@ def createIndividualPreprocessedFiles(funcs, key, logger, individualFuncPath):
     typedefFilter.filterUnusedTypedefs(c_path)
 
 
-def processCodebase(codebasePath, useGpt4, useGpt4mini, useClaude, fineTunedModel, preanalysisOnly, translatorMode, singleFileName, dirPrefix, fileListFile, multiThreading):
+def processCodebase(codebasePath,
+                    useGpt4,
+                    useGpt4mini,
+                    useClaude,
+                    fineTunedModel,
+                    preanalysisOnly,
+                    translatorMode,
+                    singleFileName,
+                    dirPrefix,
+                    fileListFile,
+                    multiThreading,
+                    logger):
     fileList = []
     if fileListFile is not None and len(fileListFile) > 0:
         with open(fileListFile) as f:
@@ -203,6 +214,8 @@ def processCodebase(codebasePath, useGpt4, useGpt4mini, useClaude, fineTunedMode
     # Mark the directory as complete
     shutil.move(individualFuncPath, individualFuncPath+"__complete")
 
+    return individualFuncPath+"__complete"
+
 
 
 def fingerPrintModel(logger, srcDir, translator):
@@ -269,4 +282,15 @@ if __name__ == "__main__":
 
     logger.info("Command line options: %s", args)
 
-    processCodebase(args.src, args.use_gpt4, args.use_gpt4mini, args.use_claude, args.fine_tuned_model, args.preanalysis_only, Translator.getTranslatorMode(args.translator_mode), args.single_file_name, args.dir_prefix, args.file_list_file, args.multithreading) # ./inputs-complex/zlib-1.3.1/"
+    processCodebase(args.src,
+                    args.use_gpt4,
+                    args.use_gpt4mini,
+                    args.use_claude,
+                    args.fine_tuned_model,
+                    args.preanalysis_only,
+                    Translator.getTranslatorMode(args.translator_mode),
+                    args.single_file_name,
+                    args.dir_prefix,
+                    args.file_list_file,
+                    args.multithreading,
+                    logger) # ./inputs-complex/zlib-1.3.1/"
