@@ -48,4 +48,11 @@ if __name__ == "__main__":
                                        logger)
     print(f"output_directory: {output_directory}")
     directory = perform_general_execution(output_directory)
-    process_output(directory, "general")
+    model = "gpt-3.5-turbo"
+    if args.use_gpt4:
+        model = "gpt-4o"
+    elif args.use_gpt4mini:
+        model = "gpt-4o-mini"
+    elif args.use_claude:
+        model = "claude-3-5-sonnet"
+    process_output(directory, model, "general")

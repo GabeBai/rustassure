@@ -200,3 +200,5 @@ end_time=$(date +%s)
 
 elapsed_time=$((end_time - start_time)) 
 echo "Script execution time: $elapsed_time seconds"
+
+echo $elapsed_time > execution_time.txt

@@ -298,7 +298,7 @@ def execute_task(codebase, model):
 
     if function_name in globals():
         directory = globals()[function_name]()  # Call the function dynamically
-        process_output(directory, function_name)
+        process_output(directory, model, function_name)
     else:
         print(f"Function {function_name} not found.")
 
@@ -313,7 +313,8 @@ if __name__ == "__main__":
     args.src = os.path.expanduser(args.src)
 
     if args.src:
-        perform_general_execution(args.src)
+        directory = perform_general_execution(args.src)
+        process_output(directory, "custom", "custom")
     else:
         codebases = ["libcsv", "libbmp", "optipng", "url_parser", "u8c"]
         models = ["gpt-4o", "gpt-3.5-turbo", "gpt-4o-mini", "claude-3-5-sonnet"]

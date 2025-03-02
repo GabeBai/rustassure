@@ -8,6 +8,7 @@ from evaluationScripts.coverage import calculate_coverage
 c_directory = "testcase/c"
 rust_directory = "testcase/rust"
 rust_ir_directory = "klee_ir_files/rust"
+execution_time = "execution_time.txt"
 
 best_edit_distance_directory = "edit_distance/best_edit_distances.csv"
 
@@ -56,7 +57,7 @@ def count_edit_distance(csv_directory, rust_compiled_fail_files):
     return valid_function_count, zero_edit_distance_count
 
 
-def process_output(input_directory, code_base):
+def process_output(input_directory, model, code_base):
     # total Data & compile Data
     c_test_case_directory = os.path.join(input_directory, c_directory)
     rust_test_case_directory = os.path.join(input_directory, rust_directory)
@@ -73,7 +74,12 @@ def process_output(input_directory, code_base):
     # coverage Data
     coverage = calculate_coverage(os.path.join(input_directory, rust_ir_directory))
 
+    execution_time_directory = os.path.join(input_directory, execution_time)
+    with open(execution_time_directory, "r") as f:
+        elapsed_time = f.read().strip()
+
     data = {"code_base": code_base,
+            "model": model,
             "total_functions": i_count,
             "total_rust_functions_compiled": r_bc_count,
             "total_arguments": total_arguments,
@@ -81,7 +87,8 @@ def process_output(input_directory, code_base):
             "overall_lines_sum": overall_lines_sum,
             "overall_unsafe_sum": overall_unsafe_sum,
             "overall_safe_lines": overall_safe_lines,
-            "coverage": coverage}
+            "coverage": coverage,
+            "execution_time": elapsed_time}
     df = pd.DataFrame([data])
     result_directory = os.path.join(input_directory, "result.csv")
     df.to_csv(result_directory, index=False)
