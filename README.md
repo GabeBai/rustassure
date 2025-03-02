@@ -144,14 +144,14 @@ Rust-validator has two parts
 1. Frontend : translate C code base to Rust.
 2. Backend : use KLEE to verify transaltion similarity.
 
-### Frontend
+### Run Frontend
 
 1. Inside `src/python` run `python3 translationValidator.py`
 2. It should be given a input codebase directory by `--src=<input directory>`
 3. The default GPT model is gpt 3.5, it can be changed by input `--use-gpt4=true` or `--use-claude=true`
 4. The final files will be in the directory `<SRC_DIR>/individual-funcs`. This directory will contain the individual `.i` files, the Rust files for each function, and the compiled bitcodes for both the `.i` file and the `.rs` file (if successful).
 
-### Backend
+### Run Backend
 
 1. inside `src/python` run `python3 performSymbolExecution.py`, there are several existing evaluation codebases that can be selected. You can select the codebase and GPT model that you want to try according to the commandline hint.
 2. Or, you can specify any translated repostiory that you want to test by `python3 performSymbolExecution.py --src=<input directory>`
@@ -171,7 +171,7 @@ There are several ouput inside the output directory
 	* coverage : KLEE execution instruction coverage of Rust.
 
 
-### Whole Tool Chain
+### Run Whole Tool Chain
 
 1. It combines frontend and backend of the tool chain. It will firstly transalte the input codebase and then use KLEE to verify the results.
 2. Run `python3 translateAndSymbolicValidate.py --src=<input_directory>`
