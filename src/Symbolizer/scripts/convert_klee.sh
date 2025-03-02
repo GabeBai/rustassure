@@ -208,6 +208,10 @@ python3 ../../python/distance.py
 end_time=$(date +%s)   
 
 elapsed_time=$((end_time - start_time)) 
+elapsed_minutes=$((elapsed_time / 60))
+
 echo "Script execution time: $elapsed_time seconds"
 
-echo $elapsed_time > execution_time.txt
+echo "${elapsed_minutes}m" > execution_time.txt
+
+echo "Script execution time: ${elapsed_minutes}m"
