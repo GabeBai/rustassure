@@ -1,4 +1,4 @@
-## C2Rust Translation Validator
+# C2Rust Translation Validator
 
 This is the repository for the `rustify-validator` tool to compute the semantic similarity between the original C code and the translation. 
 
@@ -27,7 +27,11 @@ GPT-4o is very expensive. So please use GPT-3.5 for testing and development and 
 
 If you are a member of the team, please email `tpalit@ucdavis.edu` for the OpenAI key that you should set up in an environment variable as described below (if you haven't received it yet).
 
-### Dependencies
+## Dependencies
+
+### frontend denpendencies
+
+frontend includes extract all individual .i files and translate them into rust by LLM
 
 1. Run `git submodule update --init --recursive`. Inside `src/SVF` execute `./build.sh` and then inside `Release-Build` invoke `sudo make install`.
 
@@ -48,10 +52,36 @@ If you are a member of the team, please email `tpalit@ucdavis.edu` for the OpenA
 
 7. Install the Python modules `openai`, `tiktoken`, `more_itertools`, and `pycparser` using `pip3`. For the validator, also install `antlr4-tools`, `antlr4-python3-runtime`, `numpy`, `scipy`, `pygraphviz`, `pydot`, and `networkx`.
 
+### backend denpendencies
+
+backend includes using LLVM to modify all rust and C files and use KLEE to get symbolic value. Then run graph compare algorithm between them
+
+1. Install symbolic dependencies 
+   * `sudo apt-get install z3 cmake`
+   * `pip3 install cmake`
+   * `pip install cmake`
+
+2. Download the LLVM and clang binaries 
+	* `wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
+	* Extract it `tar -Jxvf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
+	* Add the `<FULL_PATH>/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin` to `$PATH`. This will bring the binaries on your path and you can invoke them like standard Linux tools.
+
+3.  Once you init the LLVM submodules you should have the KLEE repository. 
+	 * Create a directory for `klee-build` in `<PATH>/rustify-validator/src` 
+	 * Run `cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
+	* Run `make -j4 && sudo make install`
+
+4. Build the Symbolizer pass. This is LLVM tool that automatically inserts the `klee_make_symbolic` and `klee_print_exprs` functions to the LLVM bitcode. 
+	 Inside `rustify/src/Symbolizer` run `./build.sh`.
+
  
 NOTE: When pulling, please make sure that you have the latest of the typedefextractor repo too.
 
-### Generate the preprocessed files from the source directory
+## Tool chain detailed introduction
+
+In this part, we will talk several key modules of our tool chain step by step
+
+### preprocessed files module
 
 There is a wrapper (`inputs-complex/clang-wrapper.sh`) around the `clang` compiler that dumps out the preprocessed files. Configure and build the source code of the target application by passing `CC=<dir>/clang-wrapper.sh`. 
 
@@ -61,35 +91,7 @@ This will generate a bunch of `.i` files in the source directory. We want those.
 
 NOTE: The clang wrapper assumes that the Makefile commands compile a single file at a time. This is the common case. But if you have something that tries to compile multiple files (and link) in the same command, such as `$(CC) a.c b.c -o a.out`, the wrapper won't work. Please let me know in case it's not easy to adjust the Makefile.
 
-### Running the entire toolchain
-
-
-
-### Run frontend of the toolchain
-
-
-### Run backend of the tool chain
-
-You can either run the entire toolchain
-`python3 translationValidator.py --src=<SRC_DIR>`.
-
-This will:
-
-1. Parse the `.i` files and extract the individual functions and create `.i` files for _each_ function. This file will also contain all the `typedef` and `astruct` definitions referenced by that function. 
-
-The script will automatically filter all unneeded dependencies from the preprocessor expansion by automatically invoking `unused-typedef-extractor`. The code to do this is in `typedefFilter.py`. 
-
-2. Then it will take each individual `.i` file and invoke the `gptTranslation.py` file. Currently, it uses GPT-3.5 by default (to prevent us from going bankrupt). To use GPT-4 pass `--use-gpt4` to the `translationValidator.py`.
-
-3. This will (hopefully) use GPT to create a corresponding `.rs` file for each `.i` file. 
-
-4. Automatically invoke both the Clang C compiler to compile the `.i` files for the individual functions and the `rustc` compiler for the individual functions for the `.rs` files. Any compilation failures will be displayed on screen, and also in the log file in `validator.log`.
-
-The final files will be in the directory `<SRC_DIR>/individual-funcs`. This directory will contain the individual `.i` files, the Rust files for each function, and the compiled bitcodes for both the `.i` file and the `.rs` file (if successful).
-
-5. IMPORTANT: This will also generate an analysis.log file which reports how many functions and functions + dependent declarations fit in the request and response limits for the model. Keep an eye out for this because, from my experience, chunking requests or chaining responses, result in even worse quality results. This file will also contain this information for every function.
-
-### Invoking only the GPT translation module
+### GPT translation module
 
 The GPT translation module has the following functionalities:
 
@@ -107,6 +109,22 @@ Look at `extractFuncAndDeps` function in `functionAndDepsExtractor.py` for an ex
 
 3. Invoke the `translate` function on the `Translator` object. This will return the translated Rust code.
 
+
+The GPT tranlation module has following steps:
+
+1. Parse the `.i` files and extract the individual functions and create `.i` files for _each_ function. This file will also contain all the `typedef` and `astruct` definitions referenced by that function. 
+
+The script will automatically filter all unneeded dependencies from the preprocessor expansion by automatically invoking `unused-typedef-extractor`. The code to do this is in `typedefFilter.py`. 
+
+2. Then it will take each individual `.i` file and invoke the `gptTranslation.py` file. Currently, it uses GPT-3.5 by default (to prevent us from going bankrupt). To use GPT-4 pass `--use-gpt4` to the `translationValidator.py`.
+
+3. This will (hopefully) use GPT to create a corresponding `.rs` file for each `.i` file. 
+
+4. Automatically invoke both the Clang C compiler to compile the `.i` files for the individual functions and the `rustc` compiler for the individual functions for the `.rs` files. Any compilation failures will be displayed on screen, and also in the log file in `validator.log`.
+
+The final files will be in the directory `<SRC_DIR>/individual-funcs`. This directory will contain the individual `.i` files, the Rust files for each function, and the compiled bitcodes for both the `.i` file and the `.rs` file (if successful).
+
+
 ### Fine-tuning
 
 We can only fine-tune GPT 3.5 models, as of 6/24/2024.
@@ -119,36 +137,26 @@ We can only fine-tune GPT 3.5 models, as of 6/24/2024.
 
 4. Then, pass --fine-tuned-model=<model_name> when invoking `translatorValidator.py`.
 
-### For symbolic execution
+### symbolic execution module
 
-1. Install dependencies 
-   * `sudo apt-get install z3 cmake`
-   * `pip3 install cmake`
-   * `pip install cmake`
+Steps of symbolic execution module is as following:
 
-2. Once you init the LLVM submodules you should have the KLEE repository. 
-	 * Create a directory for `klee-build` in `<PATH>/rustify-validator/src` 
-	 * Run `cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
-	 * Run `make -j4 && sudo make install`
+1. Compiles each C file to LLVM bitcode.
 
-3. Inside `rustify/src/Symbolizer` run `./build.sh`.
+2. Applies a custom LLVM pass to generate symbolized LLVM IR.
+
+3. Runs KLEE on the IR files to extract symbolic execution logs.
+
+4. Converts symbolic expressions into tree structures and saves them as .png files.
+
+5. run graph compare algorithm to compare the similiarity and differences between the output symbolic structure.
 
 
-### To execute ONLY the latter stages of the toolchain
 
-1. Install dependencies 
-   * `sudo apt-get install z3 cmake`
-   * `pip3 install cmake`
-   * `pip install cmake`
-2. Download the LLVM and clang binaries 
-	* `wget https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
-	* Extract it `tar -Jxvf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz`.
-	* Add the `<FULL_PATH>/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04/bin` to `$PATH`. This will bring the binaries on your path and you can invoke them like standard Linux tools.
-3.  Once you init the LLVM submodules you should have the KLEE repository. 
-	 * Create a directory for `klee-build` in `<PATH>/rustify-validator/src` 
-	 * Run `cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
-	* Run `make -j4 && sudo make install`
-4. Build the Symbolizer pass. This is LLVM tool that automatically inserts the `klee_make_symbolic` and `klee_print_exprs` functions to the LLVM bitcode. 
-	 Inside `rustify/src/Symbolizer` run `./build.sh`.
-5. Run the sanity test `cd rustify/src/Symbolizer && ./convert_klee.sh` It will loop through all the `.c` files in `testcase/C/` and first symbolize them using the Symbolizer pass, then run `klee <bitcode_name.bc>` and should print out some symbolic arguments (the lines starting with `SYM_VALUE`). It will also run the `KQueryConverty.py` script to convert the constraints in a Graph format and dump them. Note that it might take a few minutes for the sanity test to complete.
-6. The graphs will be in `.dot` format inside `graph_output/C`. Open the dot files and make sure that they aren't empty. This ensures that the latter part of the toolchain is working.
+## reproduce results
+`python3 translationValidator.py --src=<SRC_DIR>`.
+
+## custom tests
+
+
+## ?????

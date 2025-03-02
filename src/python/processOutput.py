@@ -83,7 +83,8 @@ def process_output(input_directory, code_base):
             "overall_safe_lines": overall_safe_lines,
             "coverage": coverage}
     df = pd.DataFrame([data])
-    df.to_csv("result.csv", index=False)
+    result_directory = os.path.join(input_directory, "result.csv")
+    df.to_csv(result_directory, index=False)
 
 
 if __name__ == '__main__':
