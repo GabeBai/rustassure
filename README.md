@@ -161,14 +161,14 @@ There are several ouput inside the output directory
 1. Rust and C symbol results are in `graph_output`
 2. Graph compare results(edit_distance) are in `edit_distance`
 3. `result.csv` includes all of the statistical results 
-	3.1 total_functions : Total number of functions in the original input codebase.
-	3.2 total_rust_functions_compiled : Total number of translated rust functions that can be compiled.
-	3.3 total_arguments : Total number of arguments of the rust functions that can be compiled. If it is a struct, then expand it.
-	3.4 edit_distance_equal_0 : Total number of arguments that the edit_distance of the symbolic value between C & Rust are 0.
-	3.5 overall_lines_sum : Total lines of the transalted Rust target functions.
-	3.6 overall_unsafe_sum : Total lines of the transalted Rust target functions which are unsafe.
-	3.7 overall_safe_lines : Total lines of the transalted Rust target functions which are safe.
-	3.8 coverage : KLEE execution instruction coverage of Rust.
+	* total_functions : Total number of functions in the original input codebase.
+	* total_rust_functions_compiled : Total number of translated rust functions that can be compiled.
+	* total_arguments : Total number of arguments of the rust functions that can be compiled. If it is a struct, then expand it.
+	* edit_distance_equal_0 : Total number of arguments that the edit_distance of the symbolic value between C & Rust are 0.
+	* overall_lines_sum : Total lines of the transalted Rust target functions.
+	* overall_unsafe_sum : Total lines of the transalted Rust target functions which are unsafe.
+	* overall_safe_lines : Total lines of the transalted Rust target functions which are safe.
+	* coverage : KLEE execution instruction coverage of Rust.
 
 
 ### Whole Tool Chain
