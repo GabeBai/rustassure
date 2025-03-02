@@ -29,9 +29,9 @@ If you are a member of the team, please email `tpalit@ucdavis.edu` for the OpenA
 
 ## Dependencies
 
-### frontend denpendencies
+### Frontend denpendencies
 
-frontend includes extract all individual .i files and translate them into rust by LLM
+Frontend includes extract all individual .i files and translate them into rust by LLM
 
 1. Run `git submodule update --init --recursive`. Inside `src/SVF` execute `./build.sh` and then inside `Release-Build` invoke `sudo make install`.
 
@@ -52,9 +52,9 @@ frontend includes extract all individual .i files and translate them into rust b
 
 7. Install the Python modules `openai`, `tiktoken`, `more_itertools`, and `pycparser` using `pip3`. For the validator, also install `antlr4-tools`, `antlr4-python3-runtime`, `numpy`, `scipy`, `pygraphviz`, `pydot`, and `networkx`.
 
-### backend denpendencies
+### Backend denpendencies
 
-backend includes using LLVM to modify all rust and C files and use KLEE to get symbolic value. Then run graph compare algorithm between them
+Backend includes using LLVM to modify all rust and C files and use KLEE to get symbolic value. Then run graph compare algorithm between them
 
 1. Install symbolic dependencies 
    * `sudo apt-get install z3 cmake`
@@ -79,7 +79,7 @@ NOTE: When pulling, please make sure that you have the latest of the typedefextr
 
 ## Tool chain detailed introduction
 
-In this part, we will talk several key modules of our tool chain step by step
+This part gives detailed introduction of the whole tool chain.
 
 ### preprocessed files module
 
@@ -92,23 +92,6 @@ This will generate a bunch of `.i` files in the source directory. We want those.
 NOTE: The clang wrapper assumes that the Makefile commands compile a single file at a time. This is the common case. But if you have something that tries to compile multiple files (and link) in the same command, such as `$(CC) a.c b.c -o a.out`, the wrapper won't work. Please let me know in case it's not easy to adjust the Makefile.
 
 ### GPT translation module
-
-The GPT translation module has the following functionalities:
-
-1. Chunk larger functions into smaller chunks that fit the context window length.
-
-2. Chain the responses when the get truncated because of the response length limit.
-
-To use this module you need to---
-
-1. Create an instance of the `Translator` class from `gptTranslation.py`. and set up the `__init__` function. 
-
-2. For each function you want to translate, set up a`FunctionDepsObj` instance (see. `functionAndDeps.py`). The fields `typeDeclDefCodeLines` and `funcCodeLines` are single strings of (newline-separated) typedefs and function code. 
-
-Look at `extractFuncAndDeps` function in `functionAndDepsExtractor.py` for an example.
-
-3. Invoke the `translate` function on the `Translator` object. This will return the translated Rust code.
-
 
 The GPT tranlation module has following steps:
 
@@ -153,10 +136,43 @@ Steps of symbolic execution module is as following:
 
 
 
-## reproduce results
-`python3 translationValidator.py --src=<SRC_DIR>`.
+## Quick start
 
-## custom tests
+This part gives serveral ways to run rust-validator tool chain.
+
+Rust-validator has two parts
+1. Frontend : translate C code base to Rust.
+2. Backend : use KLEE to verify transaltion similarity.
+
+### Frontend
+
+1. Inside `src/python` run `python3 translationValidator.py`
+2. It should be given a input codebase directory by `--src=<input directory>`
+3. The default GPT model is gpt 3.5, it can be changed by input `--use-gpt4=true` or `--use-claude=true`
+4. The final files will be in the directory `<SRC_DIR>/individual-funcs`. This directory will contain the individual `.i` files, the Rust files for each function, and the compiled bitcodes for both the `.i` file and the `.rs` file (if successful).
+
+### Backend
+
+1. inside `src/python` run `python3 performSymbolExecution.py`, there are several existing evaluation codebases that can be selected. You can select the codebase and GPT model that you want to try according to the commandline hint.
+2. Or, you can specify any translated repostiory that you want to test by `python3 performSymbolExecution.py --src=<input directory>`
+3. The output is in src/Symbolizer, the directory name is `codebase_gptmodel_data`.
+
+There are several ouput inside the output directory
+1. Rust and C symbol results are in `graph_output`
+2. Graph compare results(edit_distance) are in `edit_distance`
+3. `result.csv` includes all of the statistical results 
+	3.1 total_functions : Total number of functions in the original input codebase.
+	3.2 total_rust_functions_compiled : Total number of translated rust functions that can be compiled.
+	3.3 total_arguments : Total number of arguments of the rust functions that can be compiled. If it is a struct, then expand it.
+	3.4 edit_distance_equal_0 : Total number of arguments that the edit_distance of the symbolic value between C & Rust are 0.
+	3.5 overall_lines_sum : Total lines of the transalted Rust target functions.
+	3.6 overall_unsafe_sum : Total lines of the transalted Rust target functions which are unsafe.
+	3.7 overall_safe_lines : Total lines of the transalted Rust target functions which are safe.
+	3.8 coverage : KLEE execution instruction coverage of Rust.
 
 
-## ?????
+### Whole Tool Chain
+
+1. It combines frontend and backend of the tool chain. It will firstly transalte the input codebase and then use KLEE to verify the results.
+2. Run `python3 translateAndSymbolicValidate.py --src=<input_directory>`
+3. Change GPT model by specify argument through `--use-gpt4=true`
