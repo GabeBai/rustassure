@@ -1,5 +1,7 @@
+from processOutput import process_output
 from translationValidator import *
 from performSymbolExecution import *
+from processOutput import *
 
 def perform_symbol_execution(input_directory):
     perform_general_execution(input_directory)
@@ -45,4 +47,5 @@ if __name__ == "__main__":
                                        args.multithreading,
                                        logger)
     print(f"output_directory: {output_directory}")
-    perform_general_execution(output_directory)
+    directory = perform_general_execution(output_directory)
+    process_output(directory, "general")

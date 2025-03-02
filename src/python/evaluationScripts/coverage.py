@@ -28,7 +28,7 @@ def parse_icov_from_output(output):
     return None
 
 
-def main(directory):
+def calculate_coverage(directory):
     klee_out_dirs = []
     
     for item in os.listdir(directory):
@@ -64,9 +64,11 @@ def main(directory):
     else:
         print("cannot parse any ICov(%) value。")
 
+    return avg_icov
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        main("/Users/gab/repo/evaluation/Analysis-libbmp/claude-3-5-sonnet/V0/klee_ir_files/Rust")
+        calculate_coverage("/Users/gab/repo/evaluation/Analysis-libbmp/claude-3-5-sonnet/V0/klee_ir_files/Rust")
     
     # main(sys.argv[1])

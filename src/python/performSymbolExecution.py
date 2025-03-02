@@ -5,6 +5,7 @@ from enum import Enum
 import inspect
 from datetime import datetime
 import argparse
+from processOutput import *
 
 class Model(Enum):
     claude = 1
@@ -296,7 +297,8 @@ def execute_task(codebase, model):
     function_name = f"{codebase}_{model.replace('-', '_')}"
 
     if function_name in globals():
-        globals()[function_name]()  # Call the function dynamically
+        directory = globals()[function_name]()  # Call the function dynamically
+        process_output(directory, function_name)
     else:
         print(f"Function {function_name} not found.")
 

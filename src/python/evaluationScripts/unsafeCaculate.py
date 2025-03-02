@@ -3,6 +3,8 @@ import re
 import csv
 import argparse
 
+from sympy import false
+
 
 def tokenize_by_underscore(s: str) -> set:
     lower_s = s.lower()
@@ -119,56 +121,87 @@ def calculate_percentage(numerator, denominator):
     percentage = (numerator / denominator) * 100
     return f"{percentage:.2f}%"
 
-def analyze_rs_files(root_dir, csv_file_path):
-    with open(csv_file_path, 'w', encoding='utf-8', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["function_name", "has_unsafe_block", "unsafe_lines", "total_lines", "percentage"])
+def analyze_rs_files(root_dir, csv_file_path, disable_write = false):
 
+    if disable_write:
         overall_unsafe_sum = 0
         overall_lines_sum = 0
-
-
         for root, dirs, files in os.walk(root_dir):
             for file in files:
                 if file.endswith('.rs'):
                     file_path = os.path.join(root, file)
-                    func_name = os.path.splitext(file)[0] 
+                    func_name = os.path.splitext(file)[0]
 
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
 
                     function_bodies = find_function_bodies(content, func_name)
 
-                    if not function_bodies:
-                        writer.writerow([func_name, False, 100000000])
-                    else:
-                        total_unsafe_lines_all = 0
-                        has_unsafe_any = False
-                        total_lines_all = sum(len(body.split("\n")) for body in function_bodies)
+                    total_unsafe_lines_all = 0
+                    has_unsafe_any = False
+                    total_lines_all = sum(len(body.split("\n")) for body in function_bodies)
 
-                        for body in function_bodies:
-                            has_unsafe_block, unsafe_lines = count_unsafe_lines_in_body(body)
-                            if has_unsafe_block:
-                                has_unsafe_any = True
-                            total_unsafe_lines_all += unsafe_lines
+                    for body in function_bodies:
+                        has_unsafe_block, unsafe_lines = count_unsafe_lines_in_body(body)
+                        if has_unsafe_block:
+                            has_unsafe_any = True
+                        total_unsafe_lines_all += unsafe_lines
 
-                        writer.writerow([
-                            func_name,
-                            has_unsafe_any,
-                            total_unsafe_lines_all,
-                            total_lines_all,
-                            calculate_percentage(total_unsafe_lines_all, total_lines_all)
-                        ])
-                        overall_unsafe_sum += total_unsafe_lines_all
-                        overall_lines_sum += total_lines_all
-            overall_percentage = calculate_percentage(overall_unsafe_sum, overall_lines_sum)
-            writer.writerow([
-                "Overall",
-                "",
-                overall_unsafe_sum,
-                overall_lines_sum,
-                overall_percentage
-            ])
+                    overall_unsafe_sum += total_unsafe_lines_all
+                    overall_lines_sum += total_lines_all
+            return overall_lines_sum, overall_unsafe_sum, overall_lines_sum - overall_unsafe_sum
+
+    else:
+        with open(csv_file_path, 'w', encoding='utf-8', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["function_name", "has_unsafe_block", "unsafe_lines", "total_lines", "percentage"])
+
+            overall_unsafe_sum = 0
+            overall_lines_sum = 0
+
+
+            for root, dirs, files in os.walk(root_dir):
+                for file in files:
+                    if file.endswith('.rs'):
+                        file_path = os.path.join(root, file)
+                        func_name = os.path.splitext(file)[0]
+
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+
+                        function_bodies = find_function_bodies(content, func_name)
+
+                        if not function_bodies:
+                            writer.writerow([func_name, False, 100000000])
+                        else:
+                            total_unsafe_lines_all = 0
+                            has_unsafe_any = False
+                            total_lines_all = sum(len(body.split("\n")) for body in function_bodies)
+
+                            for body in function_bodies:
+                                has_unsafe_block, unsafe_lines = count_unsafe_lines_in_body(body)
+                                if has_unsafe_block:
+                                    has_unsafe_any = True
+                                total_unsafe_lines_all += unsafe_lines
+
+                            writer.writerow([
+                                func_name,
+                                has_unsafe_any,
+                                total_unsafe_lines_all,
+                                total_lines_all,
+                                calculate_percentage(total_unsafe_lines_all, total_lines_all)
+                            ])
+                            overall_unsafe_sum += total_unsafe_lines_all
+                            overall_lines_sum += total_lines_all
+                overall_percentage = calculate_percentage(overall_unsafe_sum, overall_lines_sum)
+
+                writer.writerow([
+                    "Overall",
+                    "",
+                    overall_unsafe_sum,
+                    overall_lines_sum,
+                    overall_percentage
+                ])
 
 
 if __name__ == "__main__":
