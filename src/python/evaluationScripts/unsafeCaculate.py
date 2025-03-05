@@ -2,6 +2,7 @@ import os
 import re
 import csv
 import argparse
+import subprocess
 
 from sympy import false
 
@@ -114,6 +115,18 @@ def count_unsafe_lines_in_body(body):
 
     return has_unsafe_block, total_unsafe_lines
 
+def compile_rust_file(file_path):
+    compile_cmd = ["rustc", "-A", "dead_code", "--emit=llvm-bc", "--crate-type=lib", file_path]
+    try:
+        subprocess.run(compile_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    finally:
+        file_base_name = os.path.basename(file_path)
+        bc_file_name = os.path.splitext(file_base_name)[0] + ".bc"
+        if os.path.exists(bc_file_name):
+            os.remove(bc_file_name)
 
 def calculate_percentage(numerator, denominator):
     if denominator == 0:
@@ -131,6 +144,10 @@ def analyze_rs_files(root_dir, csv_file_path, disable_write = false):
                 if file.endswith('.rs'):
                     file_path = os.path.join(root, file)
                     func_name = os.path.splitext(file)[0]
+
+                    if not compile_rust_file(file_path):
+                        print(f"{func_name} compile fail")
+                        continue
 
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
@@ -165,6 +182,10 @@ def analyze_rs_files(root_dir, csv_file_path, disable_write = false):
                     if file.endswith('.rs'):
                         file_path = os.path.join(root, file)
                         func_name = os.path.splitext(file)[0]
+
+                        if not compile_rust_file(file_path):
+                            print(f"{func_name} compile fail")
+                            continue
 
                         with open(file_path, 'r', encoding='utf-8') as f:
                             content = f.read()
@@ -205,8 +226,8 @@ def analyze_rs_files(root_dir, csv_file_path, disable_write = false):
 
 
 if __name__ == "__main__":
-    for dir_name in os.listdir("/Users/gab/repo/evaluation"):
-        level_one_path = os.path.join("/Users/gab/repo/evaluation", dir_name)
+    for dir_name in os.listdir("test"):
+        level_one_path = os.path.join("test", dir_name)
 
         if not os.path.isdir(level_one_path):
             continue
