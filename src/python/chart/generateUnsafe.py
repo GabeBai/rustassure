@@ -54,7 +54,7 @@ for model in models:
 
 ax.set_xticks(x + width * (len(models) - 1) / 2)
 ax.set_xticklabels(repos)
-ax.set_ylabel("Line of Codes")
+ax.set_ylabel("Line of Code", fontsize=16)
 
 
 legend_patches = []
@@ -63,7 +63,13 @@ for model_name, color in colors_map.items():
     legend_patches.append(patch)
 
 
-first_legend = ax.legend(handles=legend_patches, title="Model", loc='upper left')
+first_legend = ax.legend(handles=legend_patches,
+                         title="Model",
+                         loc='upper left',
+                         fontsize =15,
+                         )
+
+# bbox_to_anchor=(0.62, 1)
 ax.add_artist(first_legend)
 
 
@@ -83,8 +89,10 @@ ax.legend(
     labels=['safe LOC', 'unsafe LOC'],
     handler_map={tuple: HandlerTuple()},
     loc='upper right',
-    title="Loc"
+    title="LOC",
+    fontsize = 15
 )
+ax.tick_params(axis='both', labelsize=16)
 
 plt.tight_layout()
 # plt.show()

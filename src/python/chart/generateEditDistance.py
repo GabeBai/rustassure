@@ -54,7 +54,7 @@ for model in models:
 
 ax.set_xticks(x + width * (len(models) - 1) / 2)
 ax.set_xticklabels(repos)
-ax.set_ylabel("Argument Count")
+ax.set_ylabel("return value", fontsize=16)
 
 
 legend_patches = []
@@ -62,7 +62,7 @@ for model_name, color in colors_map.items():
     patch = mpatches.Patch(color=color, alpha=1.0, label=model_name)
     legend_patches.append(patch)
 
-first_legend = ax.legend(handles=legend_patches, title="Model", loc='upper left')
+first_legend = ax.legend(handles=legend_patches, title="Model", loc='upper left', fontsize=15)
 ax.add_artist(first_legend)
 
 blue_light_patch = mpatches.Patch(color='#1f77b4', alpha=0.4)
@@ -80,8 +80,10 @@ ax.legend(
     labels=['edit distance = 0', 'edit distance != 0'],
     handler_map={tuple: HandlerTuple()},
     loc='upper right',
-    title="Argument"
+    title="return value",
+    fontsize = 15,
 )
+ax.tick_params(axis='both', labelsize=16)
 
 plt.tight_layout()
 # plt.show()

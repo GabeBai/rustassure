@@ -52,7 +52,7 @@ for model in models:
 
 ax.set_xticks(x + width * (len(models) - 1) / 2)
 ax.set_xticklabels(repos)
-ax.set_ylabel("Argument Count")
+ax.set_ylabel("function count", fontsize=16)
 
 
 legend_patches = []
@@ -60,7 +60,7 @@ for model_name, color in colors_map.items():
     patch = mpatches.Patch(color=color, alpha=1.0, label=model_name)
     legend_patches.append(patch)
 
-first_legend = ax.legend(handles=legend_patches, title="Model", loc='upper left')
+first_legend = ax.legend(handles=legend_patches, title="Model", loc='upper left', fontsize=15)
 ax.add_artist(first_legend)
 
 
@@ -79,9 +79,10 @@ ax.legend(
     labels=['compiled functions', 'uncompiled functions'],
     handler_map={tuple: HandlerTuple()},
     loc='upper right',
-    title="Argument"
+    title="function count",
+    fontsize=15
 )
-
+ax.tick_params(axis='both', labelsize=16)
 plt.tight_layout()
 # plt.show()
 plt.savefig('../figs/compile.pdf', orientation="landscape", bbox_inches='tight')
