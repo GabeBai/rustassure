@@ -251,7 +251,7 @@ namespace {
 
 	struct Symbolizer : PassInfoMixin<Symbolizer> {
 
-		//TODO : @gabe Delete this logic
+		//TODO : Delete this logic
 		std::vector<StructType*> visited_struct_types;
 		json ParsedJson;
 		std::map<int, std::string> argumentsMap;
@@ -361,7 +361,7 @@ namespace {
 				std::filesystem::path filepath(filename);
 				std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 				if (filename_without_extension == "bmp_img_read") {
-					// TODO : @gabe remove this logic
+					// TODO : remove this logic
 					if (demangled_name == "alloc") {
 						remove_functions.insert(&F);
 					}
@@ -426,7 +426,7 @@ namespace {
 			// will allocate objects and mark them symbolic for the nested pointers tooooo....
 
 
-			//@Gab : I don't think we need this logic, delete & test to see the result?
+			//don't think we need this logic, delete & test to see the result?
 			if (isa<PointerType>(ptr_type->getPointerElementType())) {
 				nested_pointers.push_back(stack_object);
 			}	 
@@ -795,7 +795,7 @@ namespace {
 							i,
 							"gep");
 					if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
-						// todo @ gab : fix me !!
+						// todo fix me !!
 						// temporary solution for i64 * inside struct (In rust, it is a function pointer)
 						if (auto *ptrType = dyn_cast<PointerType>(field_type)) {
 							Type *pointeeType = ptrType->getElementType();
@@ -1038,43 +1038,129 @@ namespace {
 					FunctionType *func_type = call_inst->getFunctionType();
 					std::vector<Type *> param_types(func_type->param_begin(), func_type->param_end());
 
-					// Create a new function with the same signature
-					Function *dummy_func = Function::Create(
-						func_type, Function::ExternalLinkage,
-						"symbolic_dummy" + std::to_string(count++), M);
-
-					// Create the function body
-					BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
-					Builder.SetInsertPoint(basic_block);
-
-					Type *return_type = func_type->getReturnType();
+					bool findFreeFunction = false;
+					Function *dummy_func;
+					//todo : make the rust free function more general
 					std::string filename = M.getModuleIdentifier();
 					std::filesystem::path filepath(filename);
 					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-					auto it = std::find(special_handle_list.begin(), special_handle_list.end(), filename_without_extension);
-					if (return_type->isVoidTy()) {
-						Builder.CreateRetVoid();
-					} else if (it != special_handle_list.end() && return_type->isIntegerTy(32)) {
-						Value *retVal = ConstantInt::get(return_type, 1);
-						Builder.CreateRet(retVal);
-					} else {
-						// Create a global variable for the return value
-						GlobalVariable *symbolic_ret_val = new GlobalVariable(
-							M, return_type, false, GlobalValue::PrivateLinkage,
-							Constant::getNullValue(return_type), "symbolic_ret");
+					if (Function *called_func = call_inst->getCalledFunction()) {
+						std::string function_name = exec_rustfilt(called_func->getName().str());
+						if (function_name == "core::ptr::drop_in_place<alloc::boxed::Box<url_free::UrlData>>") {
+							findFreeFunction = true;
+							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
+							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
+							Builder.SetInsertPoint(basic_block);
+							Argument* arg_data1 = dummy_func->getArg(0);
+							arg_data1->setName("data1");
+							Value* urlDataPtr = Builder.CreateLoad(arg_data1->getType()->getPointerElementType(),
+																		 arg_data1,
+																		 "ld_urlData");
+							Type* urlDataTy = urlDataPtr->getType()->getPointerElementType();
+							StructType* structTy = dyn_cast<StructType>(urlDataTy);
+							unsigned numElements = structTy->getNumElements();
+							for (unsigned i = 0; i < numElements; i++) {
+								Type* elemTy = structTy->getElementType(i);
+								Value* fieldPtr = Builder.CreateStructGEP(
+									structTy,
+									urlDataPtr,
+									i,
+									"field_" + std::to_string(i)
+								);
+								if (elemTy->isPointerTy()) {
+									Value* nullPtr = ConstantPointerNull::get(
+										llvm::cast<PointerType>(elemTy)
+									);
+									Builder.CreateStore(nullPtr, fieldPtr);
+								} else if (elemTy->isStructTy()) {
+									StructType* subStructTy = llvm::cast<StructType>(elemTy);
+									Value* subFieldPtr = Builder.CreateStructGEP(
+										subStructTy,
+										fieldPtr,
+										0,
+										"subfield0Ptr"
+									);
+									Type* subFieldTy = subStructTy->getElementType(0);
+									if (subFieldTy->isPointerTy()) {
+										Value* nullPtr =
+											ConstantPointerNull::get(llvm::cast<PointerType>(subFieldTy));
+										Builder.CreateStore(nullPtr, subFieldPtr);
+									}
+								}
+							}
+							Builder.CreateRetVoid();
+						} else if (filename_without_extension == "url_free" &&
+							function_name == "free") {
+							findFreeFunction = true;
+							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
+							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
+							Builder.SetInsertPoint(basic_block);
+							if (!dummy_func->arg_empty()) {
+								Argument *argStructPtr = dummy_func->getArg(0);
+								Value *origPtr = Builder.CreateBitCast(argStructPtr, getLLVMType(ctx, "struct.url_data"));
+								if (PointerType *ptrTy = dyn_cast<PointerType>(origPtr->getType())) {
+									if (StructType *structTy = dyn_cast<StructType>(ptrTy->getElementType())) {
+										unsigned numElems = structTy->getNumElements();
+										for (unsigned i = 0; i < numElems; ++i) {
+											Type *elemTy = structTy->getElementType(i);
+											if (elemTy->isPointerTy()) {
+												Value *fieldPtr = Builder.CreateStructGEP(
+													structTy,
+													origPtr,
+													i,
+													"field_ptr"
+												);
+												Value *nullVal = ConstantPointerNull::get(
+													cast<PointerType>(elemTy)
+												);
+												Builder.CreateStore(nullVal, fieldPtr);
+											}
+										}
+									}
+								}
+							}
+							Builder.CreateRetVoid();
+						}
+					}
+					if (!findFreeFunction) {
+						// Create a new function with the same signature
+						dummy_func = Function::Create(
+							func_type, Function::ExternalLinkage,
+							"symbolic_dummy" + std::to_string(count++), M);
 
-						// Call klee_make_symbolic
-						Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
-						assert(klee_make_symbolic && "Can't find klee_make_symbolic function!");
+						// Create the function body
+						BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
+						Builder.SetInsertPoint(basic_block);
 
-						Builder.CreateCall(
-							klee_make_symbolic,
-							{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
-							ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
-							Builder.CreateGlobalStringPtr("symbolic_var")});
+						Type *return_type = func_type->getReturnType();
+						std::string filename = M.getModuleIdentifier();
+						std::filesystem::path filepath(filename);
+						std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+						auto it = std::find(special_handle_list.begin(), special_handle_list.end(), filename_without_extension);
+						if (return_type->isVoidTy()) {
+							Builder.CreateRetVoid();
+						} else if (it != special_handle_list.end() && return_type->isIntegerTy(32)) {
+							Value *retVal = ConstantInt::get(return_type, 1);
+							Builder.CreateRet(retVal);
+						} else {
+							// Create a global variable for the return value
+							GlobalVariable *symbolic_ret_val = new GlobalVariable(
+								M, return_type, false, GlobalValue::PrivateLinkage,
+								Constant::getNullValue(return_type), "symbolic_ret");
 
-						// Return the global variable
-						Builder.CreateRet(Builder.CreateLoad(return_type, symbolic_ret_val));
+							// Call klee_make_symbolic
+							Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
+							assert(klee_make_symbolic && "Can't find klee_make_symbolic function!");
+
+							Builder.CreateCall(
+								klee_make_symbolic,
+								{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
+								ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
+								Builder.CreateGlobalStringPtr("symbolic_var")});
+
+							// Return the global variable
+							Builder.CreateRet(Builder.CreateLoad(return_type, symbolic_ret_val));
+						}
 					}
 
 					// Handle CallInst
