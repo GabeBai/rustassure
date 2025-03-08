@@ -6,7 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -fno-omit-frame-pointer")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -fno-omit-frame-pointer")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -fno-omit-frame-pointer")
+endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
 find_package(LLVM REQUIRED CONFIG)
@@ -21,17 +25,19 @@ add_definitions(${LLVM_DEFINITIONS})
 
 add_library(SymbolizerPass MODULE SymbolizerPass.cpp)
 
-target_link_libraries(SymbolizerPass
-		LLVMSupport
-		LLVMIRReader
-		LLVMTransformUtils
-		LLVMAnalysis
-		LLVMOption
-		LLVMDemangle
-		nlohmann_json::nlohmann_json
-		LLVMCore
-		C++
-)
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+	target_link_libraries(SymbolizerPass
+			LLVMSupport
+			LLVMIRReader
+			LLVMTransformUtils
+			LLVMAnalysis
+			LLVMOption
+			LLVMDemangle
+			nlohmann_json::nlohmann_json
+			LLVMCore
+			C++
+	)
+endif()
 
 set_target_properties(SymbolizerPass PROPERTIES PREFIX "")
 
