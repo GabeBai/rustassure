@@ -264,10 +264,7 @@ namespace {
 			"memcmp"
 		};
 		std::list<std::string> removed_list = {
-			"core::ptr::drop_in_place<alloc::boxed::Box<r::UrlData>>",
-			"core::ptr::drop_in_place<alloc::boxed::Box<url_free::UrlData>>",
 			"core::ptr::read_unaligned",
-			"core::ptr::drop_in_place<r::UrlData>",
 			"core::ptr::drop_in_place<core::option::Option<alloc::string::String>>",
 			"core::str::<impl str>::find",
 			"core::result::Result<T,E>::expect",
@@ -295,6 +292,7 @@ namespace {
 				//2) "<&str as alloc::ffi::c_str::CString::new::SpecNewImpl>::spec_new_impl"
 				//3) core::ffi::c_str::CStr::to_str,(opipng : app_print_cntrl keep will crash becasue of invalid memory)
 		};
+		GlobalVariable *gCallCounter;
 		std::list<std::string> special_handle_list = {
 			"isalnum",
 			"isalpha",
@@ -714,6 +712,17 @@ namespace {
 				}
 			}
 
+			Value *free_count = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
+			std::vector<Value*> args_vec;
+
+			std::string new_label = "free_call_counts";
+
+			args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + new_label + " : "));
+			args_vec.push_back(free_count);
+			Function* klee_print_expr_function = M.getFunction("klee_print_expr");
+			Builder.CreateCall(klee_print_expr_function, args_vec);
+
+
 			Builder.CreateRetVoid();
 		}
 
@@ -1046,79 +1055,24 @@ namespace {
 					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 					if (Function *called_func = call_inst->getCalledFunction()) {
 						std::string function_name = exec_rustfilt(called_func->getName().str());
-						if (function_name == "core::ptr::drop_in_place<alloc::boxed::Box<url_free::UrlData>>") {
+						if (function_name == "__rust_dealloc") {
 							findFreeFunction = true;
 							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
 							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
 							Builder.SetInsertPoint(basic_block);
-							Argument* arg_data1 = dummy_func->getArg(0);
-							arg_data1->setName("data1");
-							Value* urlDataPtr = Builder.CreateLoad(arg_data1->getType()->getPointerElementType(),
-																		 arg_data1,
-																		 "ld_urlData");
-							Type* urlDataTy = urlDataPtr->getType()->getPointerElementType();
-							StructType* structTy = dyn_cast<StructType>(urlDataTy);
-							unsigned numElements = structTy->getNumElements();
-							for (unsigned i = 0; i < numElements; i++) {
-								Type* elemTy = structTy->getElementType(i);
-								Value* fieldPtr = Builder.CreateStructGEP(
-									structTy,
-									urlDataPtr,
-									i,
-									"field_" + std::to_string(i)
-								);
-								if (elemTy->isPointerTy()) {
-									Value* nullPtr = ConstantPointerNull::get(
-										llvm::cast<PointerType>(elemTy)
-									);
-									Builder.CreateStore(nullPtr, fieldPtr);
-								} else if (elemTy->isStructTy()) {
-									StructType* subStructTy = llvm::cast<StructType>(elemTy);
-									Value* subFieldPtr = Builder.CreateStructGEP(
-										subStructTy,
-										fieldPtr,
-										0,
-										"subfield0Ptr"
-									);
-									Type* subFieldTy = subStructTy->getElementType(0);
-									if (subFieldTy->isPointerTy()) {
-										Value* nullPtr =
-											ConstantPointerNull::get(llvm::cast<PointerType>(subFieldTy));
-										Builder.CreateStore(nullPtr, subFieldPtr);
-									}
-								}
-							}
+							Value *oldVal = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
+							Value *incVal = Builder.CreateAdd(oldVal, ConstantInt::get(Type::getInt32Ty(ctx), 1), "incVal");
+							Builder.CreateStore(incVal, gCallCounter);
 							Builder.CreateRetVoid();
-						} else if (filename_without_extension == "url_free" &&
-							function_name == "free") {
+						} else if (function_name == "free") {
 							findFreeFunction = true;
 							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
 							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
 							Builder.SetInsertPoint(basic_block);
-							if (!dummy_func->arg_empty()) {
-								Argument *argStructPtr = dummy_func->getArg(0);
-								Value *origPtr = Builder.CreateBitCast(argStructPtr, getLLVMType(ctx, "struct.url_data"));
-								if (PointerType *ptrTy = dyn_cast<PointerType>(origPtr->getType())) {
-									if (StructType *structTy = dyn_cast<StructType>(ptrTy->getElementType())) {
-										unsigned numElems = structTy->getNumElements();
-										for (unsigned i = 0; i < numElems; ++i) {
-											Type *elemTy = structTy->getElementType(i);
-											if (elemTy->isPointerTy()) {
-												Value *fieldPtr = Builder.CreateStructGEP(
-													structTy,
-													origPtr,
-													i,
-													"field_ptr"
-												);
-												Value *nullVal = ConstantPointerNull::get(
-													cast<PointerType>(elemTy)
-												);
-												Builder.CreateStore(nullVal, fieldPtr);
-											}
-										}
-									}
-								}
-							}
+							//do logic
+							Value *oldVal = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
+							Value *incVal = Builder.CreateAdd(oldVal, ConstantInt::get(Type::getInt32Ty(ctx), 1), "incVal");
+							Builder.CreateStore(incVal, gCallCounter);
 							Builder.CreateRetVoid();
 						}
 					}
@@ -1189,6 +1143,12 @@ namespace {
 		}
 
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
+			gCallCounter = new GlobalVariable(M,
+				Type::getInt32Ty(M.getContext()),
+				false,
+				GlobalValue::ExternalLinkage,
+				ConstantInt::get(Type::getInt32Ty(M.getContext()), 0),
+				"free_function_call_count");
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);

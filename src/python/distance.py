@@ -78,12 +78,12 @@ def matchNodes(node1, node2):
 
 def traverse_two_levels_rust():
     path_to_file_dict = {}
-    base_dir = 'graph_output/Rust'
+    base_dir = '/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/Rust'
     for root, dirs, files in os.walk(base_dir):
         rel_path = os.path.relpath(root, base_dir)
         
         if len(rel_path.split(os.sep)) == 2:
-            dot_files = [file_name for file_name in files if file_name.endswith('.dot')]
+            dot_files = [file_name for file_name in files if file_name.endswith('.dot') or file_name.endswith('.txt')]
             if dot_files:
                 path_to_file_dict[rel_path] = dot_files
 
@@ -91,13 +91,13 @@ def traverse_two_levels_rust():
 
 def traverse_two_levels_c():
     path_to_file_dict = {}
-    base_dir = 'graph_output/C'
+    base_dir = '/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/C'
     for root, dirs, files in os.walk(base_dir):
         rel_path = os.path.relpath(root, base_dir)
         
         if len(rel_path.split(os.sep)) == 2:
 
-            dot_files = [file_name for file_name in files if file_name.endswith('.dot')]
+            dot_files = [file_name for file_name in files if file_name.endswith('.dot') or file_name.endswith('.txt')]
             if dot_files:
                 path_to_file_dict[rel_path] = dot_files
 
@@ -134,13 +134,14 @@ def load_graph_from_dot(file_path):
 
 
 def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
-    rust_base = "graph_output/rust"
-    c_base = "graph_output/C"
+    rust_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/Rust"
+    c_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/C"
 
     results_max = []
     results_min = []
     results_all = []
     results_best = []
+    free_counts = []
 
 
     for c_key, c_dot_files in c_dict.items():
@@ -194,11 +195,31 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                 best_r_key = max(matching_r_keys, key=len)
                 found_match = True
 
-        if found_match:
+        if c_key.endswith("free_call_counts"):
+            free_call_max_c = 0
+            free_call_max_rust = 0
+            with open(os.path.join(c_dir, "free_call_counts.txt"), "r") as file:
+                free_call_max = file.read().strip()
+                if free_call_max.isdigit():
+                    free_call_max_c = int(free_call_max)
+
+            if not best_r_key:
+                free_counts.append((function_name, argument_name, "rust_empty"))
+            else:
+                rust_dir = os.path.join(rust_base, best_r_key)
+                if os.path.exists(os.path.join(rust_dir, "free_call_counts.txt")):
+                    with open(os.path.join(rust_dir, "free_call_counts.txt"), "r") as file:
+                        free_call_max = file.read().strip()
+                        if free_call_max.isdigit():
+                            free_call_max_rust = int(free_call_max)
+                    free_counts.append((function_name, argument_name, str(abs(free_call_max_c - free_call_max_rust))))
+                else:
+                    free_counts.append((function_name, argument_name, "rust_empty"))
+        elif found_match:
             print(f" c is {c_key}, rust is {best_r_key}")
+
             rust_dir = os.path.join(rust_base, best_r_key)
             rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
-
             for i, c_file_path in enumerate(c_files):
                 G1 = load_graph_from_dot(c_file_path)
                 num_nodes_c = len(G1.nodes)
@@ -238,14 +259,15 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
             min_edit_distance_str = str(min_edit_distance)
             all_distances_str = ", ".join(map(str, sorted(all_edit_distances)))
 
-        results_max.append((function_name, argument_name, max_edit_distance_str))
-        results_min.append((function_name, argument_name, min_edit_distance_str))
-        results_all.append((function_name, argument_name, all_distances_str))
+        if not c_key.endswith("free_call_counts"):
+            results_max.append((function_name, argument_name, max_edit_distance_str))
+            results_min.append((function_name, argument_name, min_edit_distance_str))
+            results_all.append((function_name, argument_name, all_distances_str))
 
-        if node_num_not_match:
-            results_best.append((function_name, argument_name, all_distances_str))
-        else:
-            results_best.append((function_name, argument_name, min_edit_distance_str))
+            if node_num_not_match:
+                results_best.append((function_name, argument_name, all_distances_str))
+            else:
+                results_best.append((function_name, argument_name, min_edit_distance_str))
 
     os.makedirs(output_csv_path, exist_ok=True)
 
@@ -268,7 +290,10 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         writer = csv.writer(csvfile)
         writer.writerow(["function_name", "argument_name", "best_edit_distances"])
         writer.writerows(results_best)
-
+    with open(os.path.join(output_csv_path, 'free_count.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["function_name", "argument_name", "free_difference"])
+        writer.writerows(free_counts)
                         
 
 if __name__ == "__main__":

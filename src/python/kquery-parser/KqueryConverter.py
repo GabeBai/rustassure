@@ -36,12 +36,24 @@ def process_sym_values(file_path):
                 buffer = ""
 
     result = extract_values(processed_lines)
-    
+
+    filtered_result = {}
+    numeric_values = None
     for key, values in result.items():
-        print(f'key {key}')
-        print(f'value length {len(values)}')
-        print(f'value {values}')
-    return result
+        if key == "free_call_counts":
+            numeric_values = [int(v) for v in values if v.isdigit()]
+            values = str(numeric_values)
+        else:
+            filtered_result[key] = values
+
+    if numeric_values:
+        directory = os.path.join(key, "free_call_counts.txt")
+        if not os.path.exists(key):
+            os.makedirs(key)
+        with open(directory, "w") as output_file:
+            output_file.write(str(max(numeric_values)))
+
+    return filtered_result
 
 
 
@@ -62,21 +74,24 @@ def extract_values(processed_lines):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        result = process_sym_values('/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/klee_symbol_log/C/csv_increase_buffer_klee_log.txt')
         directory_name = 'csv_increase_buffer'
+        if os.path.exists(directory_name):
+            # Delete all contents in the directory
+            shutil.rmtree(directory_name)
+        os.makedirs(directory_name)
+        os.chdir(directory_name)
+        result = process_sym_values('test')
         proccess_c = True
     else:
-        result = process_sym_values(sys.argv[1])
         directory_name = sys.argv[2]
+        if os.path.exists(directory_name):
+            # Delete all contents in the directory
+            shutil.rmtree(directory_name)
+        os.makedirs(directory_name)
+        os.chdir(directory_name)
         proccess_c = (sys.argv[3] == 'c')
+        result = process_sym_values(sys.argv[1])
 
-    # Check if the directory exists
-    if os.path.exists(directory_name):
-        # Delete all contents in the directory
-        shutil.rmtree(directory_name)
-
-    os.makedirs(directory_name)
-    os.chdir(directory_name)
     for key, values in result.items():
         seen_graph = []
         # if (directory_name == 'csv_increase_buffer' and key == '*(arg_value_0.field_5)' and (not proccess_c)):
