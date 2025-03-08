@@ -119,7 +119,7 @@ manage_dot_files() {
 
 python3 ../python/llvmBitcodeEmitter.py testcase/c
 
-for c_file in testcase/C/*.bc; do
+for c_file in testcase/c/*.bc; do
     limit_jobs
     (
         echo "start process $c_file"
@@ -150,7 +150,7 @@ create_json
 
 python3 ../python/llvmBitcodeEmitter.py testcase/rust
 
-for r_file in testcase/Rust/*.bc; do
+for r_file in testcase/rust/*.bc; do
     limit_jobs
     (
         # Extract the base filename without extension
