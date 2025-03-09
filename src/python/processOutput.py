@@ -7,7 +7,7 @@ from evaluationScripts.coverage import calculate_coverage
 
 c_directory = "testcase/c"
 rust_directory = "testcase/rust"
-rust_ir_directory = "klee_ir_files/rust"
+rust_ir_directory = "klee_ir_files/Rust"
 execution_time = "execution_time.txt"
 
 best_edit_distance_directory = "edit_distance/best_edit_distances.csv"
