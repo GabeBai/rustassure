@@ -76,6 +76,3 @@ def process_data(file_directory, output_directory):
                          "terminate_error",
                          "time_out"])
         writer.writerows(result)
-
-if __name__ == "__main__":
-    count_klee_terminate("/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/libcsv_gpt_4o_20250311_2025-03-11_22-25-06")

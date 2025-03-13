@@ -4,6 +4,7 @@ from sympy.codegen import Print
 
 from evaluationScripts.unsafeCaculate import analyze_rs_files
 from evaluationScripts.coverage import calculate_coverage
+from evaluationScripts.countKleeTerminate import count_klee_terminate
 
 c_directory = "testcase/c"
 rust_directory = "testcase/rust"
@@ -73,6 +74,9 @@ def process_output(input_directory, model, code_base):
 
     # coverage Data
     coverage = calculate_coverage(os.path.join(input_directory, rust_ir_directory))
+
+    # terminate count
+    count_klee_terminate(input_directory)
 
     execution_time_directory = os.path.join(input_directory, execution_time)
     with open(execution_time_directory, "r") as f:
