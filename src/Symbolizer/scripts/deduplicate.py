@@ -40,7 +40,7 @@ def main():
     if directory_name == 'c':
         base_dir = "graph_output/C"
     else:
-        base_dir = "graph_output/rust"
+        base_dir = "graph_output/Rust"
 
     max_files = 20
 
