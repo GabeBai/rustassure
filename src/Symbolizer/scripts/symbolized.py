@@ -7,7 +7,8 @@ def start_symbolized(directory):
     demangle = ["opt", "-load-pass-plugin", "../build/DemanglePass/DemanglePass.so", "-O0", "r.ll", "-S", "-o", "r.ll"]
     symbolized = ["opt", "-load-pass-plugin", "../build/Pass/SymbolizerPass.so", "-O0", "r.ll", "-S", "-o", "r.ll"]
     link_core = ["llvm-link", "r.ll", "core_demangle.ll", "-S", "-o", "r.ll"]
-    commands = [compile, demangle, link_core]
+    remove_unuse_function = ["opt", "-S", "-internalize", "-internalize-public-api-list=main", "-globaldce", "r.ll", "-o", "r.ll"]
+    commands = [compile, demangle, link_core, remove_unuse_function]
     for cmd in commands:
         try:
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)
