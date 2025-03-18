@@ -4,6 +4,7 @@
 src/.DS_Store
 src/Symbolizer/testcase
 src/Symbolizer/Pass/cmake-build-debug/
+src/Symbolizer/DemanglePass/cmake-build-debug/
 src/SVF
 src/klee
 src/Symbolizer/build/
