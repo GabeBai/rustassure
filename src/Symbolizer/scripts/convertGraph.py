@@ -31,7 +31,7 @@ def process_dot_file(dot_file: str):
 
 def main():
     directory_name = sys.argv[1]
-    if directory_name == 'c':
+    if directory_name == 'C':
         dot_files = glob("graph_output/C/**/**/*.dot", recursive=True)
     else:
         dot_files = glob("graph_output/Rust/**/**/*.dot", recursive=True)

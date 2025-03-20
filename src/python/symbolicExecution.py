@@ -286,12 +286,12 @@ def main():
 
     # 1) Emitting LLVM bitcode for C
     try:
-        run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/c")
+        run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/C")
     except Exception as e:
         logging.error("compile C error: %s", e, exc_info=True)
 
     # 2) Process each C .bc file in parallel
-    c_bc_files = glob.glob("testcase/c/*.bc")
+    c_bc_files = glob.glob("testcase/C/*.bc")
     with ThreadPoolExecutor(max_workers=MAX_JOBS) as executor:
         future_to_file = {executor.submit(process_c_file, f): f for f in c_bc_files}
 
@@ -305,12 +305,12 @@ def main():
 
     # Deduplicate + convertGraph for C
     try:
-        run_command("python3 ../scripts/deduplicate.py c")
+        run_command("python3 ../scripts/deduplicate.py C")
     except Exception as e:
         logging.error("deduplicate C outputs error: %s", e, exc_info=True)
 
     try:
-        run_command("python3 ../scripts/convertGraph.py c")
+        run_command("python3 ../scripts/convertGraph.py C")
     except Exception as e:
         logging.error("convertGraph C outputs error: %s", e, exc_info=True)
 
@@ -319,12 +319,12 @@ def main():
 
     # 3) Emitting LLVM bitcode for Rust
     try:
-        run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/rust")
+        run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/Rust")
     except Exception as e:
         logging.error("compile rust error: %s", e, exc_info=True)
 
     # 4) Process each Rust .bc file in parallel
-    r_bc_files = glob.glob("testcase/rust/*.bc")
+    r_bc_files = glob.glob("testcase/Rust/*.bc")
     with ThreadPoolExecutor(max_workers=MAX_JOBS) as executor:
         future_to_file = {executor.submit(process_rust_file, f): f for f in r_bc_files}
 
@@ -337,12 +337,12 @@ def main():
 
     # Deduplicate + convertGraph for Rust
     try:
-        run_command("python3 ../scripts/deduplicate.py rust")
+        run_command("python3 ../scripts/deduplicate.py Rust")
     except Exception as e:
         logging.error("deduplicate rust error: %s", e, exc_info=True)
 
     try:
-        run_command("python3 ../scripts/convertGraph.py rust")
+        run_command("python3 ../scripts/convertGraph.py Rust")
     except Exception as e:
         logging.error("convertGraph rust error: %s", e, exc_info=True)
 

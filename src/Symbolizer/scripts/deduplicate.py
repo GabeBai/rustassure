@@ -37,7 +37,7 @@ def manage_dot_files_by_size(dir_path, max_files=20):
 
 def main():
     directory_name = sys.argv[1]
-    if directory_name == 'c':
+    if directory_name == 'C':
         base_dir = "graph_output/C"
     else:
         base_dir = "graph_output/Rust"
