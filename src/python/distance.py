@@ -78,7 +78,7 @@ def matchNodes(node1, node2):
 
 def traverse_two_levels_rust():
     path_to_file_dict = {}
-    base_dir = '/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/Rust'
+    base_dir = 'graph_output/Rust'
     for root, dirs, files in os.walk(base_dir):
         rel_path = os.path.relpath(root, base_dir)
         
@@ -91,7 +91,7 @@ def traverse_two_levels_rust():
 
 def traverse_two_levels_c():
     path_to_file_dict = {}
-    base_dir = '/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/C'
+    base_dir = 'graph_output/C'
     for root, dirs, files in os.walk(base_dir):
         rel_path = os.path.relpath(root, base_dir)
         
@@ -134,8 +134,8 @@ def load_graph_from_dot(file_path):
 
 
 def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
-    rust_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/Rust"
-    c_base = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/graph_output/C"
+    rust_base = "graph_output/Rust"
+    c_base = "graph_output/C"
 
     results_max = []
     results_min = []

@@ -25,15 +25,15 @@ convert_klee_4omini = "../scripts/convert_klee_4omini.sh"
 
 def start_process(source_path, model : Model):
     subprocess.run(["bash", divide_script_path], cwd=source_path, text=True)
-
-    if model == Model.claude:
-        subprocess.run(["bash", convert_klee_claude], cwd=source_path, text=True)
-    elif model == Model.gpt_4o:
-        subprocess.run(["bash", convert_klee], cwd=source_path, text=True)
-    elif model == Model.gpt_3_5:
-        subprocess.run(["bash", convert_klee_gpt3], cwd=source_path, text=True)
-    elif model == Model.gpt_4o_mini:
-        subprocess.run(["bash", convert_klee_4omini], cwd=source_path, text=True)
+    subprocess.run(["python3", "../../python/symbolicExecution.py"], cwd=source_path, text=True)
+    # if model == Model.claude:
+    #     subprocess.run(["bash", convert_klee_claude], cwd=source_path, text=True)
+    # elif model == Model.gpt_4o:
+    #     subprocess.run(["bash", convert_klee], cwd=source_path, text=True)
+    # elif model == Model.gpt_3_5:
+    #     subprocess.run(["bash", convert_klee_gpt3], cwd=source_path, text=True)
+    # elif model == Model.gpt_4o_mini:
+    #     subprocess.run(["bash", convert_klee_4omini], cwd=source_path, text=True)
 
 
 def prepare_directory(source, target_directory):
@@ -304,6 +304,7 @@ def execute_task(codebase, model):
 
 
 if __name__ == "__main__":
+    # libbmp_gpt_4o()
     parser = argparse.ArgumentParser(
         description="custom your input directory")
     parser.add_argument("--src", type=str, default="",
