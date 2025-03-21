@@ -44,7 +44,7 @@ def run_command_and_log(cmd, log_file, cwd=None):
             f"Command failed: {cmd}\n"
         )
         print(f"[ERROR] command fail: {cmd}")
-        logging.info(f"[ERROR] command fail: {cmd}")
+        logger.info(f"[ERROR] command fail: {cmd}")
         raise subprocess.CalledProcessError(process.returncode, cmd, output=msg)
     print(f"[INFO] command success: {cmd}")
 
@@ -62,7 +62,7 @@ def run_command(cmd, cwd=None):
             f"Command failed: {cmd}\n"
         )
         print(f"[ERROR] command fail: {cmd}")
-        logging.info(f"[ERROR] command fail: {cmd}")
+        logger.info(f"[ERROR] command fail: {cmd}")
         raise subprocess.CalledProcessError(process.returncode, cmd, output=msg)
     print(f"[INFO] command success: {cmd}")
 
@@ -154,6 +154,10 @@ def prepare_directory(dir_path):
 
     if os.path.exists("process_log.log"):
         os.remove("process_log.log")
+    
+    if os.path.exists("all_logs"):
+        shutil.rmtree("all_logs")
+    os.makedirs("all_logs")
 
 def manage_dot_files(dir_path):
     """
@@ -276,9 +280,8 @@ def main():
 
     if os.path.exists("input.json"):
         os.remove("input.json")
-
+    
     # Prepare directories
-    os.makedirs("all_logs")
     prepare_directory("klee_ir_files")
     prepare_directory("klee_symbol_log")
     prepare_directory("klee_symbol_error_log")
@@ -288,7 +291,7 @@ def main():
     try:
         run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/C")
     except Exception as e:
-        logging.error("compile C error: %s", e, exc_info=True)
+        logger.error("compile C error: %s", e, exc_info=True)
 
     # 2) Process each C .bc file in parallel
     c_bc_files = glob.glob("testcase/C/*.bc")
@@ -300,19 +303,19 @@ def main():
             try:
                 future.result()
             except Exception as e:
-                logging.error(f"C symbolic {f} failed", exc_info=True)
+                logger.error(f"C symbolic {f} failed", exc_info=True)
 
 
     # Deduplicate + convertGraph for C
     try:
         run_command("python3 ../scripts/deduplicate.py C")
     except Exception as e:
-        logging.error("deduplicate C outputs error: %s", e, exc_info=True)
+        logger.error("deduplicate C outputs error: %s", e, exc_info=True)
 
     try:
         run_command("python3 ../scripts/convertGraph.py C")
     except Exception as e:
-        logging.error("convertGraph C outputs error: %s", e, exc_info=True)
+        logger.error("convertGraph C outputs error: %s", e, exc_info=True)
 
     # Create JSON (replacing the 'jq' step)
     create_json()
@@ -321,7 +324,7 @@ def main():
     try:
         run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/Rust")
     except Exception as e:
-        logging.error("compile rust error: %s", e, exc_info=True)
+        logger.error("compile rust error: %s", e, exc_info=True)
 
     # 4) Process each Rust .bc file in parallel
     r_bc_files = glob.glob("testcase/Rust/*.bc")
@@ -333,24 +336,24 @@ def main():
             try:
                 future.result()
             except Exception as e:
-                logging.error(f"Rust symbolic {f} failed", exc_info=True)
+                logger.error(f"Rust symbolic {f} failed", exc_info=True)
 
     # Deduplicate + convertGraph for Rust
     try:
         run_command("python3 ../scripts/deduplicate.py Rust")
     except Exception as e:
-        logging.error("deduplicate rust error: %s", e, exc_info=True)
+        logger.error("deduplicate rust error: %s", e, exc_info=True)
 
     try:
         run_command("python3 ../scripts/convertGraph.py Rust")
     except Exception as e:
-        logging.error("convertGraph rust error: %s", e, exc_info=True)
+        logger.error("convertGraph rust error: %s", e, exc_info=True)
 
     # Run distance.py
     try:
         run_command("python3 ../../python/distance.py")
     except Exception as e:
-        logging.error("distance error: %s", e, exc_info=True)
+        logger.error("distance error: %s", e, exc_info=True)
 
     # Calculate total elapsed time
     end_time = time.time()
