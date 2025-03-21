@@ -366,11 +366,13 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         parser = KqueryParser(token_stream)
         
         tree = parser.prog()
-        print(tree.toStringTree(recog=parser))
+        # print(tree.toStringTree(recog=parser))
 
         # Create and apply the custom visitor
+        print(f"processing expression {i}")
         visitor = KqueryASTVisitor()
         visitor.visit(tree)
+        print(f"finish processing expression {i}")
 
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)

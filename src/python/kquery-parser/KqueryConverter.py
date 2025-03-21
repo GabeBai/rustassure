@@ -73,14 +73,12 @@ def extract_values(processed_lines):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        directory_name = 'csv_increase_buffer'
-        if os.path.exists(directory_name):
+    if len(sys.argv) == 2:
+        if os.path.exists("temp"):
             # Delete all contents in the directory
-            shutil.rmtree(directory_name)
-        os.makedirs(directory_name)
-        os.chdir(directory_name)
-        result = process_sym_values('test')
+            shutil.rmtree("temp")
+        os.makedirs("temp")
+        result = process_sym_values(sys.argv[1])
         proccess_c = True
     else:
         directory_name = sys.argv[2]
