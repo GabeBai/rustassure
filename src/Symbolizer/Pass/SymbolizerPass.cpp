@@ -270,6 +270,8 @@ namespace {
 			"core::result::Result<T,E>::expect",
 			"core::slice::<impl [T]>::is_empty",
 			"core::result::Result<T,E>::ok",
+			// @gab: check this function!
+			"core::ptr::metadata::from_raw_parts_mut",
 			// interesting, actually we has this function, but cannot get result with it..see good case..
 			"alloc::slice::<impl [T]>::into_vec",
 			"core::result::Result<T,E>::unwrap_or",
