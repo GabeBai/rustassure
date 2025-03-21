@@ -7,9 +7,9 @@ from openai import OpenAI
 import subprocess
 import traceback
 import tiktoken
-import argparse
 import shutil
 import argparse
+import platform
 import os
 
 from datetime import datetime
@@ -159,11 +159,8 @@ def remove_main_function(filepath: str) -> None:
                 brace_count = 0
         i += 1
 
-    # 把处理过的内容写回文件
     with open(filepath, 'w', encoding='utf-8') as f:
         f.writelines(output_lines)
-
-    print(f"已从 {os.path.basename(filepath)} 中移除 main() 函数。")
 
 def remove_no_mangle_lines(filepath: str) -> None:
 
@@ -198,8 +195,14 @@ def emitLLVMBitcodes(individualFuncPath, logger):
                 file.writelines(content)
 
         # First, annotate the Rust function with "#[no_mangle]" to prevent it getting removed
+
+        if platform.system() == "Darwin":
+            inplace_arg = "-i ''"  # macOS (BSD sed) use -i ''
+        else:
+            inplace_arg = "-i"     # Linux (GNU sed) use -i
+
         sed_cmd = (
-            f"sed -i '' "
+            f"sed {inplace_arg} "
             f"-e '/^[[:space:]]*unsafe fn /i \\\n#[no_mangle]' "
             f"-e '/^[[:space:]]*pub extern \"C\" fn /i \\\n#[no_mangle]' "
             f"-e '/^[[:space:]]*extern \"C\" fn /i \\\n#[no_mangle]' "
@@ -209,14 +212,12 @@ def emitLLVMBitcodes(individualFuncPath, logger):
             f"-e '/^[[:space:]]*pub unsafe extern \"C\" fn /i \\\n#[no_mangle]' "
             f"{filename}"
         )
-        subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(sed_cmd, shell=True, text=True)
 
-        subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        sed_cmd = f"sed -i '' '/^struct /i \\\n#[repr(C, packed)]' {filename}"
-        sed_cmd_pub = f"sed -i '' '/^pub struct /i \\\n#[repr(C, packed)]' {filename}"
-        subprocess.run(sed_cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.run(sed_cmd_pub, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        sed_cmd_struct = f"sed {inplace_arg} '/^struct /i \\\n#[repr(C, packed)]' {filename}"
+        sed_cmd_pub_struct = f"sed {inplace_arg} '/^pub struct /i \\\n#[repr(C, packed)]' {filename}"
+        subprocess.run(sed_cmd_struct, shell=True, text=True)
+        subprocess.run(sed_cmd_pub_struct, shell=True, text=True)
 
         # Compile it and generate the bitcode file
         logger.debug("Compiling Rust file %s ", filename)

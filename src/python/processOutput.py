@@ -6,8 +6,8 @@ from evaluationScripts.unsafeCaculate import analyze_rs_files
 from evaluationScripts.coverage import calculate_coverage
 from evaluationScripts.countKleeTerminate import count_klee_terminate
 
-c_directory = "testcase/c"
-rust_directory = "testcase/rust"
+c_directory = "testcase/C"
+rust_directory = "testcase/Rust"
 rust_ir_directory = "klee_ir_files/Rust"
 execution_time = "execution_time.txt"
 
@@ -99,7 +99,7 @@ def process_output(input_directory, model, code_base):
 
 
 if __name__ == '__main__':
-    process_output("../Symbolizer/libcsv_gpt_4o_20250301_2025-03-01_12-25-25", "libcsv")
+    process_output("../Symbolizer/libcsv_gpt_4o_20250320_2025-03-20_19-24-28", "gpt-4o", "libcsv")
 
 
 
