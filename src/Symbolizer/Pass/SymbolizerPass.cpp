@@ -250,9 +250,6 @@ namespace {
 
 
 	struct Symbolizer : PassInfoMixin<Symbolizer> {
-
-		//TODO : Delete this logic
-		std::vector<StructType*> visited_struct_types;
 		json ParsedJson;
 		std::map<int, std::string> argumentsMap;
 		std::unordered_set<StructType*> visited_structs;
@@ -437,10 +434,8 @@ namespace {
 				// Is it a C pointer?
 				if (PointerType* ptr_type = dyn_cast<PointerType>(pointer->getType()->getPointerElementType())) {
 					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), nested_pointers);
-
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(pointer->getType()->getPointerElementType())) { // these are stack variables
-					visited_struct_types.push_back(struct_type);
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
 						Type* field_type = struct_type->getElementType(i);
 						// If it is a pointer, then we try to initialize it and make it work
@@ -459,6 +454,7 @@ namespace {
 								visited_structs.insert(struct_type);
 							}
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", nested_pointers);
+							visited_structs.emplace(struct_type);
 						}
 					}
 				}
@@ -469,7 +465,6 @@ namespace {
 			LLVMContext& ctx = M.getContext();
 			// special handling for i8* which could be strings
 			bool cast_to_integer = false;
-			Type* originalType = type;
 			if (IntegerType* integer_type = dyn_cast<IntegerType>(type)) {
 					type = ArrayType::get(integer_type, 100);
 					cast_to_integer = true;
@@ -490,6 +485,7 @@ namespace {
 					struct_symbol_type->setBody({llvm::Type::getInt8Ty(ctx), llvm::Type::getInt8Ty(ctx)});
 				}
 
+				//special handle array when its size is 0
 				if (auto *arrayTy = llvm::dyn_cast<llvm::ArrayType>(type)) {
 					Type *elementTy = arrayTy->getElementType();
 					if (arrayTy->getNumElements() == 0) {
@@ -514,7 +510,7 @@ namespace {
 				if (needCast) {
 					return Builder.CreateBitCast(stack_arg, originType);
 				} else if (cast_to_integer) {
-					IntegerType* integer_type = dyn_cast<IntegerType>(originalType);
+					IntegerType* integer_type = dyn_cast<IntegerType>(originType);
 					Type* void_ptr_type = PointerType::get(IntegerType::get(ctx, integer_type->getBitWidth()), 0);
 					return (Builder.CreateBitCast(stack_arg, void_ptr_type));
 				} else {
@@ -607,18 +603,12 @@ namespace {
 				if (needReplace) {
 					targetType = getLLVMType(ctx, targetName);
 				}
-			
-				if (isa<PointerType>(targetType) && targetType->getPointerElementType()) {
-					if (isa<FunctionType>(targetType->getPointerElementType())) {
-						FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
-						Function *function = Function::Create(functionType, Function::ExternalLinkage, "myFunction", M);
-						create_function(M, functionType->getReturnType(), function);
-						actual_args.push_back(function);
-					} else {
-						stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace, needIgnore);
-						LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
-						actual_args.push_back(stack_load_inst);
-					}
+
+				if (isa<PointerType>(targetType) && isa<FunctionType>(targetType->getPointerElementType())) {
+					FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
+					Function *function = Function::Create(functionType, Function::ExternalLinkage, "myFunction", M);
+					create_function(M, functionType->getReturnType(), function);
+					actual_args.push_back(function);
 				} else {
 					stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace, needIgnore);
 					LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
@@ -726,6 +716,7 @@ namespace {
 			// then just pass it directly
 			// and return.
 
+			//special handle array when its size is 0
 			if (auto *pointer_type = dyn_cast<PointerType>(arg_value->getType())) {
 				Type *element_type = pointer_type->getPointerElementType();
 				if (auto *arrTy = dyn_cast<ArrayType>(element_type)) {
@@ -763,7 +754,6 @@ namespace {
 			}
 
 			// If it is a pointer type, we have to be a little careful
-			// for GEP
 			while (isa<PointerType>(arg_value->getType()) && isa<PointerType>(arg_value->getType()->getPointerElementType())) {
 				label = "*(" + label + ")";
 				// Create a load
@@ -804,11 +794,7 @@ namespace {
 								continue;
 							}
 						}
-						if (need_cast) {
-							print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, field_type), label + "." + "field_" + std::to_string(i));
-						} else {
-							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
-						}
+						print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, field_type), label + "." + "field_" + std::to_string(i));
 					} else {
 						
 						// Create a load
