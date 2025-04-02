@@ -420,20 +420,6 @@ namespace {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType()->getPointerElementType());
 			}
 			Builder.CreateStore(stack_object, pointer);
-			// llvm::errs() << "Created and stored: " << *stack_object << " of type " << *(ptr_type->getPointerElementType()) << " to " << *pointer << "\n";
-			// If the ptr_type was a pointer or a struct type (with potentially nested pointers) we
-			// will allocate objects and mark them symbolic for the nested pointers tooooo....
-
-
-			//don't think we need this logic, delete & test to see the result?
-			if (isa<PointerType>(ptr_type->getPointerElementType())) {
-				nested_pointers.push_back(stack_object);
-			}	 
-			if (isa<StructType>(ptr_type->getPointerElementType())) {
-				if (std::find(visited_struct_types.begin(), visited_struct_types.end(), ptr_type->getPointerElementType()) == visited_struct_types.end()) {
-					nested_pointers.push_back(stack_object);
-				}
-			}
 		}
 
 		void initialize_inner_objects(Module& M, IRBuilder<>& Builder, Value* stack_var) {
@@ -516,7 +502,10 @@ namespace {
 				initialize_inner_objects(M, Builder, stack_arg);
 				// Only mark the non-pointers symbolic
 				// For structs, only mark the non-pointer fields symbolic
-				if (!isa<PointerType>(type) && !needIgnore) {
+				if (isa<PointerType>(type) && isa<PointerType>(type->getPointerElementType())) {
+					needIgnore = true;
+				}
+				if (!needIgnore) {
 					// type is the type passed to the CreateAlloca
 					// For structs too, we can mark the whole struct
 					// as symbolic
@@ -626,8 +615,9 @@ namespace {
 						create_function(M, functionType->getReturnType(), function);
 						actual_args.push_back(function);
 					} else {
-						stackArg = create_object_and_mark_symbolic(M, Builder,targetType->getPointerElementType(), arg.getName(), originalType, needReplace, needIgnore);
-						actual_args.push_back(stackArg);
+						stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace, needIgnore);
+						LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
+						actual_args.push_back(stack_load_inst);
 					}
 				} else {
 					stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace, needIgnore);
@@ -773,6 +763,7 @@ namespace {
 			}
 
 			// If it is a pointer type, we have to be a little careful
+			// for GEP
 			while (isa<PointerType>(arg_value->getType()) && isa<PointerType>(arg_value->getType()->getPointerElementType())) {
 				label = "*(" + label + ")";
 				// Create a load
@@ -858,6 +849,12 @@ namespace {
 					}
 				}
 			} else if (arg_value->getType()->isPointerTy()) {
+				//print pointer
+				std::vector<Value*> args_vec_pointer;
+				args_vec_pointer.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + "_pointer" + " : "));
+				args_vec_pointer.push_back(arg_value);
+				Builder.CreateCall(klee_print_expr_function, args_vec_pointer);
+
 				Value *isNotNull = Builder.CreateICmpNE(arg_value, Constant::getNullValue(arg_value->getType()), "is_not_null");
 
 				// Create a basic block for the loop and after-loop continuation
