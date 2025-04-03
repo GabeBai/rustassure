@@ -254,8 +254,8 @@ def process_rust_file(bc_file):
 
     # link core
     link_core = (
-        f"llvm-link klee_ir_files/Rust/{base_name}_klee.ll -S -o"
-        f"klee_ir_files/Rust/{base_name}_klee.ll"
+        f"llvm-link klee_ir_files/Rust/{base_name}_klee.ll ../scripts/core_demangle.ll"
+        f"-S -o klee_ir_files/Rust/{base_name}_klee.ll"
     )
     run_command(link_core)
 
