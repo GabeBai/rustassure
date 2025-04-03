@@ -238,13 +238,28 @@ def process_rust_file(bc_file):
     """
     base_name = os.path.basename(bc_file).replace(".rs.bc", "")
 
-    # 1) opt pass
+    # demangle
+    demangle_opt = (
+        f"opt -load-pass-plugin ../build/Pass/DemanglePass.so"
+        f"-O0 {bc_file} -S -o klee_ir_files/Rust/{base_name}_klee.ll"
+    )
+    run_command(demangle_opt)
+
+    # symbolize
     cmd_opt1 = (
         f"opt -load-pass-plugin ../build/Pass/SymbolizerPass.so "
-        f"-O0 {bc_file} -S -o klee_ir_files/Rust/{base_name}_klee.ll"
+        f"-O0 klee_ir_files/Rust/{base_name}_klee.ll -S -o klee_ir_files/Rust/{base_name}_klee.ll"
     )
     run_command(cmd_opt1)
 
+    # link core
+    link_core = (
+        f"llvm-link klee_ir_files/Rust/{base_name}_klee.ll -S -o"
+        f"klee_ir_files/Rust/{base_name}_klee.ll"
+    )
+    run_command(link_core)
+
+    # remove unuse function
     # 2) opt pass (internalize + globaldce)
     cmd_opt2 = (
         f"opt -S -internalize -internalize-public-api-list=main -globaldce "
