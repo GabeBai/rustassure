@@ -335,38 +335,38 @@ namespace {
 			// We will only consider the function that has the same name as the file.
 			// Note: we have separated out each function in its own file so this isn't a problem
 
-			std::unordered_set<Function*> remove_functions;
-			std::string filename = M.getModuleIdentifier();
-			std::filesystem::path filepath(filename);
-			std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-			for (Function& F: M.functions()) {
-				if (!F.hasName()) {
-					remove_functions.insert(&F);
-					//F.eraseFromParent();
-					continue;
-				}
-				std::string demangled_name = exec_rustfilt(F.getName().str());
+			// std::unordered_set<Function*> remove_functions;
+			// std::string filename = M.getModuleIdentifier();
+			// std::filesystem::path filepath(filename);
+			// std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+			// for (Function& F: M.functions()) {
+			// 	if (!F.hasName()) {
+			// 		remove_functions.insert(&F);
+			// 		//F.eraseFromParent();
+			// 		continue;
+			// 	}
+			// 	std::string demangled_name = exec_rustfilt(F.getName().str());
 			
-				auto it = std::find(removed_list.begin(), removed_list.end(), demangled_name);
-				if (it != removed_list.end()) {
-					remove_functions.insert(&F);
-					outs() << "removed function: " << demangled_name << "\n";
-				}
+			// 	auto it = std::find(removed_list.begin(), removed_list.end(), demangled_name);
+			// 	if (it != removed_list.end()) {
+			// 		remove_functions.insert(&F);
+			// 		outs() << "removed function: " << demangled_name << "\n";
+			// 	}
 				
-				std::string filename = M.getModuleIdentifier();
-				std::filesystem::path filepath(filename);
-				std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-				if (filename_without_extension == "bmp_img_read") {
-					// TODO : remove this logic
-					if (demangled_name == "alloc") {
-						remove_functions.insert(&F);
-					}
-				}
+			// 	std::string filename = M.getModuleIdentifier();
+			// 	std::filesystem::path filepath(filename);
+			// 	std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+			// 	if (filename_without_extension == "bmp_img_read") {
+			// 		// TODO : remove this logic
+			// 		if (demangled_name == "alloc") {
+			// 			remove_functions.insert(&F);
+			// 		}
+			// 	}
 
-			}
-			for (Function* F: remove_functions) {
-				F->deleteBody();
-			}
+			// }
+			// for (Function* F: remove_functions) {
+			// 	F->deleteBody();
+			// }
 			Function* main_function = M.getFunction("main");
 			if (main_function) {
 				main_function->eraseFromParent();
@@ -1136,7 +1136,7 @@ namespace {
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);
-			convert_function_calls(M);
+			// convert_function_calls(M);
 			convert_unreachable_conditions(M);
 			//M.dump();
 			return PreservedAnalyses::none();
