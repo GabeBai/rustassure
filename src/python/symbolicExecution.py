@@ -240,14 +240,14 @@ def process_rust_file(bc_file):
 
     # demangle
     demangle_opt = (
-        f"opt -load-pass-plugin ../build/Pass/DemanglePass.so"
+        f"opt -load-pass-plugin ../build/Pass/DemanglePass.so "
         f"-O0 {bc_file} -S -o klee_ir_files/Rust/{base_name}_klee.ll"
     )
     run_command(demangle_opt)
 
     # link core
     link_core = (
-        f"llvm-link klee_ir_files/Rust/{base_name}_klee.ll ../scripts/core_demangle.ll"
+        f"llvm-link klee_ir_files/Rust/{base_name}_klee.ll ../scripts/core_demangle.ll "
         f"-S -o klee_ir_files/Rust/{base_name}_klee.ll"
     )
     run_command(link_core)
