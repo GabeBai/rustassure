@@ -510,7 +510,7 @@ namespace {
 				if (needCast) {
 					return Builder.CreateBitCast(stack_arg, originType);
 				} else if (cast_to_integer) {
-					IntegerType* integer_type = dyn_cast<IntegerType>(originType);
+					IntegerType* integer_type = dyn_cast<IntegerType>(originType->getPointerElementType());
 					Type* void_ptr_type = PointerType::get(IntegerType::get(ctx, integer_type->getBitWidth()), 0);
 					return (Builder.CreateBitCast(stack_arg, void_ptr_type));
 				} else {
@@ -599,11 +599,10 @@ namespace {
 				}
 
 				Type* targetType = arg.getType();
-				Type* originalType = targetType;
 				if (needReplace) {
 					targetType = getLLVMType(ctx, targetName);
-					originalType = PointerType::get(originalType, 0);
 				}
+				Type* originalType = PointerType::get(targetType, 0);
 
 				if (isa<PointerType>(targetType) && isa<FunctionType>(targetType->getPointerElementType())) {
 					FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
