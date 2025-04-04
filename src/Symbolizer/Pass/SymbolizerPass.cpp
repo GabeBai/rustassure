@@ -411,7 +411,7 @@ namespace {
 				return;
 			}
 			// If it is, then allocate something and store it
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type->getPointerElementType(), false, false);
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type, false, false);
 			// Store it to the pointer
 			if (pointer->getType()->getPointerElementType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType()->getPointerElementType());
@@ -666,18 +666,6 @@ namespace {
 					target_value = Builder.CreateBitCast(arg_value, targetType);
 				}
 
-				if (auto *pointer_type = dyn_cast<PointerType>(arg_value->getType())) {
-					Type *element_type = pointer_type->getPointerElementType();
-					if (auto *arrTy = dyn_cast<ArrayType>(element_type)) {
-						Type *arrElmTy = arrTy->getElementType();
-						if (arrTy->getNumElements() == 0) {
-							if (auto *intTy = dyn_cast<IntegerType>(arrElmTy)) {
-								Type *intPtrTy = PointerType::get(intTy, 0);
-								target_value = Builder.CreateBitCast(arg_value, intPtrTy, "cast");
-							}
-						}
-					}
-				}
 
 				print_nested_klee_exprs(M, Builder, target_value, prefix + std::to_string(index));
 			}
