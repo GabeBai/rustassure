@@ -599,10 +599,11 @@ namespace {
 				}
 
 				Type* targetType = arg.getType();
+				Type* originalType = targetType;
 				if (needReplace) {
 					targetType = getLLVMType(ctx, targetName);
 				}
-				Type* originalType = PointerType::get(targetType, 0);
+				originalType = PointerType::get(targetType, 0);
 
 				if (isa<PointerType>(targetType) && isa<FunctionType>(targetType->getPointerElementType())) {
 					FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
