@@ -602,6 +602,7 @@ namespace {
 				Type* originalType = targetType;
 				if (needReplace) {
 					targetType = getLLVMType(ctx, targetName);
+					originalType = PointerType::get(originalType, 0);
 				}
 
 				if (isa<PointerType>(targetType) && isa<FunctionType>(targetType->getPointerElementType())) {
@@ -794,7 +795,12 @@ namespace {
 								continue;
 							}
 						}
-						print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, field_type), label + "." + "field_" + std::to_string(i));
+						if (need_cast) {
+							// field_type is address of the targetType
+							print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, field_type), label + "." + "field_" + std::to_string(i));
+						} else {
+							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
+						}
 					} else {
 						
 						// Create a load
