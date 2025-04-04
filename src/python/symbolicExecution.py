@@ -245,19 +245,19 @@ def process_rust_file(bc_file):
     )
     run_command(demangle_opt)
 
-    # symbolize
-    cmd_opt1 = (
-        f"opt -load-pass-plugin ../build/Pass/SymbolizerPass.so "
-        f"-O0 klee_ir_files/Rust/{base_name}_klee.ll -S -o klee_ir_files/Rust/{base_name}_klee.ll"
-    )
-    run_command(cmd_opt1)
-
     # link core
     link_core = (
         f"llvm-link klee_ir_files/Rust/{base_name}_klee.ll ../scripts/core_demangle.ll"
         f"-S -o klee_ir_files/Rust/{base_name}_klee.ll"
     )
     run_command(link_core)
+
+    # symbolize
+    cmd_opt1 = (
+        f"opt -load-pass-plugin ../build/Pass/SymbolizerPass.so "
+        f"-O0 klee_ir_files/Rust/{base_name}_klee.ll -S -o klee_ir_files/Rust/{base_name}_klee.ll"
+    )
+    run_command(cmd_opt1)
 
     # remove unuse function
     # 2) opt pass (internalize + globaldce)

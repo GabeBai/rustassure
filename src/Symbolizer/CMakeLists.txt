@@ -15,5 +15,5 @@ set(CMAKE_C_FLAGS "-O0 -ggdb")
 SET(CMAKE_CXX_FLAGS "-Wall -fno-rtti")
 
 add_subdirectory(Pass)
-add_subdirectory(DemanglePass)
-add_subdirectory(LoopInfoPass)
+# add_subdirectory(DemanglePass)
+# add_subdirectory(LoopInfoPass)
