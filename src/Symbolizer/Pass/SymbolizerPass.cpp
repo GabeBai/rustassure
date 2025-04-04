@@ -1136,8 +1136,8 @@ namespace {
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);
-			// convert_function_calls(M);
-			convert_unreachable_conditions(M);
+			convert_function_calls(M);
+			// convert_unreachable_conditions(M);
 			//M.dump();
 			return PreservedAnalyses::none();
 		}

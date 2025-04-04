@@ -8,7 +8,7 @@ def start_symbolized(directory, file_name):
     symbolized = ["opt", "-load-pass-plugin", "../build/Pass/SymbolizerPass.so", "-O0", file_name, "-S", "-o", file_name]
     link_core = ["llvm-link", file_name, "core_demangle.ll", "-S", "-o", file_name]
     remove_unuse_function = ["opt", "-S", "-internalize", "-internalize-public-api-list=main", "-globaldce", file_name, "-o", file_name]
-    commands = [compile, demangle, symbolized, link_core, remove_unuse_function]
+    commands = [compile, demangle, link_core, symbolized, remove_unuse_function]
     # commands = [compile, demangle, link_core, remove_unuse_function]
     for cmd in commands:
         try:
