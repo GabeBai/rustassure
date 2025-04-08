@@ -253,7 +253,7 @@ def emitLLVMBitcodes(individualFuncPath, logger):
 
         remove_static_and_inline_from_file(filename)
         remove_specific_line(filename)
-        # special_handle(filename)
+        special_handle(filename)
         emitBitcodeCmd = "clang -c -femit-all-decls -emit-llvm -o " + filename + ".bc " + filename
         logger.debug("Running command %s", emitBitcodeCmd)
 
