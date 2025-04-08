@@ -54,6 +54,25 @@ bool startsWith(const std::string& str, const std::string& prefix) {
 	return str.compare(0, prefix.size(), prefix) == 0;
 }
 
+int editDistance(const std::string &s1, const std::string &s2) {
+    const size_t len1 = s1.size(), len2 = s2.size();
+    std::vector<std::vector<int>> dp(len1 + 1, std::vector<int>(len2 + 1));
+    for (size_t i = 0; i <= len1; i++) {
+        dp[i][0] = i;
+    }
+    for (size_t j = 0; j <= len2; j++) {
+        dp[0][j] = j;
+    }
+    for (size_t i = 1; i <= len1; i++) {
+        for (size_t j = 1; j <= len2; j++) {
+            dp[i][j] = std::min({ dp[i - 1][j] + 1,
+                                  dp[i][j - 1] + 1,
+                                  dp[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1) });
+        }
+    }
+    return dp[len1][len2];
+}
+
 Type* getLLVMType(LLVMContext &context, const std::string &typeStr) {
 	if (typeStr == "core::ffi::c_str::CStr") {
 		ArrayType *arrTy = ArrayType::get(Type::getInt8Ty(context), 100);
@@ -527,20 +546,40 @@ namespace {
 
 			// Find the other function in the file
 			Function* target_function = nullptr;
+			std::vector<Function*> candidate_functions;
+			std::string filename = M.getModuleIdentifier();
+			std::filesystem::path filepath(filename);
+			std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 			for (Function& F: M.functions()) {
 				if (!F.hasName()) {
 					continue;
 				}
 				if (!F.isDeclaration()) {
-					std::string filename = M.getModuleIdentifier();
-					std::filesystem::path filepath(filename);
-					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-
+				
 					std::string demangled_name = exec_rustfilt(F.getName().str());
 					std::vector<std::string> result = splitString(demangled_name, "::");
-					std::string function_name = result[result.size() -1];
+					std::string function_name = result.empty() ? "" : result.back();
 					if (compareStrings(filename_without_extension, function_name)) {
-						target_function = &F;
+						candidate_functions.push_back(&F);
+					}
+				}
+			}
+
+			if (!candidate_functions.empty()) {
+				if (candidate_functions.size() == 1) {
+					target_function = candidate_functions[0];
+				} else {
+					int bestDistance = std::numeric_limits<int>::max();
+					for (auto *func : candidate_functions) {
+						std::string demangled_name = exec_rustfilt(func->getName().str());
+						std::vector<std::string> result = splitString(demangled_name, "::");
+						std::string func_name = result.empty() ? "" : result.back();
+			
+						int distance = editDistance(filename_without_extension, func_name);
+						if (distance < bestDistance) {
+							bestDistance = distance;
+							target_function = func;
+						}
 					}
 				}
 			}
