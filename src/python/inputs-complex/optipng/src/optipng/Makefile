@@ -8,7 +8,7 @@ bindir = $(exec_prefix)/bin
 mandir = $(prefix)/man
 man1dir = $(mandir)/man1
 
-CFLAGS = -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+CC = ./clang-wrapper.sh
 CPP = $(CC) -E
 CPPFLAGS =
 LD = $(CC)

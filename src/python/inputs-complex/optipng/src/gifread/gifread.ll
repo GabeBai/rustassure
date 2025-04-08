@@ -1,26 +1,27 @@
 ; ModuleID = 'gifread.c'
 source_filename = "gifread.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 %struct.GIFScreen = type { i32, i32, i32, i32, i32, i32, i32, i32, [768 x i8] }
 %struct.GIFImage = type { %struct.GIFScreen*, i32, i32, i32, i32, i32, i32, i32, i32, [768 x i8], i8** }
 %struct.GIFExtension = type { %struct.GIFScreen*, i8*, i32, i8 }
 %struct.GIFGraphicCtlExt = type { i32, i32, i32, i32, i32 }
 
 @.str = private unnamed_addr constant [4 x i8] c"GIF\00", align 1
-@GIFError = global void (i8*)* @DefaultError, align 8
+@GIFError = dso_local global void (i8*)* @DefaultError, align 8
 @.str.1 = private unnamed_addr constant [15 x i8] c"Not a GIF file\00", align 1
 @.str.2 = private unnamed_addr constant [4 x i8] c"87a\00", align 1
 @.str.3 = private unnamed_addr constant [4 x i8] c"89a\00", align 1
-@GIFWarning = global void (i8*)* @DefaultWarning, align 8
+@GIFWarning = dso_local global void (i8*)* @DefaultWarning, align 8
 @.str.4 = private unnamed_addr constant [47 x i8] c"Invalid GIF version number, not \2287a\22 or \2289a\22\00", align 1
 @.str.5 = private unnamed_addr constant [25 x i8] c"Invalid image dimensions\00", align 1
 @.str.6 = private unnamed_addr constant [18 x i8] c"Bogus data in GIF\00", align 1
-@DefaultColorTable = internal global [24 x i8] c"\00\00\00\FF\FF\FF\FF\00\00\00\FF\FF\00\FF\00\FF\00\FF\00\00\FF\FF\FF\00", align 1
+@DefaultColorTable = internal global [24 x i8] c"\00\00\00\FF\FF\FF\FF\00\00\00\FF\FF\00\FF\00\FF\00\FF\00\00\FF\FF\FF\00", align 16
 @.str.7 = private unnamed_addr constant [32 x i8] c"Not a graphic control extension\00", align 1
 @.str.8 = private unnamed_addr constant [33 x i8] c"Broken graphic control extension\00", align 1
 @.str.9 = private unnamed_addr constant [37 x i8] c"GIF/LZW error: invalid LZW code size\00", align 1
@@ -35,12 +36,12 @@ target triple = "arm64-apple-macosx14.0.0"
 @LZWReadByte.oldcode = internal global i32 0, align 4
 @LZWReadByte.clear_code = internal global i32 0, align 4
 @LZWReadByte.end_code = internal global i32 0, align 4
-@LZWReadByte.table = internal global [2 x [4096 x i32]] zeroinitializer, align 4
-@LZWReadByte.stack = internal global [8192 x i32] zeroinitializer, align 4
+@LZWReadByte.table = internal global [2 x [4096 x i32]] zeroinitializer, align 16
+@LZWReadByte.stack = internal global [8192 x i32] zeroinitializer, align 16
 @LZWReadByte.sp = internal global i32* null, align 8
 @DataBlockSize = internal global i32 0, align 4
 @.str.12 = private unnamed_addr constant [36 x i8] c"GIF/LZW error: circular table entry\00", align 1
-@LZWGetCode.buffer = internal global [280 x i8] zeroinitializer, align 1
+@LZWGetCode.buffer = internal global [280 x i8] zeroinitializer, align 16
 @LZWGetCode.curbit = internal global i32 0, align 4
 @LZWGetCode.lastbit = internal global i32 0, align 4
 @LZWGetCode.done = internal global i32 0, align 4
@@ -48,19 +49,19 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.13 = private unnamed_addr constant [42 x i8] c"GIF/LZW error: ran off the end of my bits\00", align 1
 @.str.14 = private unnamed_addr constant [14 x i8] c"Out of memory\00", align 1
 @.str.15 = private unnamed_addr constant [45 x i8] c"Error reading file or unexpected end of file\00", align 1
-@__stderrp = external global %struct.__sFILE*, align 8
+@stderr = external dso_local global %struct._IO_FILE*, align 8
 @.str.16 = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @GIFReadScreen(%struct.GIFScreen* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @GIFReadScreen(%struct.GIFScreen* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca %struct.GIFScreen*, align 8
-  %4 = alloca %struct.__sFILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca [7 x i8], align 1
   store %struct.GIFScreen* %0, %struct.GIFScreen** %3, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %4, align 8
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %4, align 8
   %6 = getelementptr inbounds [7 x i8], [7 x i8]* %5, i64 0, i64 0
-  %7 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %8 = call i64 @fread(i8* noundef %6, i64 noundef 6, i64 noundef 1, %struct.__sFILE* noundef %7)
+  %7 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %8 = call i64 @fread(i8* noundef %6, i64 noundef 6, i64 noundef 1, %struct._IO_FILE* noundef %7)
   %9 = icmp ule i64 %8, 0
   br i1 %9, label %10, label %11
 
@@ -70,7 +71,7 @@ define void @GIFReadScreen(%struct.GIFScreen* noundef %0, %struct.__sFILE* nound
 
 11:                                               ; preds = %10, %2
   %12 = getelementptr inbounds [7 x i8], [7 x i8]* %5, i64 0, i64 0
-  %13 = call i32 @memcmp(i8* noundef %12, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i64 noundef 3)
+  %13 = call i32 @memcmp(i8* noundef %12, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i64 noundef 3) #5
   %14 = icmp ne i32 %13, 0
   br i1 %14, label %15, label %17
 
@@ -82,14 +83,14 @@ define void @GIFReadScreen(%struct.GIFScreen* noundef %0, %struct.__sFILE* nound
 17:                                               ; preds = %15, %11
   %18 = getelementptr inbounds [7 x i8], [7 x i8]* %5, i64 0, i64 0
   %19 = getelementptr inbounds i8, i8* %18, i64 3
-  %20 = call i32 @memcmp(i8* noundef %19, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.2, i64 0, i64 0), i64 noundef 3)
+  %20 = call i32 @memcmp(i8* noundef %19, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.2, i64 0, i64 0), i64 noundef 3) #5
   %21 = icmp ne i32 %20, 0
   br i1 %21, label %22, label %29
 
 22:                                               ; preds = %17
   %23 = getelementptr inbounds [7 x i8], [7 x i8]* %5, i64 0, i64 0
   %24 = getelementptr inbounds i8, i8* %23, i64 3
-  %25 = call i32 @memcmp(i8* noundef %24, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.3, i64 0, i64 0), i64 noundef 3)
+  %25 = call i32 @memcmp(i8* noundef %24, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.3, i64 0, i64 0), i64 noundef 3) #5
   %26 = icmp ne i32 %25, 0
   br i1 %26, label %27, label %29
 
@@ -100,8 +101,8 @@ define void @GIFReadScreen(%struct.GIFScreen* noundef %0, %struct.__sFILE* nound
 
 29:                                               ; preds = %27, %22, %17
   %30 = getelementptr inbounds [7 x i8], [7 x i8]* %5, i64 0, i64 0
-  %31 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %32 = call i64 @fread(i8* noundef %30, i64 noundef 7, i64 noundef 1, %struct.__sFILE* noundef %31)
+  %31 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %32 = call i64 @fread(i8* noundef %30, i64 noundef 7, i64 noundef 1, %struct._IO_FILE* noundef %31)
   %33 = icmp ule i64 %32, 0
   br i1 %33, label %34, label %35
 
@@ -204,8 +205,8 @@ define void @GIFReadScreen(%struct.GIFScreen* noundef %0, %struct.__sFILE* nound
   %117 = load i32, i32* %116, align 4
   %118 = mul i32 3, %117
   %119 = zext i32 %118 to i64
-  %120 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %121 = call i64 @fread(i8* noundef %114, i64 noundef %119, i64 noundef 1, %struct.__sFILE* noundef %120)
+  %120 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %121 = call i64 @fread(i8* noundef %114, i64 noundef %119, i64 noundef 1, %struct._IO_FILE* noundef %120)
   %122 = icmp ule i64 %121, 0
   br i1 %122, label %123, label %124
 
@@ -279,19 +280,20 @@ define void @GIFReadScreen(%struct.GIFScreen* noundef %0, %struct.__sFILE* nound
   ret void
 }
 
-declare i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct.__sFILE* noundef) #1
+declare dso_local i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct._IO_FILE* noundef) #1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @ReadError() #0 {
   %1 = load void (i8*)*, void (i8*)** @GIFError, align 8
   call void %1(i8* noundef getelementptr inbounds ([45 x i8], [45 x i8]* @.str.15, i64 0, i64 0))
   ret void
 }
 
-declare i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #1
+; Function Attrs: nounwind readonly willreturn
+declare dso_local i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #2
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @GIFInitImage(%struct.GIFImage* noundef %0, %struct.GIFScreen* noundef %1, i8** noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @GIFInitImage(%struct.GIFImage* noundef %0, %struct.GIFScreen* noundef %1, i8** noundef %2) #0 {
   %4 = alloca %struct.GIFImage*, align 8
   %5 = alloca %struct.GIFScreen*, align 8
   %6 = alloca i8**, align 8
@@ -309,31 +311,31 @@ define void @GIFInitImage(%struct.GIFImage* noundef %0, %struct.GIFScreen* nound
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @GIFDestroyImage(%struct.GIFImage* noundef %0) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @GIFDestroyImage(%struct.GIFImage* noundef %0) #0 {
   %2 = alloca %struct.GIFImage*, align 8
   store %struct.GIFImage* %0, %struct.GIFImage** %2, align 8
   %3 = load %struct.GIFImage*, %struct.GIFImage** %2, align 8
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @GIFReadNextBlock(%struct.GIFImage* noundef %0, %struct.GIFExtension* noundef %1, %struct.__sFILE* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @GIFReadNextBlock(%struct.GIFImage* noundef %0, %struct.GIFExtension* noundef %1, %struct._IO_FILE* noundef %2) #0 {
   %4 = alloca i32, align 4
   %5 = alloca %struct.GIFImage*, align 8
   %6 = alloca %struct.GIFExtension*, align 8
-  %7 = alloca %struct.__sFILE*, align 8
+  %7 = alloca %struct._IO_FILE*, align 8
   %8 = alloca i32, align 4
   %9 = alloca i32, align 4
   store %struct.GIFImage* %0, %struct.GIFImage** %5, align 8
   store %struct.GIFExtension* %1, %struct.GIFExtension** %6, align 8
-  store %struct.__sFILE* %2, %struct.__sFILE** %7, align 8
+  store %struct._IO_FILE* %2, %struct._IO_FILE** %7, align 8
   store i32 0, i32* %9, align 4
   br label %10
 
 10:                                               ; preds = %33, %3
-  %11 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %12 = call i32 @getc(%struct.__sFILE* noundef %11)
+  %11 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %12 = call i32 @getc(%struct._IO_FILE* noundef %11)
   store i32 %12, i32* %8, align 4
   %13 = icmp eq i32 %12, -1
   br i1 %13, label %14, label %15
@@ -352,16 +354,16 @@ define i32 @GIFReadNextBlock(%struct.GIFImage* noundef %0, %struct.GIFExtension*
 
 17:                                               ; preds = %15
   %18 = load %struct.GIFImage*, %struct.GIFImage** %5, align 8
-  %19 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  call void @GIFReadNextImage(%struct.GIFImage* noundef %18, %struct.__sFILE* noundef %19)
+  %19 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  call void @GIFReadNextImage(%struct.GIFImage* noundef %18, %struct._IO_FILE* noundef %19)
   %20 = load i32, i32* %8, align 4
   store i32 %20, i32* %4, align 4
   br label %34
 
 21:                                               ; preds = %15
   %22 = load %struct.GIFExtension*, %struct.GIFExtension** %6, align 8
-  %23 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  call void @GIFReadNextExtension(%struct.GIFExtension* noundef %22, %struct.__sFILE* noundef %23)
+  %23 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  call void @GIFReadNextExtension(%struct.GIFExtension* noundef %22, %struct._IO_FILE* noundef %23)
   %24 = load i32, i32* %8, align 4
   store i32 %24, i32* %4, align 4
   br label %34
@@ -393,19 +395,19 @@ define i32 @GIFReadNextBlock(%struct.GIFImage* noundef %0, %struct.GIFExtension*
   ret i32 %35
 }
 
-declare i32 @getc(%struct.__sFILE* noundef) #1
+declare dso_local i32 @getc(%struct._IO_FILE* noundef) #1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal void @GIFReadNextImage(%struct.GIFImage* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal void @GIFReadNextImage(%struct.GIFImage* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca %struct.GIFImage*, align 8
-  %4 = alloca %struct.__sFILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca %struct.GIFScreen*, align 8
   %6 = alloca [9 x i8], align 1
   store %struct.GIFImage* %0, %struct.GIFImage** %3, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %4, align 8
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %4, align 8
   %7 = getelementptr inbounds [9 x i8], [9 x i8]* %6, i64 0, i64 0
-  %8 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %9 = call i64 @fread(i8* noundef %7, i64 noundef 9, i64 noundef 1, %struct.__sFILE* noundef %8)
+  %8 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %9 = call i64 @fread(i8* noundef %7, i64 noundef 9, i64 noundef 1, %struct._IO_FILE* noundef %8)
   %10 = icmp ule i64 %9, 0
   br i1 %10, label %11, label %12
 
@@ -419,8 +421,8 @@ define internal void @GIFReadNextImage(%struct.GIFImage* noundef %0, %struct.__s
   br i1 %14, label %15, label %17
 
 15:                                               ; preds = %12
-  %16 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  call void @GIFSkipDataBlocks(%struct.__sFILE* noundef %16)
+  %16 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  call void @GIFSkipDataBlocks(%struct._IO_FILE* noundef %16)
   br label %176
 
 17:                                               ; preds = %12
@@ -551,8 +553,8 @@ define internal void @GIFReadNextImage(%struct.GIFImage* noundef %0, %struct.__s
   %126 = load i32, i32* %125, align 4
   %127 = mul i32 3, %126
   %128 = zext i32 %127 to i64
-  %129 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %130 = call i64 @fread(i8* noundef %123, i64 noundef %128, i64 noundef 1, %struct.__sFILE* noundef %129)
+  %129 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %130 = call i64 @fread(i8* noundef %123, i64 noundef %128, i64 noundef 1, %struct._IO_FILE* noundef %129)
   %131 = icmp ule i64 %130, 0
   br i1 %131, label %132, label %133
 
@@ -616,18 +618,18 @@ define internal void @GIFReadNextImage(%struct.GIFImage* noundef %0, %struct.__s
 
 173:                                              ; preds = %171, %159
   %174 = load %struct.GIFImage*, %struct.GIFImage** %3, align 8
-  %175 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  call void @GIFReadImageData(%struct.GIFImage* noundef %174, %struct.__sFILE* noundef %175)
+  %175 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  call void @GIFReadImageData(%struct.GIFImage* noundef %174, %struct._IO_FILE* noundef %175)
   br label %176
 
 176:                                              ; preds = %173, %15
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal void @GIFReadNextExtension(%struct.GIFExtension* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal void @GIFReadNextExtension(%struct.GIFExtension* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca %struct.GIFExtension*, align 8
-  %4 = alloca %struct.__sFILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca i8*, align 8
   %6 = alloca i32, align 4
   %7 = alloca i32, align 4
@@ -635,9 +637,9 @@ define internal void @GIFReadNextExtension(%struct.GIFExtension* noundef %0, %st
   %9 = alloca i32, align 4
   %10 = alloca i32, align 4
   store %struct.GIFExtension* %0, %struct.GIFExtension** %3, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %4, align 8
-  %11 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %12 = call i32 @getc(%struct.__sFILE* noundef %11)
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %4, align 8
+  %11 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %12 = call i32 @getc(%struct._IO_FILE* noundef %11)
   store i32 %12, i32* %10, align 4
   %13 = icmp eq i32 %12, -1
   br i1 %13, label %14, label %15
@@ -652,8 +654,8 @@ define internal void @GIFReadNextExtension(%struct.GIFExtension* noundef %0, %st
   br i1 %17, label %18, label %20
 
 18:                                               ; preds = %15
-  %19 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  call void @GIFSkipDataBlocks(%struct.__sFILE* noundef %19)
+  %19 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  call void @GIFSkipDataBlocks(%struct._IO_FILE* noundef %19)
   br label %73
 
 20:                                               ; preds = %15
@@ -685,7 +687,7 @@ define internal void @GIFReadNextExtension(%struct.GIFExtension* noundef %0, %st
   %38 = load i8*, i8** %37, align 8
   %39 = load i32, i32* %6, align 4
   %40 = zext i32 %39 to i64
-  %41 = call i8* @realloc(i8* noundef %38, i64 noundef %40) #5
+  %41 = call i8* @realloc(i8* noundef %38, i64 noundef %40) #6
   store i8* %41, i8** %5, align 8
   %42 = load i8*, i8** %5, align 8
   %43 = icmp eq i8* %42, null
@@ -716,8 +718,8 @@ define internal void @GIFReadNextExtension(%struct.GIFExtension* noundef %0, %st
   %58 = load i32, i32* %7, align 4
   %59 = zext i32 %58 to i64
   %60 = getelementptr inbounds i8, i8* %57, i64 %59
-  %61 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %62 = call i32 @GIFReadDataBlock(i8* noundef %60, %struct.__sFILE* noundef %61)
+  %61 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %62 = call i32 @GIFReadDataBlock(i8* noundef %60, %struct._IO_FILE* noundef %61)
   store i32 %62, i32* %9, align 4
   %63 = load i32, i32* %9, align 4
   %64 = icmp eq i32 %63, 0
@@ -741,8 +743,8 @@ define internal void @GIFReadNextExtension(%struct.GIFExtension* noundef %0, %st
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @GIFGetColorTable(i8** noundef %0, i32* noundef %1, %struct.GIFImage* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @GIFGetColorTable(i8** noundef %0, i32* noundef %1, %struct.GIFImage* noundef %2) #0 {
   %4 = alloca i8**, align 8
   %5 = alloca i32*, align 8
   %6 = alloca %struct.GIFImage*, align 8
@@ -804,8 +806,8 @@ define void @GIFGetColorTable(i8** noundef %0, i32* noundef %1, %struct.GIFImage
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @GIFInitExtension(%struct.GIFExtension* noundef %0, %struct.GIFScreen* noundef %1, i32 noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @GIFInitExtension(%struct.GIFExtension* noundef %0, %struct.GIFScreen* noundef %1, i32 noundef %2) #0 {
   %4 = alloca %struct.GIFExtension*, align 8
   %5 = alloca %struct.GIFScreen*, align 8
   %6 = alloca i32, align 4
@@ -824,7 +826,7 @@ define void @GIFInitExtension(%struct.GIFExtension* noundef %0, %struct.GIFScree
 13:                                               ; preds = %3
   %14 = load i32, i32* %6, align 4
   %15 = zext i32 %14 to i64
-  %16 = call i8* @malloc(i64 noundef %15) #6
+  %16 = call noalias i8* @malloc(i64 noundef %15) #6
   store i8* %16, i8** %7, align 8
   %17 = load i8*, i8** %7, align 8
   %18 = icmp eq i8* %17, null
@@ -858,31 +860,32 @@ define void @GIFInitExtension(%struct.GIFExtension* noundef %0, %struct.GIFScree
   ret void
 }
 
-; Function Attrs: allocsize(0)
-declare i8* @malloc(i64 noundef) #2
+; Function Attrs: nounwind
+declare dso_local noalias i8* @malloc(i64 noundef) #3
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @MemoryError() #0 {
   %1 = load void (i8*)*, void (i8*)** @GIFError, align 8
   call void %1(i8* noundef getelementptr inbounds ([14 x i8], [14 x i8]* @.str.14, i64 0, i64 0))
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @GIFDestroyExtension(%struct.GIFExtension* noundef %0) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @GIFDestroyExtension(%struct.GIFExtension* noundef %0) #0 {
   %2 = alloca %struct.GIFExtension*, align 8
   store %struct.GIFExtension* %0, %struct.GIFExtension** %2, align 8
   %3 = load %struct.GIFExtension*, %struct.GIFExtension** %2, align 8
   %4 = getelementptr inbounds %struct.GIFExtension, %struct.GIFExtension* %3, i32 0, i32 1
   %5 = load i8*, i8** %4, align 8
-  call void @free(i8* noundef %5)
+  call void @free(i8* noundef %5) #6
   ret void
 }
 
-declare void @free(i8* noundef) #1
+; Function Attrs: nounwind
+declare dso_local void @free(i8* noundef) #3
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @GIFGetGraphicCtl(%struct.GIFGraphicCtlExt* noundef %0, %struct.GIFExtension* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @GIFGetGraphicCtl(%struct.GIFGraphicCtlExt* noundef %0, %struct.GIFExtension* noundef %1) #0 {
   %3 = alloca %struct.GIFGraphicCtlExt*, align 8
   %4 = alloca %struct.GIFExtension*, align 8
   %5 = alloca i8*, align 8
@@ -971,38 +974,38 @@ define void @GIFGetGraphicCtl(%struct.GIFGraphicCtlExt* noundef %0, %struct.GIFE
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @DefaultError(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
-  %3 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8
+  %3 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8
   %4 = load i8*, i8** %2, align 8
-  %5 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %3, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.16, i64 0, i64 0), i8* noundef %4)
+  %5 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %3, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.16, i64 0, i64 0), i8* noundef %4)
   call void @exit(i32 noundef 1) #7
   unreachable
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @DefaultWarning(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
-  %3 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8
+  %3 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8
   %4 = load i8*, i8** %2, align 8
-  %5 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %3, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.16, i64 0, i64 0), i8* noundef %4)
+  %5 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %3, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.16, i64 0, i64 0), i8* noundef %4)
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal void @GIFSkipDataBlocks(%struct.__sFILE* noundef %0) #0 {
-  %2 = alloca %struct.__sFILE*, align 8
+; Function Attrs: noinline nounwind optnone uwtable
+define internal void @GIFSkipDataBlocks(%struct._IO_FILE* noundef %0) #0 {
+  %2 = alloca %struct._IO_FILE*, align 8
   %3 = alloca i32, align 4
-  %4 = alloca [256 x i8], align 1
-  store %struct.__sFILE* %0, %struct.__sFILE** %2, align 8
+  %4 = alloca [256 x i8], align 16
+  store %struct._IO_FILE* %0, %struct._IO_FILE** %2, align 8
   br label %5
 
 5:                                                ; preds = %23, %1
-  %6 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %7 = call i32 @getc(%struct.__sFILE* noundef %6)
+  %6 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %7 = call i32 @getc(%struct._IO_FILE* noundef %6)
   store i32 %7, i32* %3, align 4
   %8 = icmp eq i32 %7, -1
   br i1 %8, label %9, label %10
@@ -1020,8 +1023,8 @@ define internal void @GIFSkipDataBlocks(%struct.__sFILE* noundef %0) #0 {
   %14 = getelementptr inbounds [256 x i8], [256 x i8]* %4, i64 0, i64 0
   %15 = load i32, i32* %3, align 4
   %16 = zext i32 %15 to i64
-  %17 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %18 = call i64 @fread(i8* noundef %14, i64 noundef %16, i64 noundef 1, %struct.__sFILE* noundef %17)
+  %17 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %18 = call i64 @fread(i8* noundef %14, i64 noundef %16, i64 noundef 1, %struct._IO_FILE* noundef %17)
   %19 = icmp ule i64 %18, 0
   br i1 %19, label %20, label %21
 
@@ -1039,10 +1042,10 @@ define internal void @GIFSkipDataBlocks(%struct.__sFILE* noundef %0) #0 {
   br label %5
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca %struct.GIFImage*, align 8
-  %4 = alloca %struct.__sFILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca i32, align 4
   %6 = alloca i8**, align 8
   %7 = alloca i32, align 4
@@ -1055,9 +1058,9 @@ define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct.__s
   %14 = alloca i32, align 4
   %15 = alloca i32, align 4
   store %struct.GIFImage* %0, %struct.GIFImage** %3, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %4, align 8
-  %16 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %17 = call i32 @getc(%struct.__sFILE* noundef %16)
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %4, align 8
+  %16 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %17 = call i32 @getc(%struct._IO_FILE* noundef %16)
   store i32 %17, i32* %5, align 4
   %18 = icmp eq i32 %17, -1
   br i1 %18, label %19, label %20
@@ -1078,8 +1081,8 @@ define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct.__s
 
 25:                                               ; preds = %23, %20
   %26 = load i32, i32* %5, align 4
-  %27 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %28 = call i32 @LZWReadByte(i32 noundef 1, i32 noundef %26, %struct.__sFILE* noundef %27)
+  %27 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %28 = call i32 @LZWReadByte(i32 noundef 1, i32 noundef %26, %struct._IO_FILE* noundef %27)
   %29 = icmp slt i32 %28, 0
   br i1 %29, label %30, label %32
 
@@ -1098,8 +1101,8 @@ define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct.__s
   br i1 %37, label %38, label %40
 
 38:                                               ; preds = %32
-  %39 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  call void @GIFSkipDataBlocks(%struct.__sFILE* noundef %39)
+  %39 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  call void @GIFSkipDataBlocks(%struct._IO_FILE* noundef %39)
   br label %124
 
 40:                                               ; preds = %32
@@ -1124,8 +1127,8 @@ define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct.__s
 
 51:                                               ; preds = %115, %40
   %52 = load i32, i32* %5, align 4
-  %53 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %54 = call i32 @LZWReadByte(i32 noundef 0, i32 noundef %52, %struct.__sFILE* noundef %53)
+  %53 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %54 = call i32 @LZWReadByte(i32 noundef 0, i32 noundef %52, %struct._IO_FILE* noundef %53)
   store i32 %54, i32* %15, align 4
   %55 = icmp sge i32 %54, 0
   br i1 %55, label %56, label %116
@@ -1252,7 +1255,7 @@ define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct.__s
   br label %116
 
 115:                                              ; preds = %110
-  br label %51, !llvm.loop !10
+  br label %51, !llvm.loop !4
 
 116:                                              ; preds = %114, %51
   br label %117
@@ -1262,32 +1265,32 @@ define internal void @GIFReadImageData(%struct.GIFImage* noundef %0, %struct.__s
 
 118:                                              ; preds = %123, %117
   %119 = load i32, i32* %5, align 4
-  %120 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %121 = call i32 @LZWReadByte(i32 noundef 0, i32 noundef %119, %struct.__sFILE* noundef %120)
+  %120 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %121 = call i32 @LZWReadByte(i32 noundef 0, i32 noundef %119, %struct._IO_FILE* noundef %120)
   %122 = icmp sge i32 %121, 0
   br i1 %122, label %123, label %124
 
 123:                                              ; preds = %118
-  br label %118, !llvm.loop !12
+  br label %118, !llvm.loop !6
 
 124:                                              ; preds = %38, %118
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct._IO_FILE* noundef %2) #0 {
   %4 = alloca i32, align 4
   %5 = alloca i32, align 4
   %6 = alloca i32, align 4
-  %7 = alloca %struct.__sFILE*, align 8
+  %7 = alloca %struct._IO_FILE*, align 8
   %8 = alloca i32, align 4
   %9 = alloca i32, align 4
   %10 = alloca i32, align 4
   %11 = alloca i32, align 4
-  %12 = alloca [260 x i8], align 1
+  %12 = alloca [260 x i8], align 16
   store i32 %0, i32* %5, align 4
   store i32 %1, i32* %6, align 4
-  store %struct.__sFILE* %2, %struct.__sFILE** %7, align 8
+  store %struct._IO_FILE* %2, %struct._IO_FILE** %7, align 8
   %13 = load i32, i32* %5, align 4
   %14 = icmp ne i32 %13, 0
   br i1 %14, label %15, label %59
@@ -1310,8 +1313,8 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   %25 = load i32, i32* @LZWReadByte.clear_code, align 4
   %26 = add nsw i32 %25, 2
   store i32 %26, i32* @LZWReadByte.max_code, align 4
-  %27 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %28 = call i32 @LZWGetCode(i32 noundef 0, i32 noundef 1, %struct.__sFILE* noundef %27)
+  %27 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %28 = call i32 @LZWGetCode(i32 noundef 0, i32 noundef 1, %struct._IO_FILE* noundef %27)
   store i32 1, i32* @LZWReadByte.fresh, align 4
   store i32 0, i32* %10, align 4
   br label %29
@@ -1338,7 +1341,7 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   %42 = load i32, i32* %10, align 4
   %43 = add nsw i32 %42, 1
   store i32 %43, i32* %10, align 4
-  br label %29, !llvm.loop !13
+  br label %29, !llvm.loop !7
 
 44:                                               ; preds = %29
   br label %45
@@ -1363,7 +1366,7 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   %56 = load i32, i32* %10, align 4
   %57 = add nsw i32 %56, 1
   store i32 %57, i32* %10, align 4
-  br label %45, !llvm.loop !14
+  br label %45, !llvm.loop !8
 
 58:                                               ; preds = %45
   store i32* getelementptr inbounds ([8192 x i32], [8192 x i32]* @LZWReadByte.stack, i64 0, i64 0), i32** @LZWReadByte.sp, align 8
@@ -1381,8 +1384,8 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
 
 63:                                               ; preds = %67, %62
   %64 = load i32, i32* @LZWReadByte.code_size, align 4
-  %65 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %66 = call i32 @LZWGetCode(i32 noundef %64, i32 noundef 0, %struct.__sFILE* noundef %65)
+  %65 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %66 = call i32 @LZWGetCode(i32 noundef %64, i32 noundef 0, %struct._IO_FILE* noundef %65)
   store i32 %66, i32* @LZWReadByte.oldcode, align 4
   store i32 %66, i32* @LZWReadByte.firstcode, align 4
   br label %67
@@ -1391,7 +1394,7 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   %68 = load i32, i32* @LZWReadByte.firstcode, align 4
   %69 = load i32, i32* @LZWReadByte.clear_code, align 4
   %70 = icmp eq i32 %68, %69
-  br i1 %70, label %63, label %71, !llvm.loop !15
+  br i1 %70, label %63, label %71, !llvm.loop !9
 
 71:                                               ; preds = %67
   %72 = load i32, i32* @LZWReadByte.firstcode, align 4
@@ -1419,8 +1422,8 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
 
 82:                                               ; preds = %225, %81
   %83 = load i32, i32* @LZWReadByte.code_size, align 4
-  %84 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %85 = call i32 @LZWGetCode(i32 noundef %83, i32 noundef 0, %struct.__sFILE* noundef %84)
+  %84 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %85 = call i32 @LZWGetCode(i32 noundef %83, i32 noundef 0, %struct._IO_FILE* noundef %84)
   store i32 %85, i32* %8, align 4
   %86 = icmp sge i32 %85, 0
   br i1 %86, label %87, label %226
@@ -1457,7 +1460,7 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   %105 = load i32, i32* %10, align 4
   %106 = add nsw i32 %105, 1
   store i32 %106, i32* %10, align 4
-  br label %92, !llvm.loop !16
+  br label %92, !llvm.loop !10
 
 107:                                              ; preds = %92
   br label %108
@@ -1482,7 +1485,7 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   %119 = load i32, i32* %10, align 4
   %120 = add nsw i32 %119, 1
   store i32 %120, i32* %10, align 4
-  br label %108, !llvm.loop !17
+  br label %108, !llvm.loop !11
 
 121:                                              ; preds = %108
   %122 = load i32, i32* @LZWReadByte.set_code_size, align 4
@@ -1496,8 +1499,8 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   store i32 %127, i32* @LZWReadByte.max_code, align 4
   store i32* getelementptr inbounds ([8192 x i32], [8192 x i32]* @LZWReadByte.stack, i64 0, i64 0), i32** @LZWReadByte.sp, align 8
   %128 = load i32, i32* @LZWReadByte.code_size, align 4
-  %129 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %130 = call i32 @LZWGetCode(i32 noundef %128, i32 noundef 0, %struct.__sFILE* noundef %129)
+  %129 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %130 = call i32 @LZWGetCode(i32 noundef %128, i32 noundef 0, %struct._IO_FILE* noundef %129)
   store i32 %130, i32* @LZWReadByte.oldcode, align 4
   store i32 %130, i32* @LZWReadByte.firstcode, align 4
   %131 = load i32, i32* @LZWReadByte.firstcode, align 4
@@ -1524,14 +1527,14 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
 
 141:                                              ; preds = %146, %140
   %142 = getelementptr inbounds [260 x i8], [260 x i8]* %12, i64 0, i64 0
-  %143 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %144 = call i32 @GIFReadDataBlock(i8* noundef %142, %struct.__sFILE* noundef %143)
+  %143 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %144 = call i32 @GIFReadDataBlock(i8* noundef %142, %struct._IO_FILE* noundef %143)
   store i32 %144, i32* %11, align 4
   %145 = icmp sgt i32 %144, 0
   br i1 %145, label %146, label %147
 
 146:                                              ; preds = %141
-  br label %141, !llvm.loop !18
+  br label %141, !llvm.loop !12
 
 147:                                              ; preds = %141
   %148 = load i32, i32* %11, align 4
@@ -1596,7 +1599,7 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   %183 = getelementptr inbounds [4096 x i32], [4096 x i32]* getelementptr inbounds ([2 x [4096 x i32]], [2 x [4096 x i32]]* @LZWReadByte.table, i64 0, i64 0), i64 0, i64 %182
   %184 = load i32, i32* %183, align 4
   store i32 %184, i32* %8, align 4
-  br label %161, !llvm.loop !19
+  br label %161, !llvm.loop !13
 
 185:                                              ; preds = %161
   %186 = load i32, i32* %8, align 4
@@ -1665,7 +1668,7 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   br label %228
 
 225:                                              ; preds = %217
-  br label %82, !llvm.loop !20
+  br label %82, !llvm.loop !14
 
 226:                                              ; preds = %82
   %227 = load i32, i32* %8, align 4
@@ -1677,19 +1680,19 @@ define internal i32 @LZWReadByte(i32 noundef %0, i32 noundef %1, %struct.__sFILE
   ret i32 %229
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal i32 @LZWGetCode(i32 noundef %0, i32 noundef %1, %struct.__sFILE* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal i32 @LZWGetCode(i32 noundef %0, i32 noundef %1, %struct._IO_FILE* noundef %2) #0 {
   %4 = alloca i32, align 4
   %5 = alloca i32, align 4
   %6 = alloca i32, align 4
-  %7 = alloca %struct.__sFILE*, align 8
+  %7 = alloca %struct._IO_FILE*, align 8
   %8 = alloca i32, align 4
   %9 = alloca i32, align 4
   %10 = alloca i32, align 4
   %11 = alloca i32, align 4
   store i32 %0, i32* %5, align 4
   store i32 %1, i32* %6, align 4
-  store %struct.__sFILE* %2, %struct.__sFILE** %7, align 8
+  store %struct._IO_FILE* %2, %struct._IO_FILE** %7, align 8
   %12 = load i32, i32* %6, align 4
   %13 = icmp ne i32 %12, 0
   br i1 %13, label %14, label %15
@@ -1736,15 +1739,15 @@ define internal i32 @LZWGetCode(i32 noundef %0, i32 noundef %1, %struct.__sFILE*
   %34 = sext i32 %33 to i64
   %35 = getelementptr inbounds [280 x i8], [280 x i8]* @LZWGetCode.buffer, i64 0, i64 %34
   %36 = load i8, i8* %35, align 1
-  store i8 %36, i8* getelementptr inbounds ([280 x i8], [280 x i8]* @LZWGetCode.buffer, i64 0, i64 0), align 1
+  store i8 %36, i8* getelementptr inbounds ([280 x i8], [280 x i8]* @LZWGetCode.buffer, i64 0, i64 0), align 16
   %37 = load i32, i32* @LZWGetCode.last_byte, align 4
   %38 = sub nsw i32 %37, 1
   %39 = sext i32 %38 to i64
   %40 = getelementptr inbounds [280 x i8], [280 x i8]* @LZWGetCode.buffer, i64 0, i64 %39
   %41 = load i8, i8* %40, align 1
   store i8 %41, i8* getelementptr inbounds ([280 x i8], [280 x i8]* @LZWGetCode.buffer, i64 0, i64 1), align 1
-  %42 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %43 = call i32 @GIFReadDataBlock(i8* noundef getelementptr inbounds ([280 x i8], [280 x i8]* @LZWGetCode.buffer, i64 0, i64 2), %struct.__sFILE* noundef %42)
+  %42 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %43 = call i32 @GIFReadDataBlock(i8* noundef getelementptr inbounds ([280 x i8], [280 x i8]* @LZWGetCode.buffer, i64 0, i64 2), %struct._IO_FILE* noundef %42)
   store i32 %43, i32* %8, align 4
   %44 = icmp eq i32 %43, 0
   br i1 %44, label %45, label %46
@@ -1808,7 +1811,7 @@ define internal i32 @LZWGetCode(i32 noundef %0, i32 noundef %1, %struct.__sFILE*
   %82 = load i32, i32* %10, align 4
   %83 = add nsw i32 %82, 1
   store i32 %83, i32* %10, align 4
-  br label %58, !llvm.loop !21
+  br label %58, !llvm.loop !15
 
 84:                                               ; preds = %58
   %85 = load i32, i32* %5, align 4
@@ -1824,15 +1827,15 @@ define internal i32 @LZWGetCode(i32 noundef %0, i32 noundef %1, %struct.__sFILE*
   ret i32 %90
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal i32 @GIFReadDataBlock(i8* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal i32 @GIFReadDataBlock(i8* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca i8*, align 8
-  %4 = alloca %struct.__sFILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca i32, align 4
   store i8* %0, i8** %3, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %4, align 8
-  %6 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %7 = call i32 @getc(%struct.__sFILE* noundef %6)
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %4, align 8
+  %6 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %7 = call i32 @getc(%struct._IO_FILE* noundef %6)
   store i32 %7, i32* %5, align 4
   %8 = icmp eq i32 %7, -1
   br i1 %8, label %9, label %10
@@ -1852,8 +1855,8 @@ define internal i32 @GIFReadDataBlock(i8* noundef %0, %struct.__sFILE* noundef %
   %15 = load i8*, i8** %3, align 8
   %16 = load i32, i32* %5, align 4
   %17 = zext i32 %16 to i64
-  %18 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %19 = call i64 @fread(i8* noundef %15, i64 noundef %17, i64 noundef 1, %struct.__sFILE* noundef %18)
+  %18 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %19 = call i64 @fread(i8* noundef %15, i64 noundef %17, i64 noundef 1, %struct._IO_FILE* noundef %18)
   %20 = icmp ule i64 %19, 0
   br i1 %20, label %21, label %22
 
@@ -1869,45 +1872,39 @@ define internal i32 @GIFReadDataBlock(i8* noundef %0, %struct.__sFILE* noundef %
   ret i32 %24
 }
 
-; Function Attrs: allocsize(1)
-declare i8* @realloc(i8* noundef, i64 noundef) #3
+; Function Attrs: nounwind
+declare dso_local i8* @realloc(i8* noundef, i64 noundef) #3
 
-declare i32 @fprintf(%struct.__sFILE* noundef, i8* noundef, ...) #1
+declare dso_local i32 @fprintf(%struct._IO_FILE* noundef, i8* noundef, ...) #1
 
-; Function Attrs: noreturn
-declare void @exit(i32 noundef) #4
+; Function Attrs: noreturn nounwind
+declare dso_local void @exit(i32 noundef) #4
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #2 = { allocsize(0) "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { allocsize(1) "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #4 = { noreturn "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #5 = { allocsize(1) }
-attributes #6 = { allocsize(0) }
-attributes #7 = { noreturn }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { nounwind readonly willreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { noreturn nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #5 = { nounwind readonly willreturn }
+attributes #6 = { nounwind }
+attributes #7 = { noreturn nounwind }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
-!13 = distinct !{!13, !11}
-!14 = distinct !{!14, !11}
-!15 = distinct !{!15, !11}
-!16 = distinct !{!16, !11}
-!17 = distinct !{!17, !11}
-!18 = distinct !{!18, !11}
-!19 = distinct !{!19, !11}
-!20 = distinct !{!20, !11}
-!21 = distinct !{!21, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}
+!7 = distinct !{!7, !5}
+!8 = distinct !{!8, !5}
+!9 = distinct !{!9, !5}
+!10 = distinct !{!10, !5}
+!11 = distinct !{!11, !5}
+!12 = distinct !{!12, !5}
+!13 = distinct !{!13, !5}
+!14 = distinct !{!14, !5}
+!15 = distinct !{!15, !5}

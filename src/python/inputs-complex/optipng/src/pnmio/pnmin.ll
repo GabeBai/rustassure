@@ -1,209 +1,204 @@
 ; ModuleID = 'pnmin.c'
 source_filename = "pnmin.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.pnm_struct = type { i32, i32, i32, i32, i32 }
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pnm_fget_header(%struct.pnm_struct* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pnm_fget_header(%struct.pnm_struct* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca %struct.pnm_struct*, align 8
-  %5 = alloca %struct.__sFILE*, align 8
+  %5 = alloca %struct._IO_FILE*, align 8
   %6 = alloca i32, align 4
   %7 = alloca i32, align 4
   store %struct.pnm_struct* %0, %struct.pnm_struct** %4, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %5, align 8
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %5, align 8
   %8 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
   %9 = bitcast %struct.pnm_struct* %8 to i8*
-  %10 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
-  %11 = bitcast %struct.pnm_struct* %10 to i8*
-  %12 = call i64 @llvm.objectsize.i64.p0i8(i8* %11, i1 false, i1 true, i1 false)
-  %13 = call i8* @__memset_chk(i8* noundef %9, i32 noundef 0, i64 noundef 20, i64 noundef %12) #4
-  %14 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %15 = call i32 @getc(%struct.__sFILE* noundef %14)
-  store i32 %15, i32* %7, align 4
+  call void @llvm.memset.p0i8.i64(i8* align 4 %9, i8 0, i64 20, i1 false)
+  %10 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %11 = call i32 @getc(%struct._IO_FILE* noundef %10)
+  store i32 %11, i32* %7, align 4
+  %12 = load i32, i32* %7, align 4
+  %13 = icmp eq i32 %12, -1
+  br i1 %13, label %14, label %15
+
+14:                                               ; preds = %2
+  store i32 -1, i32* %3, align 4
+  br label %102
+
+15:                                               ; preds = %2
   %16 = load i32, i32* %7, align 4
-  %17 = icmp eq i32 %16, -1
+  %17 = icmp ne i32 %16, 80
   br i1 %17, label %18, label %19
 
-18:                                               ; preds = %2
+18:                                               ; preds = %15
   store i32 -1, i32* %3, align 4
-  br label %106
+  br label %102
 
-19:                                               ; preds = %2
-  %20 = load i32, i32* %7, align 4
-  %21 = icmp ne i32 %20, 80
-  br i1 %21, label %22, label %23
+19:                                               ; preds = %15
+  %20 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %21 = call i32 @getc(%struct._IO_FILE* noundef %20)
+  store i32 %21, i32* %7, align 4
+  %22 = load i32, i32* %7, align 4
+  %23 = icmp slt i32 %22, 49
+  br i1 %23, label %27, label %24
 
-22:                                               ; preds = %19
+24:                                               ; preds = %19
+  %25 = load i32, i32* %7, align 4
+  %26 = icmp sgt i32 %25, 57
+  br i1 %26, label %27, label %28
+
+27:                                               ; preds = %24, %19
   store i32 -1, i32* %3, align 4
-  br label %106
+  br label %102
 
-23:                                               ; preds = %19
-  %24 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %25 = call i32 @getc(%struct.__sFILE* noundef %24)
-  store i32 %25, i32* %7, align 4
-  %26 = load i32, i32* %7, align 4
-  %27 = icmp slt i32 %26, 49
-  br i1 %27, label %31, label %28
-
-28:                                               ; preds = %23
+28:                                               ; preds = %24
   %29 = load i32, i32* %7, align 4
-  %30 = icmp sgt i32 %29, 57
-  br i1 %30, label %31, label %32
-
-31:                                               ; preds = %28, %23
-  store i32 -1, i32* %3, align 4
-  br label %106
-
-32:                                               ; preds = %28
+  %30 = sub nsw i32 %29, 48
+  store i32 %30, i32* %6, align 4
+  %31 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %32 = call i32 @pnm_fget_char(%struct._IO_FILE* noundef %31)
+  store i32 %32, i32* %7, align 4
   %33 = load i32, i32* %7, align 4
-  %34 = sub nsw i32 %33, 48
-  store i32 %34, i32* %6, align 4
-  %35 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %36 = call i32 @pnm_fget_char(%struct.__sFILE* noundef %35)
-  store i32 %36, i32* %7, align 4
-  %37 = load i32, i32* %7, align 4
-  %38 = icmp eq i32 %37, 32
-  br i1 %38, label %49, label %39
+  %34 = icmp eq i32 %33, 32
+  br i1 %34, label %45, label %35
 
-39:                                               ; preds = %32
-  %40 = load i32, i32* %7, align 4
-  %41 = icmp eq i32 %40, 9
-  br i1 %41, label %49, label %42
+35:                                               ; preds = %28
+  %36 = load i32, i32* %7, align 4
+  %37 = icmp eq i32 %36, 9
+  br i1 %37, label %45, label %38
 
-42:                                               ; preds = %39
-  %43 = load i32, i32* %7, align 4
-  %44 = icmp eq i32 %43, 10
-  br i1 %44, label %49, label %45
+38:                                               ; preds = %35
+  %39 = load i32, i32* %7, align 4
+  %40 = icmp eq i32 %39, 10
+  br i1 %40, label %45, label %41
 
-45:                                               ; preds = %42
-  %46 = load i32, i32* %7, align 4
-  %47 = icmp eq i32 %46, 13
-  br i1 %47, label %49, label %48
+41:                                               ; preds = %38
+  %42 = load i32, i32* %7, align 4
+  %43 = icmp eq i32 %42, 13
+  br i1 %43, label %45, label %44
 
-48:                                               ; preds = %45
+44:                                               ; preds = %41
   store i32 -1, i32* %3, align 4
-  br label %106
+  br label %102
 
-49:                                               ; preds = %45, %42, %39, %32
-  %50 = load i32, i32* %6, align 4
-  %51 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
-  %52 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %51, i32 0, i32 0
-  store i32 %50, i32* %52, align 4
-  %53 = load i32, i32* %6, align 4
-  %54 = icmp uge i32 %53, 1
-  br i1 %54, label %55, label %105
+45:                                               ; preds = %41, %38, %35, %28
+  %46 = load i32, i32* %6, align 4
+  %47 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
+  %48 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %47, i32 0, i32 0
+  store i32 %46, i32* %48, align 4
+  %49 = load i32, i32* %6, align 4
+  %50 = icmp uge i32 %49, 1
+  br i1 %50, label %51, label %101
 
-55:                                               ; preds = %49
-  %56 = load i32, i32* %6, align 4
-  %57 = icmp ule i32 %56, 6
-  br i1 %57, label %58, label %105
+51:                                               ; preds = %45
+  %52 = load i32, i32* %6, align 4
+  %53 = icmp ule i32 %52, 6
+  br i1 %53, label %54, label %101
 
-58:                                               ; preds = %55
-  %59 = load i32, i32* %6, align 4
-  %60 = icmp eq i32 %59, 3
-  br i1 %60, label %64, label %61
+54:                                               ; preds = %51
+  %55 = load i32, i32* %6, align 4
+  %56 = icmp eq i32 %55, 3
+  br i1 %56, label %60, label %57
 
-61:                                               ; preds = %58
-  %62 = load i32, i32* %6, align 4
-  %63 = icmp eq i32 %62, 6
-  br label %64
+57:                                               ; preds = %54
+  %58 = load i32, i32* %6, align 4
+  %59 = icmp eq i32 %58, 6
+  br label %60
 
-64:                                               ; preds = %61, %58
-  %65 = phi i1 [ true, %58 ], [ %63, %61 ]
-  %66 = zext i1 %65 to i64
-  %67 = select i1 %65, i32 3, i32 1
-  %68 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
-  %69 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %68, i32 0, i32 1
-  store i32 %67, i32* %69, align 4
-  %70 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %71 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
-  %72 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %71, i32 0, i32 2
-  %73 = call i32 @pnm_fscan_uint(%struct.__sFILE* noundef %70, i32* noundef %72)
-  %74 = icmp ne i32 %73, 1
-  br i1 %74, label %81, label %75
+60:                                               ; preds = %57, %54
+  %61 = phi i1 [ true, %54 ], [ %59, %57 ]
+  %62 = zext i1 %61 to i64
+  %63 = select i1 %61, i32 3, i32 1
+  %64 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
+  %65 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %64, i32 0, i32 1
+  store i32 %63, i32* %65, align 4
+  %66 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %67 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
+  %68 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %67, i32 0, i32 2
+  %69 = call i32 @pnm_fscan_uint(%struct._IO_FILE* noundef %66, i32* noundef %68)
+  %70 = icmp ne i32 %69, 1
+  br i1 %70, label %77, label %71
 
-75:                                               ; preds = %64
-  %76 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %77 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
-  %78 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %77, i32 0, i32 3
-  %79 = call i32 @pnm_fscan_uint(%struct.__sFILE* noundef %76, i32* noundef %78)
-  %80 = icmp ne i32 %79, 1
-  br i1 %80, label %81, label %82
+71:                                               ; preds = %60
+  %72 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %73 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
+  %74 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %73, i32 0, i32 3
+  %75 = call i32 @pnm_fscan_uint(%struct._IO_FILE* noundef %72, i32* noundef %74)
+  %76 = icmp ne i32 %75, 1
+  br i1 %76, label %77, label %78
 
-81:                                               ; preds = %75, %64
+77:                                               ; preds = %71, %60
   store i32 -1, i32* %3, align 4
-  br label %106
+  br label %102
 
-82:                                               ; preds = %75
-  %83 = load i32, i32* %6, align 4
-  %84 = icmp eq i32 %83, 1
-  br i1 %84, label %88, label %85
+78:                                               ; preds = %71
+  %79 = load i32, i32* %6, align 4
+  %80 = icmp eq i32 %79, 1
+  br i1 %80, label %84, label %81
 
-85:                                               ; preds = %82
-  %86 = load i32, i32* %6, align 4
-  %87 = icmp eq i32 %86, 4
-  br i1 %87, label %88, label %91
+81:                                               ; preds = %78
+  %82 = load i32, i32* %6, align 4
+  %83 = icmp eq i32 %82, 4
+  br i1 %83, label %84, label %87
 
-88:                                               ; preds = %85, %82
+84:                                               ; preds = %81, %78
+  %85 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
+  %86 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %85, i32 0, i32 4
+  store i32 1, i32* %86, align 4
+  br label %95
+
+87:                                               ; preds = %81
+  %88 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
   %89 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
   %90 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %89, i32 0, i32 4
-  store i32 1, i32* %90, align 4
-  br label %99
+  %91 = call i32 @pnm_fscan_uint(%struct._IO_FILE* noundef %88, i32* noundef %90)
+  %92 = icmp ne i32 %91, 1
+  br i1 %92, label %93, label %94
 
-91:                                               ; preds = %85
-  %92 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %93 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
-  %94 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %93, i32 0, i32 4
-  %95 = call i32 @pnm_fscan_uint(%struct.__sFILE* noundef %92, i32* noundef %94)
-  %96 = icmp ne i32 %95, 1
-  br i1 %96, label %97, label %98
-
-97:                                               ; preds = %91
+93:                                               ; preds = %87
   store i32 -1, i32* %3, align 4
-  br label %106
+  br label %102
 
-98:                                               ; preds = %91
-  br label %99
+94:                                               ; preds = %87
+  br label %95
 
-99:                                               ; preds = %98, %88
-  %100 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
-  %101 = call i32 @pnm_is_valid(%struct.pnm_struct* noundef %100)
-  %102 = icmp ne i32 %101, 0
-  %103 = zext i1 %102 to i64
-  %104 = select i1 %102, i32 1, i32 0
-  store i32 %104, i32* %3, align 4
-  br label %106
+95:                                               ; preds = %94, %84
+  %96 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
+  %97 = call i32 @pnm_is_valid(%struct.pnm_struct* noundef %96)
+  %98 = icmp ne i32 %97, 0
+  %99 = zext i1 %98 to i64
+  %100 = select i1 %98, i32 1, i32 0
+  store i32 %100, i32* %3, align 4
+  br label %102
 
-105:                                              ; preds = %55, %49
+101:                                              ; preds = %51, %45
   store i32 -1, i32* %3, align 4
-  br label %106
+  br label %102
 
-106:                                              ; preds = %105, %99, %97, %81, %48, %31, %22, %18
-  %107 = load i32, i32* %3, align 4
-  ret i32 %107
+102:                                              ; preds = %101, %95, %93, %77, %44, %27, %18, %14
+  %103 = load i32, i32* %3, align 4
+  ret i32 %103
 }
 
-; Function Attrs: nounwind
-declare i8* @__memset_chk(i8* noundef, i32 noundef, i64 noundef, i64 noundef) #1
+; Function Attrs: argmemonly nofree nounwind willreturn writeonly
+declare void @llvm.memset.p0i8.i64(i8* nocapture writeonly, i8, i64, i1 immarg) #1
 
-; Function Attrs: nofree nosync nounwind readnone speculatable willreturn
-declare i64 @llvm.objectsize.i64.p0i8(i8*, i1 immarg, i1 immarg, i1 immarg) #2
+declare dso_local i32 @getc(%struct._IO_FILE* noundef) #2
 
-declare i32 @getc(%struct.__sFILE* noundef) #3
-
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal i32 @pnm_fget_char(%struct.__sFILE* noundef %0) #0 {
-  %2 = alloca %struct.__sFILE*, align 8
+; Function Attrs: noinline nounwind optnone uwtable
+define internal i32 @pnm_fget_char(%struct._IO_FILE* noundef %0) #0 {
+  %2 = alloca %struct._IO_FILE*, align 8
   %3 = alloca i32, align 4
-  store %struct.__sFILE* %0, %struct.__sFILE** %2, align 8
-  %4 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %5 = call i32 @getc(%struct.__sFILE* noundef %4)
+  store %struct._IO_FILE* %0, %struct._IO_FILE** %2, align 8
+  %4 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %5 = call i32 @getc(%struct._IO_FILE* noundef %4)
   store i32 %5, i32* %3, align 4
   %6 = load i32, i32* %3, align 4
   %7 = icmp eq i32 %6, 35
@@ -213,8 +208,8 @@ define internal i32 @pnm_fget_char(%struct.__sFILE* noundef %0) #0 {
   br label %9
 
 9:                                                ; preds = %21, %8
-  %10 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %11 = call i32 @getc(%struct.__sFILE* noundef %10)
+  %10 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %11 = call i32 @getc(%struct._IO_FILE* noundef %10)
   store i32 %11, i32* %3, align 4
   br label %12
 
@@ -235,7 +230,7 @@ define internal i32 @pnm_fget_char(%struct.__sFILE* noundef %0) #0 {
 
 21:                                               ; preds = %18, %15, %12
   %22 = phi i1 [ false, %15 ], [ false, %12 ], [ %20, %18 ]
-  br i1 %22, label %9, label %23, !llvm.loop !10
+  br i1 %22, label %9, label %23, !llvm.loop !4
 
 23:                                               ; preds = %21
   br label %24
@@ -246,8 +241,8 @@ define internal i32 @pnm_fget_char(%struct.__sFILE* noundef %0) #0 {
   br i1 %26, label %27, label %37
 
 27:                                               ; preds = %24
-  %28 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %29 = call i32 @getc(%struct.__sFILE* noundef %28)
+  %28 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %29 = call i32 @getc(%struct._IO_FILE* noundef %28)
   store i32 %29, i32* %3, align 4
   %30 = load i32, i32* %3, align 4
   %31 = icmp ne i32 %30, 10
@@ -255,8 +250,8 @@ define internal i32 @pnm_fget_char(%struct.__sFILE* noundef %0) #0 {
 
 32:                                               ; preds = %27
   %33 = load i32, i32* %3, align 4
-  %34 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %35 = call i32 @ungetc(i32 noundef %33, %struct.__sFILE* noundef %34)
+  %34 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %35 = call i32 @ungetc(i32 noundef %33, %struct._IO_FILE* noundef %34)
   store i32 10, i32* %3, align 4
   br label %36
 
@@ -268,20 +263,20 @@ define internal i32 @pnm_fget_char(%struct.__sFILE* noundef %0) #0 {
   ret i32 %38
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal i32 @pnm_fscan_uint(%struct.__sFILE* noundef %0, i32* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal i32 @pnm_fscan_uint(%struct._IO_FILE* noundef %0, i32* noundef %1) #0 {
   %3 = alloca i32, align 4
-  %4 = alloca %struct.__sFILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca i32*, align 8
   %6 = alloca i32, align 4
   %7 = alloca i32, align 4
-  store %struct.__sFILE* %0, %struct.__sFILE** %4, align 8
+  store %struct._IO_FILE* %0, %struct._IO_FILE** %4, align 8
   store i32* %1, i32** %5, align 8
   br label %8
 
 8:                                                ; preds = %23, %2
-  %9 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %10 = call i32 @pnm_fget_char(%struct.__sFILE* noundef %9)
+  %9 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %10 = call i32 @pnm_fget_char(%struct._IO_FILE* noundef %9)
   store i32 %10, i32* %6, align 4
   br label %11
 
@@ -307,7 +302,7 @@ define internal i32 @pnm_fscan_uint(%struct.__sFILE* noundef %0, i32* noundef %1
 
 23:                                               ; preds = %20, %17, %14, %11
   %24 = phi i1 [ true, %17 ], [ true, %14 ], [ true, %11 ], [ %22, %20 ]
-  br i1 %24, label %8, label %25, !llvm.loop !12
+  br i1 %24, label %8, label %25, !llvm.loop !6
 
 25:                                               ; preds = %23
   %26 = load i32, i32* %6, align 4
@@ -330,8 +325,8 @@ define internal i32 @pnm_fscan_uint(%struct.__sFILE* noundef %0, i32* noundef %1
 
 35:                                               ; preds = %32, %29
   %36 = load i32, i32* %6, align 4
-  %37 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %38 = call i32 @ungetc(i32 noundef %36, %struct.__sFILE* noundef %37)
+  %37 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %38 = call i32 @ungetc(i32 noundef %36, %struct._IO_FILE* noundef %37)
   store i32 0, i32* %3, align 4
   br label %86
 
@@ -363,13 +358,13 @@ define internal i32 @pnm_fscan_uint(%struct.__sFILE* noundef %0, i32* noundef %1
 55:                                               ; preds = %41
   %56 = load i32*, i32** %5, align 8
   store i32 -1, i32* %56, align 4
-  %57 = call i32* @__error()
+  %57 = call i32* @__errno_location() #4
   store i32 34, i32* %57, align 4
   br label %58
 
 58:                                               ; preds = %55, %52
-  %59 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %60 = call i32 @getc(%struct.__sFILE* noundef %59)
+  %59 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %60 = call i32 @getc(%struct._IO_FILE* noundef %59)
   store i32 %60, i32* %6, align 4
   br label %61
 
@@ -385,7 +380,7 @@ define internal i32 @pnm_fscan_uint(%struct.__sFILE* noundef %0, i32* noundef %1
 
 67:                                               ; preds = %64, %61
   %68 = phi i1 [ false, %61 ], [ %66, %64 ]
-  br i1 %68, label %41, label %69, !llvm.loop !13
+  br i1 %68, label %41, label %69, !llvm.loop !7
 
 69:                                               ; preds = %67
   %70 = load i32, i32* %6, align 4
@@ -409,8 +404,8 @@ define internal i32 @pnm_fscan_uint(%struct.__sFILE* noundef %0, i32* noundef %1
 
 81:                                               ; preds = %78
   %82 = load i32, i32* %6, align 4
-  %83 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %84 = call i32 @ungetc(i32 noundef %82, %struct.__sFILE* noundef %83)
+  %83 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %84 = call i32 @ungetc(i32 noundef %82, %struct._IO_FILE* noundef %83)
   br label %85
 
 85:                                               ; preds = %81, %78, %75, %72, %69
@@ -422,15 +417,15 @@ define internal i32 @pnm_fscan_uint(%struct.__sFILE* noundef %0, i32* noundef %1
   ret i32 %87
 }
 
-declare i32 @pnm_is_valid(%struct.pnm_struct* noundef) #3
+declare dso_local i32 @pnm_is_valid(%struct.pnm_struct* noundef) #2
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32 noundef %2, %struct.__sFILE* noundef %3) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32 noundef %2, %struct._IO_FILE* noundef %3) #0 {
   %5 = alloca i32, align 4
   %6 = alloca %struct.pnm_struct*, align 8
   %7 = alloca i32*, align 8
   %8 = alloca i32, align 4
-  %9 = alloca %struct.__sFILE*, align 8
+  %9 = alloca %struct._IO_FILE*, align 8
   %10 = alloca i32, align 4
   %11 = alloca i32, align 4
   %12 = alloca i32, align 4
@@ -447,7 +442,7 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   store %struct.pnm_struct* %0, %struct.pnm_struct** %6, align 8
   store i32* %1, i32** %7, align 8
   store i32 %2, i32* %8, align 4
-  store %struct.__sFILE* %3, %struct.__sFILE** %9, align 8
+  store %struct._IO_FILE* %3, %struct._IO_FILE** %9, align 8
   %23 = load %struct.pnm_struct*, %struct.pnm_struct** %6, align 8
   %24 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %23, i32 0, i32 0
   %25 = load i32, i32* %24, align 4
@@ -500,8 +495,8 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   br label %51
 
 51:                                               ; preds = %66, %50
-  %52 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %53 = call i32 @pnm_fget_char(%struct.__sFILE* noundef %52)
+  %52 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %53 = call i32 @pnm_fget_char(%struct._IO_FILE* noundef %52)
   store i32 %53, i32* %16, align 4
   br label %54
 
@@ -527,7 +522,7 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
 
 66:                                               ; preds = %63, %60, %57, %54
   %67 = phi i1 [ true, %60 ], [ true, %57 ], [ true, %54 ], [ %65, %63 ]
-  br i1 %67, label %51, label %68, !llvm.loop !14
+  br i1 %67, label %51, label %68, !llvm.loop !8
 
 68:                                               ; preds = %66
   %69 = load i32, i32* %16, align 4
@@ -541,8 +536,8 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
 
 74:                                               ; preds = %71
   %75 = load i32, i32* %16, align 4
-  %76 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %77 = call i32 @ungetc(i32 noundef %75, %struct.__sFILE* noundef %76)
+  %76 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %77 = call i32 @ungetc(i32 noundef %75, %struct._IO_FILE* noundef %76)
   br label %89
 
 78:                                               ; preds = %71, %68
@@ -560,7 +555,7 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   %87 = load i64, i64* %21, align 8
   %88 = add i64 %87, 1
   store i64 %88, i64* %21, align 8
-  br label %46, !llvm.loop !15
+  br label %46, !llvm.loop !9
 
 89:                                               ; preds = %74, %46
   br label %245
@@ -576,11 +571,11 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   br i1 %94, label %95, label %107
 
 95:                                               ; preds = %91
-  %96 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
+  %96 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
   %97 = load i32*, i32** %7, align 8
   %98 = load i64, i64* %21, align 8
   %99 = getelementptr inbounds i32, i32* %97, i64 %98
-  %100 = call i32 @pnm_fscan_uint(%struct.__sFILE* noundef %96, i32* noundef %99)
+  %100 = call i32 @pnm_fscan_uint(%struct._IO_FILE* noundef %96, i32* noundef %99)
   %101 = icmp ne i32 %100, 1
   br i1 %101, label %102, label %103
 
@@ -594,7 +589,7 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   %105 = load i64, i64* %21, align 8
   %106 = add i64 %105, 1
   store i64 %106, i64* %21, align 8
-  br label %91, !llvm.loop !16
+  br label %91, !llvm.loop !10
 
 107:                                              ; preds = %102, %91
   br label %245
@@ -611,8 +606,8 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   br i1 %112, label %113, label %144
 
 113:                                              ; preds = %109
-  %114 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %115 = call i32 @getc(%struct.__sFILE* noundef %114)
+  %114 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %115 = call i32 @getc(%struct._IO_FILE* noundef %114)
   store i32 %115, i32* %16, align 4
   %116 = load i32, i32* %16, align 4
   %117 = icmp eq i32 %116, -1
@@ -661,10 +656,10 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   %141 = load i32, i32* %20, align 4
   %142 = ashr i32 %141, 1
   store i32 %142, i32* %20, align 4
-  br label %120, !llvm.loop !17
+  br label %120, !llvm.loop !11
 
 143:                                              ; preds = %138, %120
-  br label %109, !llvm.loop !18
+  br label %109, !llvm.loop !12
 
 144:                                              ; preds = %118, %109
   br label %245
@@ -685,8 +680,8 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   br i1 %152, label %153, label %167
 
 153:                                              ; preds = %149
-  %154 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %155 = call i32 @getc(%struct.__sFILE* noundef %154)
+  %154 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %155 = call i32 @getc(%struct._IO_FILE* noundef %154)
   store i32 %155, i32* %16, align 4
   %156 = load i32, i32* %16, align 4
   %157 = icmp eq i32 %156, -1
@@ -707,7 +702,7 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   %165 = load i64, i64* %21, align 8
   %166 = add i64 %165, 1
   store i64 %166, i64* %21, align 8
-  br label %149, !llvm.loop !19
+  br label %149, !llvm.loop !13
 
 167:                                              ; preds = %158, %149
   br label %242
@@ -728,11 +723,11 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   br i1 %175, label %176, label %195
 
 176:                                              ; preds = %172
-  %177 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %178 = call i32 @getc(%struct.__sFILE* noundef %177)
+  %177 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %178 = call i32 @getc(%struct._IO_FILE* noundef %177)
   store i32 %178, i32* %17, align 4
-  %179 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %180 = call i32 @getc(%struct.__sFILE* noundef %179)
+  %179 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %180 = call i32 @getc(%struct._IO_FILE* noundef %179)
   store i32 %180, i32* %16, align 4
   %181 = load i32, i32* %16, align 4
   %182 = icmp eq i32 %181, -1
@@ -756,7 +751,7 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   %193 = load i64, i64* %21, align 8
   %194 = add i64 %193, 1
   store i64 %194, i64* %21, align 8
-  br label %172, !llvm.loop !20
+  br label %172, !llvm.loop !14
 
 195:                                              ; preds = %183, %172
   br label %241
@@ -783,20 +778,20 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   br i1 %206, label %207, label %210
 
 207:                                              ; preds = %204
-  %208 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %209 = call i32 @getc(%struct.__sFILE* noundef %208)
+  %208 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %209 = call i32 @getc(%struct._IO_FILE* noundef %208)
   store i32 %209, i32* %19, align 4
   br label %210
 
 210:                                              ; preds = %207, %204
-  %211 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %212 = call i32 @getc(%struct.__sFILE* noundef %211)
+  %211 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %212 = call i32 @getc(%struct._IO_FILE* noundef %211)
   store i32 %212, i32* %18, align 4
-  %213 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %214 = call i32 @getc(%struct.__sFILE* noundef %213)
+  %213 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %214 = call i32 @getc(%struct._IO_FILE* noundef %213)
   store i32 %214, i32* %17, align 4
-  %215 = load %struct.__sFILE*, %struct.__sFILE** %9, align 8
-  %216 = call i32 @getc(%struct.__sFILE* noundef %215)
+  %215 = load %struct._IO_FILE*, %struct._IO_FILE** %9, align 8
+  %216 = call i32 @getc(%struct._IO_FILE* noundef %215)
   store i32 %216, i32* %16, align 4
   %217 = load i32, i32* %16, align 4
   %218 = icmp eq i32 %217, -1
@@ -826,16 +821,16 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   %235 = load i64, i64* %21, align 8
   %236 = add i64 %235, 1
   store i64 %236, i64* %21, align 8
-  br label %200, !llvm.loop !21
+  br label %200, !llvm.loop !15
 
 237:                                              ; preds = %219, %200
   br label %240
 
 238:                                              ; preds = %196
-  %239 = call i32* @__error()
+  %239 = call i32* @__errno_location() #4
   store i32 22, i32* %239, align 4
   store i32 0, i32* %5, align 4
-  br label %265
+  br label %259
 
 240:                                              ; preds = %237
   br label %241
@@ -847,16 +842,16 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   br label %245
 
 243:                                              ; preds = %4
-  %244 = call i32* @__error()
+  %244 = call i32* @__errno_location() #4
   store i32 22, i32* %244, align 4
   store i32 0, i32* %5, align 4
-  br label %265
+  br label %259
 
 245:                                              ; preds = %242, %144, %107, %89
   %246 = load i64, i64* %21, align 8
   %247 = load i64, i64* %15, align 8
   %248 = icmp ult i64 %246, %247
-  br i1 %248, label %249, label %264
+  br i1 %248, label %249, label %258
 
 249:                                              ; preds = %245
   %250 = load i32*, i32** %7, align 8
@@ -867,36 +862,32 @@ define i32 @pnm_fget_values(%struct.pnm_struct* noundef %0, i32* noundef %1, i32
   %255 = load i64, i64* %21, align 8
   %256 = sub i64 %254, %255
   %257 = mul i64 %256, 4
-  %258 = load i32*, i32** %7, align 8
-  %259 = load i64, i64* %21, align 8
-  %260 = getelementptr inbounds i32, i32* %258, i64 %259
-  %261 = bitcast i32* %260 to i8*
-  %262 = call i64 @llvm.objectsize.i64.p0i8(i8* %261, i1 false, i1 true, i1 false)
-  %263 = call i8* @__memset_chk(i8* noundef %253, i32 noundef 0, i64 noundef %257, i64 noundef %262) #4
+  call void @llvm.memset.p0i8.i64(i8* align 4 %253, i8 0, i64 %257, i1 false)
   store i32 -1, i32* %5, align 4
-  br label %265
+  br label %259
 
-264:                                              ; preds = %245
+258:                                              ; preds = %245
   store i32 1, i32* %5, align 4
-  br label %265
+  br label %259
 
-265:                                              ; preds = %264, %249, %243, %238
-  %266 = load i32, i32* %5, align 4
-  ret i32 %266
+259:                                              ; preds = %258, %249, %243, %238
+  %260 = load i32, i32* %5, align 4
+  ret i32 %260
 }
 
-declare i32 @ungetc(i32 noundef, %struct.__sFILE* noundef) #3
+declare dso_local i32 @ungetc(i32 noundef, %struct._IO_FILE* noundef) #2
 
-declare i32* @__error() #3
+; Function Attrs: nounwind readnone willreturn
+declare dso_local i32* @__errno_location() #3
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 noundef %2, i32 noundef %3, %struct.__sFILE* noundef %4) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 noundef %2, i32 noundef %3, %struct._IO_FILE* noundef %4) #0 {
   %6 = alloca i32, align 4
   %7 = alloca %struct.pnm_struct*, align 8
   %8 = alloca i8*, align 8
   %9 = alloca i64, align 8
   %10 = alloca i32, align 4
-  %11 = alloca %struct.__sFILE*, align 8
+  %11 = alloca %struct._IO_FILE*, align 8
   %12 = alloca i32, align 4
   %13 = alloca i32, align 4
   %14 = alloca i32, align 4
@@ -912,7 +903,7 @@ define i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 n
   store i8* %1, i8** %8, align 8
   store i64 %2, i64* %9, align 8
   store i32 %3, i32* %10, align 4
-  store %struct.__sFILE* %4, %struct.__sFILE** %11, align 8
+  store %struct._IO_FILE* %4, %struct._IO_FILE** %11, align 8
   %23 = load %struct.pnm_struct*, %struct.pnm_struct** %7, align 8
   %24 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %23, i32 0, i32 0
   %25 = load i32, i32* %24, align 4
@@ -1000,10 +991,10 @@ define i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 n
   br i1 %71, label %72, label %74
 
 72:                                               ; preds = %68
-  %73 = call i32* @__error()
+  %73 = call i32* @__errno_location() #4
   store i32 22, i32* %73, align 4
   store i32 0, i32* %6, align 4
-  br label %141
+  br label %136
 
 74:                                               ; preds = %68
   %75 = load i32, i32* %12, align 4
@@ -1026,8 +1017,8 @@ define i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 n
   br i1 %80, label %81, label %113
 
 81:                                               ; preds = %77
-  %82 = load %struct.__sFILE*, %struct.__sFILE** %11, align 8
-  %83 = call i32 @getc(%struct.__sFILE* noundef %82)
+  %82 = load %struct._IO_FILE*, %struct._IO_FILE** %11, align 8
+  %83 = call i32 @getc(%struct._IO_FILE* noundef %82)
   store i32 %83, i32* %19, align 4
   %84 = load i32, i32* %19, align 4
   %85 = icmp eq i32 %84, -1
@@ -1077,10 +1068,10 @@ define i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 n
   %110 = load i32, i32* %20, align 4
   %111 = ashr i32 %110, 1
   store i32 %111, i32* %20, align 4
-  br label %88, !llvm.loop !22
+  br label %88, !llvm.loop !16
 
 112:                                              ; preds = %107, %88
-  br label %77, !llvm.loop !23
+  br label %77, !llvm.loop !17
 
 113:                                              ; preds = %86, %77
   br label %122
@@ -1089,22 +1080,22 @@ define i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 n
   %115 = load i8*, i8** %8, align 8
   %116 = load i64, i64* %9, align 8
   %117 = load i64, i64* %17, align 8
-  %118 = load %struct.__sFILE*, %struct.__sFILE** %11, align 8
-  %119 = call i64 @fread(i8* noundef %115, i64 noundef %116, i64 noundef %117, %struct.__sFILE* noundef %118)
+  %118 = load %struct._IO_FILE*, %struct._IO_FILE** %11, align 8
+  %119 = call i64 @fread(i8* noundef %115, i64 noundef %116, i64 noundef %117, %struct._IO_FILE* noundef %118)
   store i64 %119, i64* %21, align 8
   br label %122
 
 120:                                              ; preds = %74
-  %121 = call i32* @__error()
+  %121 = call i32* @__errno_location() #4
   store i32 22, i32* %121, align 4
   store i32 0, i32* %6, align 4
-  br label %141
+  br label %136
 
 122:                                              ; preds = %114, %113
   %123 = load i64, i64* %21, align 8
   %124 = load i64, i64* %17, align 8
   %125 = icmp ult i64 %123, %124
-  br i1 %125, label %126, label %140
+  br i1 %125, label %126, label %135
 
 126:                                              ; preds = %122
   %127 = load i8*, i8** %8, align 8
@@ -1115,55 +1106,45 @@ define i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %0, i8* noundef %1, i64 n
   %132 = mul i64 %130, %131
   %133 = load i64, i64* %21, align 8
   %134 = sub i64 %132, %133
-  %135 = load i8*, i8** %8, align 8
-  %136 = load i64, i64* %21, align 8
-  %137 = getelementptr inbounds i8, i8* %135, i64 %136
-  %138 = call i64 @llvm.objectsize.i64.p0i8(i8* %137, i1 false, i1 true, i1 false)
-  %139 = call i8* @__memset_chk(i8* noundef %129, i32 noundef 0, i64 noundef %134, i64 noundef %138) #4
+  call void @llvm.memset.p0i8.i64(i8* align 1 %129, i8 0, i64 %134, i1 false)
   store i32 -1, i32* %6, align 4
-  br label %141
+  br label %136
 
-140:                                              ; preds = %122
+135:                                              ; preds = %122
   store i32 1, i32* %6, align 4
-  br label %141
+  br label %136
 
-141:                                              ; preds = %140, %126, %120, %72
-  %142 = load i32, i32* %6, align 4
-  ret i32 %142
+136:                                              ; preds = %135, %126, %120, %72
+  %137 = load i32, i32* %6, align 4
+  ret i32 %137
 }
 
-declare i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct.__sFILE* noundef) #3
+declare dso_local i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct._IO_FILE* noundef) #2
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { nounwind "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #2 = { nofree nosync nounwind readnone speculatable willreturn }
-attributes #3 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #4 = { nounwind }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { argmemonly nofree nounwind willreturn writeonly }
+attributes #2 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { nounwind readnone willreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { nounwind readnone willreturn }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
-!13 = distinct !{!13, !11}
-!14 = distinct !{!14, !11}
-!15 = distinct !{!15, !11}
-!16 = distinct !{!16, !11}
-!17 = distinct !{!17, !11}
-!18 = distinct !{!18, !11}
-!19 = distinct !{!19, !11}
-!20 = distinct !{!20, !11}
-!21 = distinct !{!21, !11}
-!22 = distinct !{!22, !11}
-!23 = distinct !{!23, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}
+!7 = distinct !{!7, !5}
+!8 = distinct !{!8, !5}
+!9 = distinct !{!9, !5}
+!10 = distinct !{!10, !5}
+!11 = distinct !{!11, !5}
+!12 = distinct !{!12, !5}
+!13 = distinct !{!13, !5}
+!14 = distinct !{!14, !5}
+!15 = distinct !{!15, !5}
+!16 = distinct !{!16, !5}
+!17 = distinct !{!17, !5}

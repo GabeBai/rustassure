@@ -1,6 +1,5 @@
 .PHONY: all clean url-test
 
-# 使用自定义的 Clang 包装器脚本
 CC := ./clang-wrapper.sh
 
 all: url-test

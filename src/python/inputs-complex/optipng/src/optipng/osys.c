@@ -512,13 +512,8 @@ osys_copy_attr(const char *src_path, const char *dest_path)
     {
         struct timespec times[2];
 
-        #if defined(__APPLE__) && defined(__MACH__) // macOS
-            times[0] = sbuf.st_atimespec;
-            times[1] = sbuf.st_mtimespec;
-        #else
-            times[0] = sbuf.st_atim;
-            times[1] = sbuf.st_mtim;
-        #endif
+        times[0] = sbuf.st_atim;
+        times[1] = sbuf.st_mtim;
         if (utimensat(AT_FDCWD, dest_path, times, 0) != 0)
             result = -1;
     }

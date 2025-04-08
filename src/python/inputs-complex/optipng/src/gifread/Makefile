@@ -2,8 +2,8 @@
 .PRECIOUS: Makefile
 .SUFFIXES: .c .o .a
 
-CC = gcc
-CFLAGS = -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+CC = ./clang-wrapper.sh
+CFLAGS =
 CPP = $(CC) -E
 CPPFLAGS =
 LD = $(CC)

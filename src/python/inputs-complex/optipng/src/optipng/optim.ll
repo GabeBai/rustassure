@@ -1,12 +1,14 @@
 ; ModuleID = 'optim.c'
 source_filename = "optim.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.opng_options = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i8*, i8*, i8*, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
 %struct.opng_summary_struct = type { i32, i32, i32, i32 }
 %struct.opng_engine_struct = type { i32 }
-%struct.exception_context = type { [48 x i32]*, i32, %struct.anon }
+%struct.exception_context = type { [1 x %struct.__jmp_buf_tag]*, i32, %struct.anon }
+%struct.__jmp_buf_tag = type { [8 x i64], i32, %struct.__sigset_t }
+%struct.__sigset_t = type { [16 x i64] }
 %struct.anon = type { i8* }
 %struct.opng_process_struct = type { i32, i32, i64, i64, i64, i64, i64, i64, i64, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
 %struct.opng_image_struct = type { i32, i32, i32, i32, i32, i32, i32, i8**, %struct.png_color_struct*, i32, %struct.png_color_16_struct*, %struct.png_color_16_struct, i16*, %struct.png_color_8_struct*, %struct.png_color_8_struct, i8*, i32, %struct.png_color_16_struct*, %struct.png_color_16_struct, %struct.png_unknown_chunk_t*, i32 }
@@ -14,9 +16,10 @@ target triple = "arm64-apple-macosx14.0.0"
 %struct.png_color_8_struct = type { i8, i8, i8, i8, i8 }
 %struct.png_color_16_struct = type { i8, i16, i16, i16, i16 }
 %struct.png_unknown_chunk_t = type { [5 x i8], i8*, i64, i8 }
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 %struct.png_struct_def = type opaque
 %struct.png_info_def = type opaque
 %struct.opng_preset = type { i8*, i8*, i8*, i8* }
@@ -32,7 +35,7 @@ target triple = "arm64-apple-macosx14.0.0"
 @engine = internal global %struct.opng_engine_struct zeroinitializer, align 4
 @.str = private unnamed_addr constant [34 x i8] c"The OptiPNG engine is not running\00", align 1
 @.str.1 = private unnamed_addr constant [19 x i8] c"** Processing: %s\0A\00", align 1
-@the_exception_context = global [1 x %struct.exception_context] zeroinitializer, align 8
+@the_exception_context = dso_local global [1 x %struct.exception_context] zeroinitializer, align 16
 @process = internal global %struct.opng_process_struct zeroinitializer, align 8
 @.str.2 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
 @.str.3 = private unnamed_addr constant [18 x i8] c"** Status report\0A\00", align 1
@@ -41,8 +44,8 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.6 = private unnamed_addr constant [36 x i8] c"%u error(s) have been encountered.\0A\00", align 1
 @.str.7 = private unnamed_addr constant [39 x i8] c"%u erroneous file(s) have been fixed.\0A\00", align 1
 @image = internal global %struct.opng_image_struct zeroinitializer, align 8
-@opng_optimize_impl.infile = internal global %struct.__sFILE* null, align 8
-@opng_optimize_impl.outfile = internal global %struct.__sFILE* null, align 8
+@opng_optimize_impl.infile = internal global %struct._IO_FILE* null, align 8
+@opng_optimize_impl.outfile = internal global %struct._IO_FILE* null, align 8
 @opng_optimize_impl.infile_name_local = internal global i8* null, align 8
 @opng_optimize_impl.outfile_name = internal global i8* null, align 8
 @opng_optimize_impl.bakfile_name = internal global i8* null, align 8
@@ -127,7 +130,7 @@ target triple = "arm64-apple-macosx14.0.0"
 @sig_fdAT = internal constant [4 x i8] c"fdAT", align 1
 @sig_acTL = internal constant [4 x i8] c"acTL", align 1
 @sig_fcTL = internal constant [4 x i8] c"fcTL", align 1
-@opng_print_image_info.type_channels = internal constant [8 x i32] [i32 1, i32 0, i32 3, i32 1, i32 2, i32 0, i32 4, i32 0], align 4
+@opng_print_image_info.type_channels = internal constant [8 x i32] [i32 1, i32 0, i32 3, i32 1, i32 2, i32 0, i32 4, i32 0], align 16
 @.str.75 = private unnamed_addr constant [15 x i8] c"%lux%lu pixels\00", align 1
 @.str.76 = private unnamed_addr constant [3 x i8] c", \00", align 1
 @.str.77 = private unnamed_addr constant [17 x i8] c"%dx%d bits/pixel\00", align 1
@@ -143,7 +146,7 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.87 = private unnamed_addr constant [14 x i8] c"+transparency\00", align 1
 @.str.88 = private unnamed_addr constant [11 x i8] c"interlaced\00", align 1
 @.str.89 = private unnamed_addr constant [17 x i8] c"No IDAT in input\00", align 1
-@presets = internal constant [8 x %struct.opng_preset] [%struct.opng_preset { i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.94, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.96, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.97, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.96, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.94, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.97, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.98, i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.94, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.98, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.97, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }], align 8
+@presets = internal constant [8 x %struct.opng_preset] [%struct.opng_preset { i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0), i8* getelementptr inbounds ([1 x i8], [1 x i8]* @.str.92, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.94, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.96, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.97, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.96, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.94, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.93, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.97, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.98, i32 0, i32 0), i8* getelementptr inbounds ([2 x i8], [2 x i8]* @.str.94, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }, %struct.opng_preset { i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.98, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.97, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0), i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.95, i32 0, i32 0) }], align 16
 @.str.90 = private unnamed_addr constant [29 x i8] c"Invalid iteration parameters\00", align 1
 @.str.91 = private unnamed_addr constant [36 x i8] c"Iteration parameter(s) out of range\00", align 1
 @.str.92 = private unnamed_addr constant [1 x i8] zeroinitializer, align 1
@@ -168,7 +171,7 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.110 = private unnamed_addr constant [28 x i8] c"Invalid encoding parameters\00", align 1
 @write_ptr = internal global %struct.png_struct_def* null, align 8
 @write_info_ptr = internal global %struct.png_info_def* null, align 8
-@filter_table = internal constant [6 x i32] [i32 8, i32 16, i32 32, i32 64, i32 128, i32 248], align 4
+@filter_table = internal constant [6 x i32] [i32 8, i32 16, i32 32, i32 64, i32 128, i32 248], align 16
 @.str.111 = private unnamed_addr constant [17 x i8] c"No info in image\00", align 1
 @opng_write_data.allow_crt_chunk = internal global i32 0, align 4
 @opng_write_data.crt_chunk_is_idat = internal global i32 0, align 4
@@ -194,8 +197,8 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.127 = private unnamed_addr constant [4 x i8] c"...\00", align 1
 @.str.128 = private unnamed_addr constant [11 x i8] c"Error: %s\0A\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @opng_initialize(%struct.opng_options* noundef %0, %struct.opng_ui* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @opng_initialize(%struct.opng_options* noundef %0, %struct.opng_ui* noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca %struct.opng_options*, align 8
   %5 = alloca %struct.opng_ui*, align 8
@@ -272,13 +275,13 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* noalias nocapture writeonly, i8* noa
 ; Function Attrs: argmemonly nofree nounwind willreturn writeonly
 declare void @llvm.memset.p0i8.i64(i8* nocapture writeonly, i8, i64, i1 immarg) #2
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @opng_optimize(i8* noundef %0) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @opng_optimize(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   %3 = alloca i8*, align 8
   %4 = alloca i32, align 4
-  %5 = alloca [48 x i32]*, align 8
-  %6 = alloca [48 x i32], align 4
+  %5 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %6 = alloca [1 x %struct.__jmp_buf_tag], align 16
   store i8* %0, i8** %2, align 8
   %7 = load i32, i32* getelementptr inbounds (%struct.opng_engine_struct, %struct.opng_engine_struct* @engine, i32 0, i32 0), align 4
   %8 = icmp ne i32 %7, 0
@@ -297,11 +300,11 @@ define i32 @opng_optimize(i8* noundef %0) #0 {
   %15 = add i32 %14, 1
   store i32 %15, i32* getelementptr inbounds (%struct.opng_summary_struct, %struct.opng_summary_struct* @summary, i32 0, i32 0), align 4
   call void @opng_clear_image_info()
-  %16 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %16, [48 x i32]** %5, align 8
-  store [48 x i32]* %6, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %17 = getelementptr inbounds [48 x i32], [48 x i32]* %6, i64 0, i64 0
-  %18 = call i32 @setjmp(i32* noundef %17) #7
+  %16 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %16, [1 x %struct.__jmp_buf_tag]** %5, align 8
+  store [1 x %struct.__jmp_buf_tag]* %6, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %17 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %6, i64 0, i64 0
+  %18 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %17) #9
   %19 = icmp eq i32 %18, 0
   br i1 %19, label %20, label %47
 
@@ -353,7 +356,7 @@ define i32 @opng_optimize(i8* noundef %0) #0 {
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %44 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %45 = icmp ne i32 %44, 0
-  br i1 %45, label %21, label %46, !llvm.loop !10
+  br i1 %45, label %21, label %46, !llvm.loop !4
 
 46:                                               ; preds = %43
   br label %48
@@ -363,14 +366,14 @@ define i32 @opng_optimize(i8* noundef %0) #0 {
   br label %48
 
 48:                                               ; preds = %47, %46
-  %49 = load volatile [48 x i32]*, [48 x i32]** %5, align 8
-  store [48 x i32]* %49, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %49 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %5, align 8
+  store [1 x %struct.__jmp_buf_tag]* %49, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %50 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %51 = icmp ne i32 %50, 0
   br i1 %51, label %52, label %54
 
 52:                                               ; preds = %48
-  %53 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %53 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store i8* %53, i8** %3, align 8
   br i1 false, label %54, label %55
 
@@ -394,29 +397,29 @@ define i32 @opng_optimize(i8* noundef %0) #0 {
   ret i32 %61
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_clear_image_info() #0 {
   call void @llvm.memset.p0i8.i64(i8* align 8 bitcast (%struct.opng_image_struct* @image to i8*), i8 0, i64 160, i1 false)
   ret void
 }
 
-; Function Attrs: returns_twice
-declare i32 @setjmp(i32* noundef) #3
+; Function Attrs: nounwind returns_twice
+declare dso_local i32 @_setjmp(%struct.__jmp_buf_tag* noundef) #3
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
-  %3 = alloca [1024 x i8], align 1
-  %4 = alloca [1024 x i8], align 1
+  %3 = alloca [4096 x i8], align 16
+  %4 = alloca [4096 x i8], align 16
   %5 = alloca i8*, align 8
-  %6 = alloca [48 x i32]*, align 8
-  %7 = alloca [48 x i32], align 4
+  %6 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %7 = alloca [1 x %struct.__jmp_buf_tag], align 16
   %8 = alloca i8*, align 8
   %9 = alloca i32, align 4
-  %10 = alloca [48 x i32]*, align 8
-  %11 = alloca [48 x i32], align 4
-  %12 = alloca [48 x i32]*, align 8
-  %13 = alloca [48 x i32], align 4
+  %10 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %11 = alloca [1 x %struct.__jmp_buf_tag], align 16
+  %12 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %13 = alloca [1 x %struct.__jmp_buf_tag], align 16
   store i8* %0, i8** %2, align 8
   call void @llvm.memset.p0i8.i64(i8* align 8 bitcast (%struct.opng_process_struct* @process to i8*), i8 0, i64 112, i1 false)
   %14 = load i32, i32* getelementptr inbounds (%struct.opng_options, %struct.opng_options* @options, i32 0, i32 4), align 8
@@ -434,30 +437,30 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   %20 = load i8*, i8** %2, align 8
   store i8* %20, i8** @opng_optimize_impl.infile_name_local, align 8
   %21 = load i8*, i8** @opng_optimize_impl.infile_name_local, align 8
-  %22 = call %struct.__sFILE* @"\01_fopen"(i8* noundef %21, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.8, i64 0, i64 0))
-  store %struct.__sFILE* %22, %struct.__sFILE** @opng_optimize_impl.infile, align 8
-  %23 = icmp eq %struct.__sFILE* %22, null
+  %22 = call noalias %struct._IO_FILE* @fopen(i8* noundef %21, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.8, i64 0, i64 0))
+  store %struct._IO_FILE* %22, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
+  %23 = icmp eq %struct._IO_FILE* %22, null
   br i1 %23, label %24, label %29
 
 24:                                               ; preds = %19
   br label %25
 
 25:                                               ; preds = %24
-  store volatile i8* getelementptr inbounds ([26 x i8], [26 x i8]* @.str.9, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([26 x i8], [26 x i8]* @.str.9, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %26
 
 26:                                               ; preds = %25
-  %27 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %28 = getelementptr inbounds [48 x i32], [48 x i32]* %27, i64 0, i64 0
-  call void @longjmp(i32* noundef %28, i32 noundef 1) #8
+  %27 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %28 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %27, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %28, i32 noundef 1) #10
   unreachable
 
 29:                                               ; preds = %19
-  %30 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %30, [48 x i32]** %6, align 8
-  store [48 x i32]* %7, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %31 = getelementptr inbounds [48 x i32], [48 x i32]* %7, i64 0, i64 0
-  %32 = call i32 @setjmp(i32* noundef %31) #7
+  %30 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %30, [1 x %struct.__jmp_buf_tag]** %6, align 8
+  store [1 x %struct.__jmp_buf_tag]* %7, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %31 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %7, i64 0, i64 0
+  %32 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %31) #9
   %33 = icmp eq i32 %32, 0
   br i1 %33, label %34, label %41
 
@@ -465,15 +468,15 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %35
 
 35:                                               ; preds = %37, %34
-  %36 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.infile, align 8
-  call void @opng_read_file(%struct.__sFILE* noundef %36)
+  %36 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
+  call void @opng_read_file(%struct._IO_FILE* noundef %36)
   br label %37
 
 37:                                               ; preds = %35
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %38 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %39 = icmp ne i32 %38, 0
-  br i1 %39, label %35, label %40, !llvm.loop !12
+  br i1 %39, label %35, label %40, !llvm.loop !6
 
 40:                                               ; preds = %37
   br label %42
@@ -483,14 +486,14 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %42
 
 42:                                               ; preds = %41, %40
-  %43 = load volatile [48 x i32]*, [48 x i32]** %6, align 8
-  store [48 x i32]* %43, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %43 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %6, align 8
+  store [1 x %struct.__jmp_buf_tag]* %43, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %44 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %45 = icmp ne i32 %44, 0
   br i1 %45, label %46, label %48
 
 46:                                               ; preds = %42
-  %47 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %47 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store volatile i8* %47, i8** %5, align 8
   br i1 false, label %48, label %49
 
@@ -511,8 +514,8 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %55
 
 55:                                               ; preds = %54, %48
-  %56 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.infile, align 8
-  %57 = call i32 @fclose(%struct.__sFILE* noundef %56)
+  %56 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
+  %57 = call i32 @fclose(%struct._IO_FILE* noundef %56)
   %58 = load volatile i8*, i8** %5, align 8
   %59 = icmp ne i8* %58, null
   br i1 %59, label %60, label %66
@@ -522,13 +525,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
 
 61:                                               ; preds = %60
   %62 = load volatile i8*, i8** %5, align 8
-  store volatile i8* %62, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %62, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %63
 
 63:                                               ; preds = %61
-  %64 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %65 = getelementptr inbounds [48 x i32], [48 x i32]* %64, i64 0, i64 0
-  call void @longjmp(i32* noundef %65, i32 noundef 1) #8
+  %64 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %65 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %64, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %65, i32 noundef 1) #10
   unreachable
 
 66:                                               ; preds = %55
@@ -558,13 +561,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %80
 
 80:                                               ; preds = %78
-  store volatile i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.14, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.14, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %81
 
 81:                                               ; preds = %80
-  %82 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %83 = getelementptr inbounds [48 x i32], [48 x i32]* %82, i64 0, i64 0
-  call void @longjmp(i32* noundef %83, i32 noundef 1) #8
+  %82 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %83 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %82, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %83, i32 noundef 1) #10
   unreachable
 
 84:                                               ; preds = %74
@@ -617,13 +620,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %112
 
 112:                                              ; preds = %110
-  store volatile i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str.16, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([15 x i8], [15 x i8]* @.str.16, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %113
 
 113:                                              ; preds = %112
-  %114 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %115 = getelementptr inbounds [48 x i32], [48 x i32]* %114, i64 0, i64 0
-  call void @longjmp(i32* noundef %115, i32 noundef 1) #8
+  %114 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %115 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %114, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %115, i32 noundef 1) #10
   unreachable
 
 116:                                              ; preds = %106, %103
@@ -662,13 +665,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %134
 
 134:                                              ; preds = %132
-  store volatile i8* getelementptr inbounds ([38 x i8], [38 x i8]* @.str.20, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([38 x i8], [38 x i8]* @.str.20, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %135
 
 135:                                              ; preds = %134
-  %136 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %137 = getelementptr inbounds [48 x i32], [48 x i32]* %136, i64 0, i64 0
-  call void @longjmp(i32* noundef %137, i32 noundef 1) #8
+  %136 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %137 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %136, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %137, i32 noundef 1) #10
   unreachable
 
 138:                                              ; preds = %128
@@ -697,13 +700,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %152
 
 152:                                              ; preds = %150
-  store volatile i8* getelementptr inbounds ([26 x i8], [26 x i8]* @.str.22, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([26 x i8], [26 x i8]* @.str.22, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %153
 
 153:                                              ; preds = %152
-  %154 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %155 = getelementptr inbounds [48 x i32], [48 x i32]* %154, i64 0, i64 0
-  call void @longjmp(i32* noundef %155, i32 noundef 1) #8
+  %154 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %155 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %154, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %155, i32 noundef 1) #10
   unreachable
 
 156:                                              ; preds = %146, %143
@@ -745,9 +748,9 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br i1 %176, label %189, label %177
 
 177:                                              ; preds = %173
-  %178 = getelementptr inbounds [1024 x i8], [1024 x i8]* %3, i64 0, i64 0
+  %178 = getelementptr inbounds [4096 x i8], [4096 x i8]* %3, i64 0, i64 0
   %179 = load i8*, i8** @opng_optimize_impl.infile_name_local, align 8
-  %180 = call i8* @osys_path_chext(i8* noundef %178, i64 noundef 1024, i8* noundef %179, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.24, i64 0, i64 0))
+  %180 = call i8* @osys_path_chext(i8* noundef %178, i64 noundef 4096, i8* noundef %179, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.24, i64 0, i64 0))
   %181 = icmp eq i8* %180, null
   br i1 %181, label %182, label %187
 
@@ -755,17 +758,17 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %183
 
 183:                                              ; preds = %182
-  store volatile i8* getelementptr inbounds ([45 x i8], [45 x i8]* @.str.25, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([45 x i8], [45 x i8]* @.str.25, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %184
 
 184:                                              ; preds = %183
-  %185 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %186 = getelementptr inbounds [48 x i32], [48 x i32]* %185, i64 0, i64 0
-  call void @longjmp(i32* noundef %186, i32 noundef 1) #8
+  %185 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %186 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %185, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %186, i32 noundef 1) #10
   unreachable
 
 187:                                              ; preds = %177
-  %188 = getelementptr inbounds [1024 x i8], [1024 x i8]* %3, i64 0, i64 0
+  %188 = getelementptr inbounds [4096 x i8], [4096 x i8]* %3, i64 0, i64 0
   store i8* %188, i8** @opng_optimize_impl.outfile_name, align 8
   br label %189
 
@@ -790,10 +793,10 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br i1 %199, label %200, label %205
 
 200:                                              ; preds = %197
-  %201 = getelementptr inbounds [1024 x i8], [1024 x i8]* %4, i64 0, i64 0
+  %201 = getelementptr inbounds [4096 x i8], [4096 x i8]* %4, i64 0, i64 0
   %202 = load i8*, i8** @opng_optimize_impl.outfile_name, align 8
-  %203 = call i8* @__strcpy_chk(i8* noundef %201, i8* noundef %202, i64 noundef 1024) #9
-  %204 = getelementptr inbounds [1024 x i8], [1024 x i8]* %4, i64 0, i64 0
+  %203 = call i8* @strcpy(i8* noundef %201, i8* noundef %202) #11
+  %204 = getelementptr inbounds [4096 x i8], [4096 x i8]* %4, i64 0, i64 0
   store i8* %204, i8** %8, align 8
   br label %207
 
@@ -803,10 +806,10 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %207
 
 207:                                              ; preds = %205, %200
-  %208 = getelementptr inbounds [1024 x i8], [1024 x i8]* %3, i64 0, i64 0
+  %208 = getelementptr inbounds [4096 x i8], [4096 x i8]* %3, i64 0, i64 0
   %209 = load i8*, i8** %8, align 8
   %210 = load i8*, i8** getelementptr inbounds (%struct.opng_options, %struct.opng_options* @options, i32 0, i32 11), align 8
-  %211 = call i8* @osys_path_chdir(i8* noundef %208, i64 noundef 1024, i8* noundef %209, i8* noundef %210)
+  %211 = call i8* @osys_path_chdir(i8* noundef %208, i64 noundef 4096, i8* noundef %209, i8* noundef %210)
   %212 = icmp eq i8* %211, null
   br i1 %212, label %213, label %218
 
@@ -814,17 +817,17 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %214
 
 214:                                              ; preds = %213
-  store volatile i8* getelementptr inbounds ([45 x i8], [45 x i8]* @.str.25, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([45 x i8], [45 x i8]* @.str.25, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %215
 
 215:                                              ; preds = %214
-  %216 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %217 = getelementptr inbounds [48 x i32], [48 x i32]* %216, i64 0, i64 0
-  call void @longjmp(i32* noundef %217, i32 noundef 1) #8
+  %216 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %217 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %216, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %217, i32 noundef 1) #10
   unreachable
 
 218:                                              ; preds = %207
-  %219 = getelementptr inbounds [1024 x i8], [1024 x i8]* %3, i64 0, i64 0
+  %219 = getelementptr inbounds [4096 x i8], [4096 x i8]* %3, i64 0, i64 0
   store i8* %219, i8** @opng_optimize_impl.outfile_name, align 8
   br label %220
 
@@ -858,7 +861,7 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
 235:                                              ; preds = %225
   %236 = load i8*, i8** @opng_optimize_impl.infile_name_local, align 8
   %237 = load i8*, i8** @opng_optimize_impl.outfile_name, align 8
-  %238 = call i32 @strcmp(i8* noundef %236, i8* noundef %237)
+  %238 = call i32 @strcmp(i8* noundef %236, i8* noundef %237) #12
   %239 = icmp ne i32 %238, 0
   %240 = zext i1 %239 to i32
   store i32 %240, i32* @opng_optimize_impl.new_outfile, align 4
@@ -868,16 +871,16 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %242
 
 242:                                              ; preds = %241, %223
-  %243 = getelementptr inbounds [1024 x i8], [1024 x i8]* %4, i64 0, i64 0
+  %243 = getelementptr inbounds [4096 x i8], [4096 x i8]* %4, i64 0, i64 0
   store i8* %243, i8** @opng_optimize_impl.bakfile_name, align 8
   %244 = load i32, i32* @opng_optimize_impl.new_outfile, align 4
   %245 = icmp ne i32 %244, 0
   br i1 %245, label %246, label %253
 
 246:                                              ; preds = %242
-  %247 = getelementptr inbounds [1024 x i8], [1024 x i8]* %4, i64 0, i64 0
+  %247 = getelementptr inbounds [4096 x i8], [4096 x i8]* %4, i64 0, i64 0
   %248 = load i8*, i8** @opng_optimize_impl.outfile_name, align 8
-  %249 = call i8* @osys_path_mkbak(i8* noundef %247, i64 noundef 1024, i8* noundef %248)
+  %249 = call i8* @osys_path_mkbak(i8* noundef %247, i64 noundef 4096, i8* noundef %248)
   %250 = icmp eq i8* %249, null
   br i1 %250, label %251, label %252
 
@@ -889,9 +892,9 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %260
 
 253:                                              ; preds = %242
-  %254 = getelementptr inbounds [1024 x i8], [1024 x i8]* %4, i64 0, i64 0
+  %254 = getelementptr inbounds [4096 x i8], [4096 x i8]* %4, i64 0, i64 0
   %255 = load i8*, i8** @opng_optimize_impl.infile_name_local, align 8
-  %256 = call i8* @osys_path_mkbak(i8* noundef %254, i64 noundef 1024, i8* noundef %255)
+  %256 = call i8* @osys_path_mkbak(i8* noundef %254, i64 noundef 4096, i8* noundef %255)
   %257 = icmp eq i8* %256, null
   br i1 %257, label %258, label %259
 
@@ -911,13 +914,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %264
 
 264:                                              ; preds = %263
-  store volatile i8* getelementptr inbounds ([41 x i8], [41 x i8]* @.str.26, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([41 x i8], [41 x i8]* @.str.26, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %265
 
 265:                                              ; preds = %264
-  %266 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %267 = getelementptr inbounds [48 x i32], [48 x i32]* %266, i64 0, i64 0
-  call void @longjmp(i32* noundef %267, i32 noundef 1) #8
+  %266 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %267 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %266, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %267, i32 noundef 1) #10
   unreachable
 
 268:                                              ; preds = %260
@@ -952,13 +955,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %286
 
 286:                                              ; preds = %284
-  store volatile i8* getelementptr inbounds ([32 x i8], [32 x i8]* @.str.29, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([32 x i8], [32 x i8]* @.str.29, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %287
 
 287:                                              ; preds = %286
-  %288 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %289 = getelementptr inbounds [48 x i32], [48 x i32]* %288, i64 0, i64 0
-  call void @longjmp(i32* noundef %289, i32 noundef 1) #8
+  %288 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %289 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %288, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %289, i32 noundef 1) #10
   unreachable
 
 290:                                              ; preds = %281, %278, %275
@@ -982,13 +985,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %302
 
 302:                                              ; preds = %301
-  store volatile i8* getelementptr inbounds ([39 x i8], [39 x i8]* @.str.31, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([39 x i8], [39 x i8]* @.str.31, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %303
 
 303:                                              ; preds = %302
-  %304 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %305 = getelementptr inbounds [48 x i32], [48 x i32]* %304, i64 0, i64 0
-  call void @longjmp(i32* noundef %305, i32 noundef 1) #8
+  %304 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %305 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %304, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %305, i32 noundef 1) #10
   unreachable
 
 306:                                              ; preds = %297, %294
@@ -1107,13 +1110,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %370
 
 370:                                              ; preds = %369
-  store volatile i8* getelementptr inbounds ([30 x i8], [30 x i8]* @.str.37, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([30 x i8], [30 x i8]* @.str.37, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %371
 
 371:                                              ; preds = %370
-  %372 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %373 = getelementptr inbounds [48 x i32], [48 x i32]* %372, i64 0, i64 0
-  call void @longjmp(i32* noundef %373, i32 noundef 1) #8
+  %372 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %373 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %372, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %373, i32 noundef 1) #10
   unreachable
 
 374:                                              ; preds = %363
@@ -1135,13 +1138,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %383
 
 383:                                              ; preds = %382
-  store volatile i8* getelementptr inbounds ([29 x i8], [29 x i8]* @.str.38, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([29 x i8], [29 x i8]* @.str.38, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %384
 
 384:                                              ; preds = %383
-  %385 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %386 = getelementptr inbounds [48 x i32], [48 x i32]* %385, i64 0, i64 0
-  call void @longjmp(i32* noundef %386, i32 noundef 1) #8
+  %385 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %386 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %385, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %386, i32 noundef 1) #10
   unreachable
 
 387:                                              ; preds = %376
@@ -1150,13 +1153,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
 
 388:                                              ; preds = %387, %375
   %389 = load i8*, i8** @opng_optimize_impl.outfile_name, align 8
-  %390 = call %struct.__sFILE* @"\01_fopen"(i8* noundef %389, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.39, i64 0, i64 0))
-  store %struct.__sFILE* %390, %struct.__sFILE** @opng_optimize_impl.outfile, align 8
-  %391 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %391, [48 x i32]** %10, align 8
-  store [48 x i32]* %11, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %392 = getelementptr inbounds [48 x i32], [48 x i32]* %11, i64 0, i64 0
-  %393 = call i32 @setjmp(i32* noundef %392) #7
+  %390 = call noalias %struct._IO_FILE* @fopen(i8* noundef %389, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.39, i64 0, i64 0))
+  store %struct._IO_FILE* %390, %struct._IO_FILE** @opng_optimize_impl.outfile, align 8
+  %391 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %391, [1 x %struct.__jmp_buf_tag]** %10, align 8
+  store [1 x %struct.__jmp_buf_tag]* %11, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %392 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %11, i64 0, i64 0
+  %393 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %392) #9
   %394 = icmp eq i32 %393, 0
   br i1 %394, label %395, label %489
 
@@ -1164,21 +1167,21 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %396
 
 396:                                              ; preds = %485, %395
-  %397 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.outfile, align 8
-  %398 = icmp eq %struct.__sFILE* %397, null
+  %397 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.outfile, align 8
+  %398 = icmp eq %struct._IO_FILE* %397, null
   br i1 %398, label %399, label %404
 
 399:                                              ; preds = %396
   br label %400
 
 400:                                              ; preds = %399
-  store volatile i8* getelementptr inbounds ([27 x i8], [27 x i8]* @.str.40, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([27 x i8], [27 x i8]* @.str.40, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %401
 
 401:                                              ; preds = %400
-  %402 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %403 = getelementptr inbounds [48 x i32], [48 x i32]* %402, i64 0, i64 0
-  call void @longjmp(i32* noundef %403, i32 noundef 1) #8
+  %402 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %403 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %402, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %403, i32 noundef 1) #10
   unreachable
 
 404:                                              ; preds = %396
@@ -1188,12 +1191,12 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br i1 %407, label %408, label %414
 
 408:                                              ; preds = %404
-  %409 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.outfile, align 8
+  %409 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.outfile, align 8
   %410 = load i32, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 16), align 4
   %411 = load i32, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 17), align 8
   %412 = load i32, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 18), align 4
   %413 = load i32, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 19), align 8
-  call void @opng_write_file(%struct.__sFILE* noundef %409, i32 noundef %410, i32 noundef %411, i32 noundef %412, i32 noundef %413)
+  call void @opng_write_file(%struct._IO_FILE* noundef %409, i32 noundef %410, i32 noundef %411, i32 noundef %412, i32 noundef %413)
   br label %484
 
 414:                                              ; preds = %404
@@ -1211,31 +1214,31 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
 
 421:                                              ; preds = %419, %417
   %422 = phi i8* [ %418, %417 ], [ %420, %419 ]
-  %423 = call %struct.__sFILE* @"\01_fopen"(i8* noundef %422, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.8, i64 0, i64 0))
-  store %struct.__sFILE* %423, %struct.__sFILE** @opng_optimize_impl.infile, align 8
-  %424 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.infile, align 8
-  %425 = icmp eq %struct.__sFILE* %424, null
+  %423 = call noalias %struct._IO_FILE* @fopen(i8* noundef %422, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.8, i64 0, i64 0))
+  store %struct._IO_FILE* %423, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
+  %424 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
+  %425 = icmp eq %struct._IO_FILE* %424, null
   br i1 %425, label %426, label %431
 
 426:                                              ; preds = %421
   br label %427
 
 427:                                              ; preds = %426
-  store volatile i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.41, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([28 x i8], [28 x i8]* @.str.41, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %428
 
 428:                                              ; preds = %427
-  %429 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %430 = getelementptr inbounds [48 x i32], [48 x i32]* %429, i64 0, i64 0
-  call void @longjmp(i32* noundef %430, i32 noundef 1) #8
+  %429 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %430 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %429, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %430, i32 noundef 1) #10
   unreachable
 
 431:                                              ; preds = %421
-  %432 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %432, [48 x i32]** %12, align 8
-  store [48 x i32]* %13, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %433 = getelementptr inbounds [48 x i32], [48 x i32]* %13, i64 0, i64 0
-  %434 = call i32 @setjmp(i32* noundef %433) #7
+  %432 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %432, [1 x %struct.__jmp_buf_tag]** %12, align 8
+  store [1 x %struct.__jmp_buf_tag]* %13, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %433 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %13, i64 0, i64 0
+  %434 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %433) #9
   %435 = icmp eq i32 %434, 0
   br i1 %435, label %436, label %458
 
@@ -1248,9 +1251,9 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br i1 %439, label %440, label %450
 
 440:                                              ; preds = %437
-  %441 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.infile, align 8
+  %441 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
   %442 = load i64, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 2), align 8
-  %443 = call i32 @osys_fseeko(%struct.__sFILE* noundef %441, i64 noundef %442, i32 noundef 0)
+  %443 = call i32 @osys_fseeko(%struct._IO_FILE* noundef %441, i64 noundef %442, i32 noundef 0)
   %444 = icmp ne i32 %443, 0
   br i1 %444, label %445, label %450
 
@@ -1258,28 +1261,28 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %446
 
 446:                                              ; preds = %445
-  store volatile i8* getelementptr inbounds ([32 x i8], [32 x i8]* @.str.42, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([32 x i8], [32 x i8]* @.str.42, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %447
 
 447:                                              ; preds = %446
-  %448 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %449 = getelementptr inbounds [48 x i32], [48 x i32]* %448, i64 0, i64 0
-  call void @longjmp(i32* noundef %449, i32 noundef 1) #8
+  %448 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %449 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %448, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %449, i32 noundef 1) #10
   unreachable
 
 450:                                              ; preds = %440, %437
   %451 = load i64, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 5), align 8
   store i64 %451, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 7), align 8
-  %452 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.infile, align 8
-  %453 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.outfile, align 8
-  call void @opng_copy_file(%struct.__sFILE* noundef %452, %struct.__sFILE* noundef %453)
+  %452 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
+  %453 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.outfile, align 8
+  call void @opng_copy_file(%struct._IO_FILE* noundef %452, %struct._IO_FILE* noundef %453)
   br label %454
 
 454:                                              ; preds = %450
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %455 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %456 = icmp ne i32 %455, 0
-  br i1 %456, label %437, label %457, !llvm.loop !13
+  br i1 %456, label %437, label %457, !llvm.loop !7
 
 457:                                              ; preds = %454
   br label %459
@@ -1289,14 +1292,14 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %459
 
 459:                                              ; preds = %458, %457
-  %460 = load volatile [48 x i32]*, [48 x i32]** %12, align 8
-  store [48 x i32]* %460, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %460 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %12, align 8
+  store [1 x %struct.__jmp_buf_tag]* %460, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %461 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %462 = icmp ne i32 %461, 0
   br i1 %462, label %463, label %465
 
 463:                                              ; preds = %459
-  %464 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %464 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store volatile i8* %464, i8** %5, align 8
   br i1 false, label %465, label %466
 
@@ -1317,8 +1320,8 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %472
 
 472:                                              ; preds = %471, %465
-  %473 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.infile, align 8
-  %474 = call i32 @fclose(%struct.__sFILE* noundef %473)
+  %473 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.infile, align 8
+  %474 = call i32 @fclose(%struct._IO_FILE* noundef %473)
   %475 = load volatile i8*, i8** %5, align 8
   %476 = icmp ne i8* %475, null
   br i1 %476, label %477, label %483
@@ -1328,13 +1331,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
 
 478:                                              ; preds = %477
   %479 = load volatile i8*, i8** %5, align 8
-  store volatile i8* %479, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %479, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %480
 
 480:                                              ; preds = %478
-  %481 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %482 = getelementptr inbounds [48 x i32], [48 x i32]* %481, i64 0, i64 0
-  call void @longjmp(i32* noundef %482, i32 noundef 1) #8
+  %481 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %482 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %481, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %482, i32 noundef 1) #10
   unreachable
 
 483:                                              ; preds = %472
@@ -1347,7 +1350,7 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %486 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %487 = icmp ne i32 %486, 0
-  br i1 %487, label %396, label %488, !llvm.loop !14
+  br i1 %487, label %396, label %488, !llvm.loop !8
 
 488:                                              ; preds = %485
   br label %490
@@ -1357,14 +1360,14 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %490
 
 490:                                              ; preds = %489, %488
-  %491 = load volatile [48 x i32]*, [48 x i32]** %10, align 8
-  store [48 x i32]* %491, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %491 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %10, align 8
+  store [1 x %struct.__jmp_buf_tag]* %491, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %492 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %493 = icmp ne i32 %492, 0
   br i1 %493, label %494, label %496
 
 494:                                              ; preds = %490
-  %495 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %495 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store volatile i8* %495, i8** %5, align 8
   br i1 false, label %496, label %497
 
@@ -1372,13 +1375,13 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   br label %537
 
 497:                                              ; preds = %494
-  %498 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.outfile, align 8
-  %499 = icmp ne %struct.__sFILE* %498, null
+  %498 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.outfile, align 8
+  %499 = icmp ne %struct._IO_FILE* %498, null
   br i1 %499, label %500, label %503
 
 500:                                              ; preds = %497
-  %501 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.outfile, align 8
-  %502 = call i32 @fclose(%struct.__sFILE* noundef %501)
+  %501 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.outfile, align 8
+  %502 = call i32 @fclose(%struct._IO_FILE* noundef %501)
   br label %503
 
 503:                                              ; preds = %500, %497
@@ -1441,18 +1444,18 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
 
 532:                                              ; preds = %531
   %533 = load volatile i8*, i8** %5, align 8
-  store volatile i8* %533, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %533, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %534
 
 534:                                              ; preds = %532
-  %535 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %536 = getelementptr inbounds [48 x i32], [48 x i32]* %535, i64 0, i64 0
-  call void @longjmp(i32* noundef %536, i32 noundef 1) #8
+  %535 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %536 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %535, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %536, i32 noundef 1) #10
   unreachable
 
 537:                                              ; preds = %496
-  %538 = load %struct.__sFILE*, %struct.__sFILE** @opng_optimize_impl.outfile, align 8
-  %539 = call i32 @fclose(%struct.__sFILE* noundef %538)
+  %538 = load %struct._IO_FILE*, %struct._IO_FILE** @opng_optimize_impl.outfile, align 8
+  %539 = call i32 @fclose(%struct._IO_FILE* noundef %538)
   %540 = load i32, i32* getelementptr inbounds (%struct.opng_options, %struct.opng_options* @options, i32 0, i32 6), align 8
   %541 = icmp ne i32 %540, 0
   br i1 %541, label %542, label %553
@@ -1533,7 +1536,7 @@ define internal void @opng_optimize_impl(i8* noundef %0) #0 {
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_print_error(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -1545,7 +1548,7 @@ define internal void @opng_print_error(i8* noundef %0) #0 {
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_destroy_image_info() #0 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
@@ -1579,7 +1582,7 @@ define internal void @opng_destroy_image_info() #0 {
   %18 = load i32, i32* %1, align 4
   %19 = add i32 %18, 1
   store i32 %19, i32* %1, align 4
-  br label %7, !llvm.loop !15
+  br label %7, !llvm.loop !9
 
 20:                                               ; preds = %7
   %21 = load i8**, i8*** getelementptr inbounds (%struct.opng_image_struct, %struct.opng_image_struct* @image, i32 0, i32 7), align 8
@@ -1616,7 +1619,7 @@ define internal void @opng_destroy_image_info() #0 {
   %40 = load i32, i32* %2, align 4
   %41 = add nsw i32 %40, 1
   store i32 %41, i32* %2, align 4
-  br label %28, !llvm.loop !16
+  br label %28, !llvm.loop !10
 
 42:                                               ; preds = %28
   %43 = load %struct.png_unknown_chunk_t*, %struct.png_unknown_chunk_t** getelementptr inbounds (%struct.opng_image_struct, %struct.opng_image_struct* @image, i32 0, i32 19), align 8
@@ -1629,8 +1632,8 @@ define internal void @opng_destroy_image_info() #0 {
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @opng_finalize() #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @opng_finalize() #0 {
   %1 = load i32, i32* getelementptr inbounds (%struct.opng_options, %struct.opng_options* @options, i32 0, i32 9), align 4
   %2 = icmp ne i32 %1, 0
   br i1 %2, label %9, label %3
@@ -1691,28 +1694,28 @@ define i32 @opng_finalize() #0 {
   ret i32 0
 }
 
-declare %struct.__sFILE* @"\01_fopen"(i8* noundef, i8* noundef) #4
+declare dso_local noalias %struct._IO_FILE* @fopen(i8* noundef, i8* noundef) #4
 
-; Function Attrs: noreturn
-declare void @longjmp(i32* noundef, i32 noundef) #5
+; Function Attrs: noreturn nounwind
+declare dso_local void @longjmp(%struct.__jmp_buf_tag* noundef, i32 noundef) #5
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
-  %2 = alloca %struct.__sFILE*, align 8
+; Function Attrs: noinline nounwind optnone uwtable
+define internal void @opng_read_file(%struct._IO_FILE* noundef %0) #0 {
+  %2 = alloca %struct._IO_FILE*, align 8
   %3 = alloca i8*, align 8
   %4 = alloca i32, align 4
   %5 = alloca i32, align 4
   %6 = alloca i8*, align 8
-  %7 = alloca [48 x i32]*, align 8
-  %8 = alloca [48 x i32], align 4
-  %9 = alloca [48 x i32]*, align 8
-  %10 = alloca [48 x i32], align 4
-  store %struct.__sFILE* %0, %struct.__sFILE** %2, align 8
-  %11 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %11, [48 x i32]** %7, align 8
-  store [48 x i32]* %8, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %12 = getelementptr inbounds [48 x i32], [48 x i32]* %8, i64 0, i64 0
-  %13 = call i32 @setjmp(i32* noundef %12) #7
+  %7 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %8 = alloca [1 x %struct.__jmp_buf_tag], align 16
+  %9 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %10 = alloca [1 x %struct.__jmp_buf_tag], align 16
+  store %struct._IO_FILE* %0, %struct._IO_FILE** %2, align 8
+  %11 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %11, [1 x %struct.__jmp_buf_tag]** %7, align 8
+  store [1 x %struct.__jmp_buf_tag]* %8, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %12 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %8, i64 0, i64 0
+  %13 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %12) #9
   %14 = icmp eq i32 %13, 0
   br i1 %14, label %15, label %82
 
@@ -1733,13 +1736,13 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   br label %23
 
 23:                                               ; preds = %22
-  store volatile i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str.54, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str.54, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %24
 
 24:                                               ; preds = %23
-  %25 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %26 = getelementptr inbounds [48 x i32], [48 x i32]* %25, i64 0, i64 0
-  call void @longjmp(i32* noundef %26, i32 noundef 1) #8
+  %25 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %26 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %25, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %26, i32 noundef 1) #10
   unreachable
 
 27:                                               ; preds = %16
@@ -1749,8 +1752,8 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   call void @png_set_user_limits(%struct.png_struct_def* noundef %29, i32 noundef 2147483647, i32 noundef 2147483647)
   call void @opng_init_read_data()
   %30 = load %struct.png_struct_def*, %struct.png_struct_def** @read_ptr, align 8
-  %31 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %32 = bitcast %struct.__sFILE* %31 to i8*
+  %31 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %32 = bitcast %struct._IO_FILE* %31 to i8*
   call void @png_set_read_fn(%struct.png_struct_def* noundef %30, i8* noundef %32, void (%struct.png_struct_def*, i8*, i64)* noundef @opng_read_data)
   store i8* null, i8** %3, align 8
   %33 = load %struct.png_struct_def*, %struct.png_struct_def** @read_ptr, align 8
@@ -1765,13 +1768,13 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   br label %39
 
 39:                                               ; preds = %38
-  store volatile i8* getelementptr inbounds ([31 x i8], [31 x i8]* @.str.55, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([31 x i8], [31 x i8]* @.str.55, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %40
 
 40:                                               ; preds = %39
-  %41 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %42 = getelementptr inbounds [48 x i32], [48 x i32]* %41, i64 0, i64 0
-  call void @longjmp(i32* noundef %42, i32 noundef 1) #8
+  %41 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %42 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %41, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %42, i32 noundef 1) #10
   unreachable
 
 43:                                               ; preds = %27
@@ -1822,8 +1825,8 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   br i1 %70, label %71, label %77
 
 71:                                               ; preds = %68
-  %72 = load %struct.__sFILE*, %struct.__sFILE** %2, align 8
-  %73 = call i32 @osys_fgetsize(%struct.__sFILE* noundef %72, i64* noundef getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 3))
+  %72 = load %struct._IO_FILE*, %struct._IO_FILE** %2, align 8
+  %73 = call i32 @osys_fgetsize(%struct._IO_FILE* noundef %72, i64* noundef getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 3))
   %74 = icmp slt i32 %73, 0
   br i1 %74, label %75, label %76
 
@@ -1843,7 +1846,7 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %79 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %80 = icmp ne i32 %79, 0
-  br i1 %80, label %16, label %81, !llvm.loop !17
+  br i1 %80, label %16, label %81, !llvm.loop !11
 
 81:                                               ; preds = %78
   br label %83
@@ -1853,14 +1856,14 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   br label %83
 
 83:                                               ; preds = %82, %81
-  %84 = load volatile [48 x i32]*, [48 x i32]** %7, align 8
-  store [48 x i32]* %84, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %84 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %7, align 8
+  store [1 x %struct.__jmp_buf_tag]* %84, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %85 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %86 = icmp ne i32 %85, 0
   br i1 %86, label %87, label %89
 
 87:                                               ; preds = %83
-  %88 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %88 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store volatile i8* %88, i8** %6, align 8
   br i1 false, label %89, label %90
 
@@ -1885,11 +1888,11 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   br label %99
 
 99:                                               ; preds = %98, %89
-  %100 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %100, [48 x i32]** %9, align 8
-  store [48 x i32]* %10, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %101 = getelementptr inbounds [48 x i32], [48 x i32]* %10, i64 0, i64 0
-  %102 = call i32 @setjmp(i32* noundef %101) #7
+  %100 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %100, [1 x %struct.__jmp_buf_tag]** %9, align 8
+  store [1 x %struct.__jmp_buf_tag]* %10, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %101 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %10, i64 0, i64 0
+  %102 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %101) #9
   %103 = icmp eq i32 %102, 0
   br i1 %103, label %104, label %216
 
@@ -1906,18 +1909,18 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
 
 109:                                              ; preds = %108
   %110 = load volatile i8*, i8** %6, align 8
-  store volatile i8* %110, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %110, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %111
 
 111:                                              ; preds = %109
-  %112 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %113 = getelementptr inbounds [48 x i32], [48 x i32]* %112, i64 0, i64 0
-  call void @longjmp(i32* noundef %113, i32 noundef 1) #8
+  %112 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %113 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %112, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %113, i32 noundef 1) #10
   unreachable
 
 114:                                              ; preds = %105
   %115 = load i8*, i8** %3, align 8
-  %116 = call i32 @strcmp(i8* noundef %115, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.60, i64 0, i64 0))
+  %116 = call i32 @strcmp(i8* noundef %115, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.60, i64 0, i64 0)) #12
   %117 = icmp ne i32 %116, 0
   br i1 %117, label %118, label %138
 
@@ -2099,7 +2102,7 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %213 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %214 = icmp ne i32 %213, 0
-  br i1 %214, label %105, label %215, !llvm.loop !18
+  br i1 %214, label %105, label %215, !llvm.loop !12
 
 215:                                              ; preds = %212
   br label %217
@@ -2109,14 +2112,14 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   br label %217
 
 217:                                              ; preds = %216, %215
-  %218 = load volatile [48 x i32]*, [48 x i32]** %9, align 8
-  store [48 x i32]* %218, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %218 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %9, align 8
+  store [1 x %struct.__jmp_buf_tag]* %218, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %219 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %220 = icmp ne i32 %219, 0
   br i1 %220, label %221, label %223
 
 221:                                              ; preds = %217
-  %222 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %222 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store volatile i8* %222, i8** %6, align 8
   br i1 false, label %223, label %224
 
@@ -2132,13 +2135,13 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
 
 227:                                              ; preds = %224
   %228 = load volatile i8*, i8** %6, align 8
-  store volatile i8* %228, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %228, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %229
 
 229:                                              ; preds = %227
-  %230 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %231 = getelementptr inbounds [48 x i32], [48 x i32]* %230, i64 0, i64 0
-  call void @longjmp(i32* noundef %231, i32 noundef 1) #8
+  %230 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %231 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %230, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %231, i32 noundef 1) #10
   unreachable
 
 232:                                              ; preds = %223
@@ -2149,24 +2152,25 @@ define internal void @opng_read_file(%struct.__sFILE* noundef %0) #0 {
   ret void
 }
 
-declare i32 @fclose(%struct.__sFILE* noundef) #4
+declare dso_local i32 @fclose(%struct._IO_FILE* noundef) #4
 
-declare i8* @osys_path_chext(i8* noundef, i64 noundef, i8* noundef, i8* noundef) #4
+declare dso_local i8* @osys_path_chext(i8* noundef, i64 noundef, i8* noundef, i8* noundef) #4
 
 ; Function Attrs: nounwind
-declare i8* @__strcpy_chk(i8* noundef, i8* noundef, i64 noundef) #6
+declare dso_local i8* @strcpy(i8* noundef, i8* noundef) #6
 
-declare i8* @osys_path_chdir(i8* noundef, i64 noundef, i8* noundef, i8* noundef) #4
+declare dso_local i8* @osys_path_chdir(i8* noundef, i64 noundef, i8* noundef, i8* noundef) #4
 
-declare i32 @osys_test_eq(i8* noundef, i8* noundef) #4
+declare dso_local i32 @osys_test_eq(i8* noundef, i8* noundef) #4
 
-declare i32 @strcmp(i8* noundef, i8* noundef) #4
+; Function Attrs: nounwind readonly willreturn
+declare dso_local i32 @strcmp(i8* noundef, i8* noundef) #7
 
-declare i8* @osys_path_mkbak(i8* noundef, i64 noundef, i8* noundef) #4
+declare dso_local i8* @osys_path_mkbak(i8* noundef, i64 noundef, i8* noundef) #4
 
-declare i32 @osys_test(i8* noundef, i8* noundef) #4
+declare dso_local i32 @osys_test(i8* noundef, i8* noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_init_iterations() #0 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
@@ -2237,7 +2241,7 @@ define internal void @opng_init_iterations() #0 {
   %39 = sext i32 %38 to i64
   %40 = getelementptr inbounds [8 x %struct.opng_preset], [8 x %struct.opng_preset]* @presets, i64 0, i64 %39
   %41 = getelementptr inbounds %struct.opng_preset, %struct.opng_preset* %40, i32 0, i32 0
-  %42 = load i8*, i8** %41, align 8
+  %42 = load i8*, i8** %41, align 16
   call void @opng_init_iteration(i32 noundef %37, i32 noundef 1022, i8* noundef %42, i32* noundef %1)
   %43 = load i32, i32* getelementptr inbounds (%struct.opng_options, %struct.opng_options* @options, i32 0, i32 20), align 4
   %44 = load i32, i32* %6, align 4
@@ -2251,7 +2255,7 @@ define internal void @opng_init_iterations() #0 {
   %51 = sext i32 %50 to i64
   %52 = getelementptr inbounds [8 x %struct.opng_preset], [8 x %struct.opng_preset]* @presets, i64 0, i64 %51
   %53 = getelementptr inbounds %struct.opng_preset, %struct.opng_preset* %52, i32 0, i32 2
-  %54 = load i8*, i8** %53, align 8
+  %54 = load i8*, i8** %53, align 16
   call void @opng_init_iteration(i32 noundef %49, i32 noundef 15, i8* noundef %54, i32* noundef %3)
   %55 = load i32, i32* getelementptr inbounds (%struct.opng_options, %struct.opng_options* @options, i32 0, i32 22), align 4
   %56 = load i32, i32* %6, align 4
@@ -2388,7 +2392,7 @@ define internal void @opng_init_iterations() #0 {
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_iterate() #0 {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
@@ -2571,7 +2575,7 @@ define internal void @opng_iterate() #0 {
   %105 = load i32, i32* %7, align 4
   %106 = load i32, i32* %8, align 4
   %107 = load i32, i32* %9, align 4
-  call void @opng_write_file(%struct.__sFILE* noundef null, i32 noundef %104, i32 noundef %105, i32 noundef %106, i32 noundef %107)
+  call void @opng_write_file(%struct._IO_FILE* noundef null, i32 noundef %104, i32 noundef %105, i32 noundef %106, i32 noundef %107)
   %108 = load i64, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 6), align 8
   %109 = icmp ugt i64 %108, 2147483647
   br i1 %109, label %110, label %118
@@ -2653,7 +2657,7 @@ define internal void @opng_iterate() #0 {
   %146 = load i32, i32* %7, align 4
   %147 = add nsw i32 %146, -1
   store i32 %147, i32* %7, align 4
-  br label %82, !llvm.loop !19
+  br label %82, !llvm.loop !13
 
 148:                                              ; preds = %82
   br label %149
@@ -2665,7 +2669,7 @@ define internal void @opng_iterate() #0 {
   %151 = load i32, i32* %6, align 4
   %152 = add nsw i32 %151, -1
   store i32 %152, i32* %6, align 4
-  br label %72, !llvm.loop !20
+  br label %72, !llvm.loop !14
 
 153:                                              ; preds = %72
   %154 = load i32, i32* %5, align 4
@@ -2679,7 +2683,7 @@ define internal void @opng_iterate() #0 {
   %157 = load i32, i32* %8, align 4
   %158 = add nsw i32 %157, 1
   store i32 %158, i32* %8, align 4
-  br label %48, !llvm.loop !21
+  br label %48, !llvm.loop !15
 
 159:                                              ; preds = %48
   br label %160
@@ -2691,7 +2695,7 @@ define internal void @opng_iterate() #0 {
   %162 = load i32, i32* %9, align 4
   %163 = add nsw i32 %162, 1
   store i32 %163, i32* %9, align 4
-  br label %38, !llvm.loop !22
+  br label %38, !llvm.loop !16
 
 164:                                              ; preds = %38
   %165 = load i32, i32* %11, align 4
@@ -2727,7 +2731,7 @@ define internal void @opng_iterate() #0 {
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_finish_iterations() #0 {
   %1 = load i64, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 7), align 8
   %2 = load i32, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 10), align 4
@@ -2794,7 +2798,7 @@ define internal void @opng_finish_iterations() #0 {
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_check_idat_size(i64 noundef %0) #0 {
   %2 = alloca i64, align 8
   store i64 %0, i64* %2, align 8
@@ -2806,34 +2810,34 @@ define internal void @opng_check_idat_size(i64 noundef %0) #0 {
   br label %6
 
 6:                                                ; preds = %5
-  store volatile i8* getelementptr inbounds ([72 x i8], [72 x i8]* @.str.109, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([72 x i8], [72 x i8]* @.str.109, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %7
 
 7:                                                ; preds = %6
-  %8 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %9 = getelementptr inbounds [48 x i32], [48 x i32]* %8, i64 0, i64 0
-  call void @longjmp(i32* noundef %9, i32 noundef 1) #8
+  %8 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %9 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %8, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %9, i32 noundef 1) #10
   unreachable
 
 10:                                               ; preds = %1
   ret void
 }
 
-declare i32 @osys_create_dir(i8* noundef) #4
+declare dso_local i32 @osys_create_dir(i8* noundef) #4
 
-declare i32 @osys_rename(i8* noundef, i8* noundef, i32 noundef) #4
+declare dso_local i32 @osys_rename(i8* noundef, i8* noundef, i32 noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal void @opng_write_file(%struct.__sFILE* noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, i32 noundef %4) #0 {
-  %6 = alloca %struct.__sFILE*, align 8
+; Function Attrs: noinline nounwind optnone uwtable
+define internal void @opng_write_file(%struct._IO_FILE* noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3, i32 noundef %4) #0 {
+  %6 = alloca %struct._IO_FILE*, align 8
   %7 = alloca i32, align 4
   %8 = alloca i32, align 4
   %9 = alloca i32, align 4
   %10 = alloca i32, align 4
   %11 = alloca i8*, align 8
-  %12 = alloca [48 x i32]*, align 8
-  %13 = alloca [48 x i32], align 4
-  store %struct.__sFILE* %0, %struct.__sFILE** %6, align 8
+  %12 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %13 = alloca [1 x %struct.__jmp_buf_tag], align 16
+  store %struct._IO_FILE* %0, %struct._IO_FILE** %6, align 8
   store i32 %1, i32* %7, align 4
   store i32 %2, i32* %8, align 4
   store i32 %3, i32* %9, align 4
@@ -2883,11 +2887,11 @@ define internal void @opng_write_file(%struct.__sFILE* noundef %0, i32 noundef %
   br label %39
 
 39:                                               ; preds = %37, %34
-  %40 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %40, [48 x i32]** %12, align 8
-  store [48 x i32]* %13, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %41 = getelementptr inbounds [48 x i32], [48 x i32]* %13, i64 0, i64 0
-  %42 = call i32 @setjmp(i32* noundef %41) #7
+  %40 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %40, [1 x %struct.__jmp_buf_tag]** %12, align 8
+  store [1 x %struct.__jmp_buf_tag]* %13, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %41 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %13, i64 0, i64 0
+  %42 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %41) #9
   %43 = icmp eq i32 %42, 0
   br i1 %43, label %44, label %99
 
@@ -2908,13 +2912,13 @@ define internal void @opng_write_file(%struct.__sFILE* noundef %0, i32 noundef %
   br label %52
 
 52:                                               ; preds = %51
-  store volatile i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str.54, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str.54, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %53
 
 53:                                               ; preds = %52
-  %54 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %55 = getelementptr inbounds [48 x i32], [48 x i32]* %54, i64 0, i64 0
-  call void @longjmp(i32* noundef %55, i32 noundef 1) #8
+  %54 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %55 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %54, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %55, i32 noundef 1) #10
   unreachable
 
 56:                                               ; preds = %45
@@ -2968,14 +2972,14 @@ define internal void @opng_write_file(%struct.__sFILE* noundef %0, i32 noundef %
   call void @png_set_user_limits(%struct.png_struct_def* noundef %84, i32 noundef 2147483647, i32 noundef 2147483647)
   %85 = load %struct.png_struct_def*, %struct.png_struct_def** @write_ptr, align 8
   %86 = load %struct.png_info_def*, %struct.png_info_def** @write_info_ptr, align 8
-  %87 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %88 = icmp ne %struct.__sFILE* %87, null
+  %87 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %88 = icmp ne %struct._IO_FILE* %87, null
   %89 = zext i1 %88 to i32
   call void @opng_store_image_info(%struct.png_struct_def* noundef %85, %struct.png_info_def* noundef %86, i32 noundef %89)
   call void @opng_init_write_data()
   %90 = load %struct.png_struct_def*, %struct.png_struct_def** @write_ptr, align 8
-  %91 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %92 = bitcast %struct.__sFILE* %91 to i8*
+  %91 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %92 = bitcast %struct._IO_FILE* %91 to i8*
   call void @png_set_write_fn(%struct.png_struct_def* noundef %90, i8* noundef %92, void (%struct.png_struct_def*, i8*, i64)* noundef @opng_write_data, void (%struct.png_struct_def*)* noundef null)
   %93 = load %struct.png_struct_def*, %struct.png_struct_def** @write_ptr, align 8
   %94 = load %struct.png_info_def*, %struct.png_info_def** @write_info_ptr, align 8
@@ -2987,7 +2991,7 @@ define internal void @opng_write_file(%struct.__sFILE* noundef %0, i32 noundef %
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %96 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %97 = icmp ne i32 %96, 0
-  br i1 %97, label %45, label %98, !llvm.loop !23
+  br i1 %97, label %45, label %98, !llvm.loop !17
 
 98:                                               ; preds = %95
   br label %100
@@ -2997,14 +3001,14 @@ define internal void @opng_write_file(%struct.__sFILE* noundef %0, i32 noundef %
   br label %100
 
 100:                                              ; preds = %99, %98
-  %101 = load volatile [48 x i32]*, [48 x i32]** %12, align 8
-  store [48 x i32]* %101, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %101 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %12, align 8
+  store [1 x %struct.__jmp_buf_tag]* %101, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %102 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %103 = icmp ne i32 %102, 0
   br i1 %103, label %104, label %106
 
 104:                                              ; preds = %100
-  %105 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %105 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store volatile i8* %105, i8** %11, align 8
   br i1 false, label %106, label %107
 
@@ -3026,35 +3030,35 @@ define internal void @opng_write_file(%struct.__sFILE* noundef %0, i32 noundef %
 
 112:                                              ; preds = %111
   %113 = load volatile i8*, i8** %11, align 8
-  store volatile i8* %113, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %113, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %114
 
 114:                                              ; preds = %112
-  %115 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %116 = getelementptr inbounds [48 x i32], [48 x i32]* %115, i64 0, i64 0
-  call void @longjmp(i32* noundef %116, i32 noundef 1) #8
+  %115 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %116 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %115, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %116, i32 noundef 1) #10
   unreachable
 
 117:                                              ; preds = %108
   ret void
 }
 
-declare i32 @osys_fseeko(%struct.__sFILE* noundef, i64 noundef, i32 noundef) #4
+declare dso_local i32 @osys_fseeko(%struct._IO_FILE* noundef, i64 noundef, i32 noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFILE* noundef %1) #0 {
-  %3 = alloca %struct.__sFILE*, align 8
-  %4 = alloca %struct.__sFILE*, align 8
+; Function Attrs: noinline nounwind optnone uwtable
+define internal void @opng_copy_file(%struct._IO_FILE* noundef %0, %struct._IO_FILE* noundef %1) #0 {
+  %3 = alloca %struct._IO_FILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca i8*, align 8
   %6 = alloca i32, align 4
   %7 = alloca i32, align 4
   %8 = alloca i32, align 4
   %9 = alloca [8 x i8], align 1
   %10 = alloca i8*, align 8
-  %11 = alloca [48 x i32]*, align 8
-  %12 = alloca [48 x i32], align 4
-  store %struct.__sFILE* %0, %struct.__sFILE** %3, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %4, align 8
+  %11 = alloca [1 x %struct.__jmp_buf_tag]*, align 8
+  %12 = alloca [1 x %struct.__jmp_buf_tag], align 16
+  store %struct._IO_FILE* %0, %struct._IO_FILE** %3, align 8
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %4, align 8
   store i32 4096, i32* %6, align 4
   %13 = call noalias %struct.png_struct_def* @png_create_write_struct(i8* noundef getelementptr inbounds ([7 x i8], [7 x i8]* @.str.53, i64 0, i64 0), i8* noundef null, void (%struct.png_struct_def*, i8*)* noundef @opng_error, void (%struct.png_struct_def*, i8*)* noundef @opng_warning)
   store %struct.png_struct_def* %13, %struct.png_struct_def** @write_ptr, align 8
@@ -3066,26 +3070,26 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
   br label %17
 
 17:                                               ; preds = %16
-  store volatile i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str.54, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str.54, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %18
 
 18:                                               ; preds = %17
-  %19 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %20 = getelementptr inbounds [48 x i32], [48 x i32]* %19, i64 0, i64 0
-  call void @longjmp(i32* noundef %20, i32 noundef 1) #8
+  %19 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %20 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %19, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %20, i32 noundef 1) #10
   unreachable
 
 21:                                               ; preds = %2
   call void @opng_init_write_data()
   %22 = load %struct.png_struct_def*, %struct.png_struct_def** @write_ptr, align 8
-  %23 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %24 = bitcast %struct.__sFILE* %23 to i8*
+  %23 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %24 = bitcast %struct._IO_FILE* %23 to i8*
   call void @png_set_write_fn(%struct.png_struct_def* noundef %22, i8* noundef %24, void (%struct.png_struct_def*, i8*, i64)* noundef @opng_write_data, void (%struct.png_struct_def*)* noundef null)
-  %25 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  store volatile [48 x i32]* %25, [48 x i32]** %11, align 8
-  store [48 x i32]* %12, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %26 = getelementptr inbounds [48 x i32], [48 x i32]* %12, i64 0, i64 0
-  %27 = call i32 @setjmp(i32* noundef %26) #7
+  %25 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  store volatile [1 x %struct.__jmp_buf_tag]* %25, [1 x %struct.__jmp_buf_tag]** %11, align 8
+  store [1 x %struct.__jmp_buf_tag]* %12, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %26 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %12, i64 0, i64 0
+  %27 = call i32 @_setjmp(%struct.__jmp_buf_tag* noundef %26) #9
   %28 = icmp eq i32 %27, 0
   br i1 %28, label %29, label %126
 
@@ -3101,8 +3105,8 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
 
 32:                                               ; preds = %116, %30
   %33 = getelementptr inbounds [8 x i8], [8 x i8]* %9, i64 0, i64 0
-  %34 = load %struct.__sFILE*, %struct.__sFILE** %3, align 8
-  %35 = call i64 @fread(i8* noundef %33, i64 noundef 8, i64 noundef 1, %struct.__sFILE* noundef %34)
+  %34 = load %struct._IO_FILE*, %struct._IO_FILE** %3, align 8
+  %35 = call i64 @fread(i8* noundef %33, i64 noundef 8, i64 noundef 1, %struct._IO_FILE* noundef %34)
   %36 = icmp ne i64 %35, 1
   br i1 %36, label %37, label %42
 
@@ -3110,13 +3114,13 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
   br label %38
 
 38:                                               ; preds = %37
-  store volatile i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str.117, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str.117, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %39
 
 39:                                               ; preds = %38
-  %40 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %41 = getelementptr inbounds [48 x i32], [48 x i32]* %40, i64 0, i64 0
-  call void @longjmp(i32* noundef %41, i32 noundef 1) #8
+  %40 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %41 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %40, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %41, i32 noundef 1) #10
   unreachable
 
 42:                                               ; preds = %32
@@ -3164,13 +3168,13 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
   br label %75
 
 75:                                               ; preds = %74
-  store volatile i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str.118, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str.118, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %76
 
 76:                                               ; preds = %75
-  %77 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %78 = getelementptr inbounds [48 x i32], [48 x i32]* %77, i64 0, i64 0
-  call void @longjmp(i32* noundef %78, i32 noundef 1) #8
+  %77 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %78 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %77, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %78, i32 noundef 1) #10
   unreachable
 
 79:                                               ; preds = %42
@@ -3202,8 +3206,8 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
   %98 = load i32, i32* %8, align 4
   %99 = add i32 %98, 4
   %100 = zext i32 %99 to i64
-  %101 = load %struct.__sFILE*, %struct.__sFILE** %3, align 8
-  %102 = call i64 @fread(i8* noundef %97, i64 noundef %100, i64 noundef 1, %struct.__sFILE* noundef %101)
+  %101 = load %struct._IO_FILE*, %struct._IO_FILE** %3, align 8
+  %102 = call i64 @fread(i8* noundef %97, i64 noundef %100, i64 noundef 1, %struct._IO_FILE* noundef %101)
   %103 = icmp ne i64 %102, 1
   br i1 %103, label %104, label %109
 
@@ -3211,13 +3215,13 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
   br label %105
 
 105:                                              ; preds = %104
-  store volatile i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str.117, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([11 x i8], [11 x i8]* @.str.117, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %106
 
 106:                                              ; preds = %105
-  %107 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %108 = getelementptr inbounds [48 x i32], [48 x i32]* %107, i64 0, i64 0
-  call void @longjmp(i32* noundef %108, i32 noundef 1) #8
+  %107 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %108 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %107, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %108, i32 noundef 1) #10
   unreachable
 
 109:                                              ; preds = %96
@@ -3233,9 +3237,9 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
 116:                                              ; preds = %109, %73
   %117 = getelementptr inbounds [8 x i8], [8 x i8]* %9, i64 0, i64 0
   %118 = getelementptr inbounds i8, i8* %117, i64 4
-  %119 = call i32 @memcmp(i8* noundef %118, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_IEND, i64 0, i64 0), i64 noundef 4)
+  %119 = call i32 @memcmp(i8* noundef %118, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_IEND, i64 0, i64 0), i64 noundef 4) #12
   %120 = icmp ne i32 %119, 0
-  br i1 %120, label %32, label %121, !llvm.loop !24
+  br i1 %120, label %32, label %121, !llvm.loop !18
 
 121:                                              ; preds = %116
   store volatile i8* null, i8** %10, align 8
@@ -3245,7 +3249,7 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
   store i32 0, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %123 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %124 = icmp ne i32 %123, 0
-  br i1 %124, label %30, label %125, !llvm.loop !25
+  br i1 %124, label %30, label %125, !llvm.loop !19
 
 125:                                              ; preds = %122
   br label %127
@@ -3255,14 +3259,14 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
   br label %127
 
 127:                                              ; preds = %126, %125
-  %128 = load volatile [48 x i32]*, [48 x i32]** %11, align 8
-  store [48 x i32]* %128, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
+  %128 = load volatile [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** %11, align 8
+  store [1 x %struct.__jmp_buf_tag]* %128, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
   %129 = load i32, i32* getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 1), align 8
   %130 = icmp ne i32 %129, 0
   br i1 %130, label %131, label %133
 
 131:                                              ; preds = %127
-  %132 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  %132 = load volatile i8*, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   store volatile i8* %132, i8** %10, align 8
   br i1 false, label %133, label %134
 
@@ -3286,20 +3290,20 @@ define internal void @opng_copy_file(%struct.__sFILE* noundef %0, %struct.__sFIL
 
 141:                                              ; preds = %140
   %142 = load volatile i8*, i8** %10, align 8
-  store volatile i8* %142, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %142, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %143
 
 143:                                              ; preds = %141
-  %144 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %145 = getelementptr inbounds [48 x i32], [48 x i32]* %144, i64 0, i64 0
-  call void @longjmp(i32* noundef %145, i32 noundef 1) #8
+  %144 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %145 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %144, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %145, i32 noundef 1) #10
   unreachable
 
 146:                                              ; preds = %135
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_print_warning(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -3311,11 +3315,11 @@ define internal void @opng_print_warning(i8* noundef %0) #0 {
   ret void
 }
 
-declare i32 @osys_unlink(i8* noundef) #4
+declare dso_local i32 @osys_unlink(i8* noundef) #4
 
-declare i32 @osys_copy_attr(i8* noundef, i8* noundef) #4
+declare dso_local i32 @osys_copy_attr(i8* noundef, i8* noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_print_fsize_difference(i64 noundef %0, i64 noundef %1, i32 noundef %2) #0 {
   %4 = alloca i64, align 8
   %5 = alloca i64, align 8
@@ -3403,9 +3407,9 @@ define internal void @opng_print_fsize_difference(i64 noundef %0, i64 noundef %1
   ret void
 }
 
-declare noalias %struct.png_struct_def* @png_create_read_struct(i8* noundef, i8* noundef, void (%struct.png_struct_def*, i8*)* noundef, void (%struct.png_struct_def*, i8*)* noundef) #4
+declare dso_local noalias %struct.png_struct_def* @png_create_read_struct(i8* noundef, i8* noundef, void (%struct.png_struct_def*, i8*)* noundef, void (%struct.png_struct_def*, i8*)* noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_error(%struct.png_struct_def* noundef %0, i8* noundef %1) #0 {
   %3 = alloca %struct.png_struct_def*, align 8
   %4 = alloca i8*, align 8
@@ -3427,17 +3431,17 @@ define internal void @opng_error(%struct.png_struct_def* noundef %0, i8* noundef
 
 12:                                               ; preds = %11
   %13 = load i8*, i8** %4, align 8
-  store volatile i8* %13, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* %13, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %14
 
 14:                                               ; preds = %12
-  %15 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %16 = getelementptr inbounds [48 x i32], [48 x i32]* %15, i64 0, i64 0
-  call void @longjmp(i32* noundef %16, i32 noundef 1) #8
+  %15 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %16 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %15, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %16, i32 noundef 1) #10
   unreachable
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_warning(%struct.png_struct_def* noundef %0, i8* noundef %1) #0 {
   %3 = alloca %struct.png_struct_def*, align 8
   %4 = alloca i8*, align 8
@@ -3460,25 +3464,25 @@ define internal void @opng_warning(%struct.png_struct_def* noundef %0, i8* nound
   ret void
 }
 
-declare noalias %struct.png_info_def* @png_create_info_struct(%struct.png_struct_def* noundef) #4
+declare dso_local noalias %struct.png_info_def* @png_create_info_struct(%struct.png_struct_def* noundef) #4
 
-declare void @png_set_keep_unknown_chunks(%struct.png_struct_def* noundef, i32 noundef, i8* noundef, i32 noundef) #4
+declare dso_local void @png_set_keep_unknown_chunks(%struct.png_struct_def* noundef, i32 noundef, i8* noundef, i32 noundef) #4
 
-declare void @png_set_user_limits(%struct.png_struct_def* noundef, i32 noundef, i32 noundef) #4
+declare dso_local void @png_set_user_limits(%struct.png_struct_def* noundef, i32 noundef, i32 noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_init_read_data() #0 {
   ret void
 }
 
-declare void @png_set_read_fn(%struct.png_struct_def* noundef, i8* noundef, void (%struct.png_struct_def*, i8*, i64)* noundef) #4
+declare dso_local void @png_set_read_fn(%struct.png_struct_def* noundef, i8* noundef, void (%struct.png_struct_def*, i8*, i64)* noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* noundef %1, i64 noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca i8*, align 8
   %6 = alloca i64, align 8
-  %7 = alloca %struct.__sFILE*, align 8
+  %7 = alloca %struct._IO_FILE*, align 8
   %8 = alloca i32, align 4
   %9 = alloca i32, align 4
   %10 = alloca i8*, align 8
@@ -3487,8 +3491,8 @@ define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* nou
   store i64 %2, i64* %6, align 8
   %11 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
   %12 = call i8* @png_get_io_ptr(%struct.png_struct_def* noundef %11)
-  %13 = bitcast i8* %12 to %struct.__sFILE*
-  store %struct.__sFILE* %13, %struct.__sFILE** %7, align 8
+  %13 = bitcast i8* %12 to %struct._IO_FILE*
+  store %struct._IO_FILE* %13, %struct._IO_FILE** %7, align 8
   %14 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
   %15 = call i32 @png_get_io_state(%struct.png_struct_def* noundef %14)
   store i32 %15, i32* %8, align 4
@@ -3497,15 +3501,15 @@ define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* nou
   store i32 %17, i32* %9, align 4
   %18 = load i8*, i8** %5, align 8
   %19 = load i64, i64* %6, align 8
-  %20 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %21 = call i64 @fread(i8* noundef %18, i64 noundef 1, i64 noundef %19, %struct.__sFILE* noundef %20)
+  %20 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %21 = call i64 @fread(i8* noundef %18, i64 noundef 1, i64 noundef %19, %struct._IO_FILE* noundef %20)
   %22 = load i64, i64* %6, align 8
   %23 = icmp ne i64 %21, %22
   br i1 %23, label %24, label %26
 
 24:                                               ; preds = %3
   %25 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
-  call void @png_error(%struct.png_struct_def* noundef %25, i8* noundef getelementptr inbounds ([52 x i8], [52 x i8]* @.str.66, i64 0, i64 0)) #8
+  call void @png_error(%struct.png_struct_def* noundef %25, i8* noundef getelementptr inbounds ([52 x i8], [52 x i8]* @.str.66, i64 0, i64 0)) #13
   unreachable
 
 26:                                               ; preds = %3
@@ -3524,8 +3528,8 @@ define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* nou
   br label %34
 
 34:                                               ; preds = %32, %29
-  %35 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %36 = call i64 @osys_ftello(%struct.__sFILE* noundef %35)
+  %35 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %36 = call i64 @osys_ftello(%struct._IO_FILE* noundef %35)
   %37 = sub nsw i64 %36, 8
   store i64 %37, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 2), align 8
   %38 = load i32, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 0), align 8
@@ -3559,7 +3563,7 @@ define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* nou
 
 54:                                               ; preds = %51
   %55 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
-  call void @png_error(%struct.png_struct_def* noundef %55, i8* noundef getelementptr inbounds ([52 x i8], [52 x i8]* @.str.68, i64 0, i64 0)) #8
+  call void @png_error(%struct.png_struct_def* noundef %55, i8* noundef getelementptr inbounds ([52 x i8], [52 x i8]* @.str.68, i64 0, i64 0)) #13
   unreachable
 
 56:                                               ; preds = %51
@@ -3610,7 +3614,7 @@ define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* nou
   %81 = getelementptr inbounds i8, i8* %80, i64 4
   store i8* %81, i8** %10, align 8
   %82 = load i8*, i8** %10, align 8
-  %83 = call i32 @memcmp(i8* noundef %82, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_IDAT, i64 0, i64 0), i64 noundef 4)
+  %83 = call i32 @memcmp(i8* noundef %82, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_IDAT, i64 0, i64 0), i64 noundef 4) #12
   %84 = icmp eq i32 %83, 0
   br i1 %84, label %85, label %145
 
@@ -3706,13 +3710,13 @@ define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* nou
 
 145:                                              ; preds = %79
   %146 = load i8*, i8** %10, align 8
-  %147 = call i32 @memcmp(i8* noundef %146, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_PLTE, i64 0, i64 0), i64 noundef 4)
+  %147 = call i32 @memcmp(i8* noundef %146, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_PLTE, i64 0, i64 0), i64 noundef 4) #12
   %148 = icmp eq i32 %147, 0
   br i1 %148, label %153, label %149
 
 149:                                              ; preds = %145
   %150 = load i8*, i8** %10, align 8
-  %151 = call i32 @memcmp(i8* noundef %150, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_tRNS, i64 0, i64 0), i64 noundef 4)
+  %151 = call i32 @memcmp(i8* noundef %150, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_tRNS, i64 0, i64 0), i64 noundef 4) #12
   %152 = icmp eq i32 %151, 0
   br i1 %152, label %153, label %178
 
@@ -3781,15 +3785,15 @@ define internal void @opng_read_data(%struct.png_struct_def* noundef %0, i8* nou
   ret void
 }
 
-declare i32 @pngx_read_image(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef, i8** noundef) #4
+declare dso_local i32 @pngx_read_image(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef, i8** noundef) #4
 
-declare i32 @osys_fgetsize(%struct.__sFILE* noundef, i64* noundef) #4
+declare dso_local i32 @osys_fgetsize(%struct._IO_FILE* noundef, i64* noundef) #4
 
-declare i32 @opng_validate_image(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #4
+declare dso_local i32 @opng_validate_image(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #4
 
-declare void @png_warning(%struct.png_struct_def* noundef, i8* noundef) #4
+declare dso_local void @png_warning(%struct.png_struct_def* noundef, i8* noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_load_image_info(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i32 noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca %struct.png_info_def*, align 8
@@ -3879,7 +3883,7 @@ define internal void @opng_load_image_info(%struct.png_struct_def* noundef %0, %
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_print_image_info(i32 noundef %0, i32 noundef %1, i32 noundef %2, i32 noundef %3) #0 {
   %5 = alloca i32, align 4
   %6 = alloca i32, align 4
@@ -4085,32 +4089,33 @@ define internal void @opng_print_image_info(i32 noundef %0, i32 noundef %1, i32 
   ret void
 }
 
-declare i32 @opng_reduce_image(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #4
+declare dso_local i32 @opng_reduce_image(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #4
 
-declare void @png_data_freer(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef) #4
+declare dso_local void @png_data_freer(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef) #4
 
-declare void @png_destroy_read_struct(%struct.png_struct_def** noundef, %struct.png_info_def** noundef, %struct.png_info_def** noundef) #4
+declare dso_local void @png_destroy_read_struct(%struct.png_struct_def** noundef, %struct.png_info_def** noundef, %struct.png_info_def** noundef) #4
 
-declare i8* @png_get_io_ptr(%struct.png_struct_def* noundef) #4
+declare dso_local i8* @png_get_io_ptr(%struct.png_struct_def* noundef) #4
 
-declare i32 @png_get_io_state(%struct.png_struct_def* noundef) #4
+declare dso_local i32 @png_get_io_state(%struct.png_struct_def* noundef) #4
 
-declare i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct.__sFILE* noundef) #4
+declare dso_local i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct._IO_FILE* noundef) #4
 
 ; Function Attrs: noreturn
-declare void @png_error(%struct.png_struct_def* noundef, i8* noundef) #5
+declare dso_local void @png_error(%struct.png_struct_def* noundef, i8* noundef) #8
 
-declare i64 @osys_ftello(%struct.__sFILE* noundef) #4
+declare dso_local i64 @osys_ftello(%struct._IO_FILE* noundef) #4
 
-declare i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #4
+; Function Attrs: nounwind readonly willreturn
+declare dso_local i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #7
 
-declare i8** @png_get_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #4
+declare dso_local i8** @png_get_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #4
 
-declare i32 @png_get_image_height(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #4
+declare dso_local i32 @png_get_image_height(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #4
 
-declare i8** @pngx_malloc_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #4
+declare dso_local i8** @pngx_malloc_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_handle_chunk(%struct.png_struct_def* noundef %0, i8* noundef %1) #0 {
   %3 = alloca %struct.png_struct_def*, align 8
   %4 = alloca i8*, align 8
@@ -4141,19 +4146,19 @@ define internal void @opng_handle_chunk(%struct.png_struct_def* noundef %0, i8* 
 
 18:                                               ; preds = %10
   %19 = load i8*, i8** %4, align 8
-  %20 = call i32 @memcmp(i8* noundef %19, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_bKGD, i64 0, i64 0), i64 noundef 4)
+  %20 = call i32 @memcmp(i8* noundef %19, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_bKGD, i64 0, i64 0), i64 noundef 4) #12
   %21 = icmp eq i32 %20, 0
   br i1 %21, label %30, label %22
 
 22:                                               ; preds = %18
   %23 = load i8*, i8** %4, align 8
-  %24 = call i32 @memcmp(i8* noundef %23, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_hIST, i64 0, i64 0), i64 noundef 4)
+  %24 = call i32 @memcmp(i8* noundef %23, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_hIST, i64 0, i64 0), i64 noundef 4) #12
   %25 = icmp eq i32 %24, 0
   br i1 %25, label %30, label %26
 
 26:                                               ; preds = %22
   %27 = load i8*, i8** %4, align 8
-  %28 = call i32 @memcmp(i8* noundef %27, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_sBIT, i64 0, i64 0), i64 noundef 4)
+  %28 = call i32 @memcmp(i8* noundef %27, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_sBIT, i64 0, i64 0), i64 noundef 4) #12
   %29 = icmp eq i32 %28, 0
   br i1 %29, label %30, label %31
 
@@ -4163,7 +4168,7 @@ define internal void @opng_handle_chunk(%struct.png_struct_def* noundef %0, i8* 
 31:                                               ; preds = %26
   store i32 3, i32* %5, align 4
   %32 = load i8*, i8** %4, align 8
-  %33 = call i32 @memcmp(i8* noundef %32, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_dSIG, i64 0, i64 0), i64 noundef 4)
+  %33 = call i32 @memcmp(i8* noundef %32, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_dSIG, i64 0, i64 0), i64 noundef 4) #12
   %34 = icmp eq i32 %33, 0
   br i1 %34, label %35, label %38
 
@@ -4184,7 +4189,7 @@ define internal void @opng_handle_chunk(%struct.png_struct_def* noundef %0, i8* 
   %44 = or i32 %43, 32
   store i32 %44, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 0), align 8
   %45 = load i8*, i8** %4, align 8
-  %46 = call i32 @memcmp(i8* noundef %45, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_fdAT, i64 0, i64 0), i64 noundef 4)
+  %46 = call i32 @memcmp(i8* noundef %45, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_fdAT, i64 0, i64 0), i64 noundef 4) #12
   %47 = icmp eq i32 %46, 0
   br i1 %47, label %48, label %51
 
@@ -4223,7 +4228,7 @@ define internal void @opng_handle_chunk(%struct.png_struct_def* noundef %0, i8* 
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i32 @opng_is_image_chunk(i8* noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i8*, align 8
@@ -4242,7 +4247,7 @@ define internal i32 @opng_is_image_chunk(i8* noundef %0) #0 {
 
 11:                                               ; preds = %1
   %12 = load i8*, i8** %3, align 8
-  %13 = call i32 @memcmp(i8* noundef %12, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_tRNS, i64 0, i64 0), i64 noundef 4)
+  %13 = call i32 @memcmp(i8* noundef %12, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_tRNS, i64 0, i64 0), i64 noundef 4) #12
   %14 = icmp eq i32 %13, 0
   br i1 %14, label %15, label %16
 
@@ -4259,7 +4264,7 @@ define internal i32 @opng_is_image_chunk(i8* noundef %0) #0 {
   ret i32 %18
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_set_keep_unknown_chunk(%struct.png_struct_def* noundef %0, i32 noundef %1, i8* noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca i32, align 4
@@ -4290,25 +4295,25 @@ define internal void @opng_set_keep_unknown_chunk(%struct.png_struct_def* nounde
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i32 @opng_is_apng_chunk(i8* noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i8*, align 8
   store i8* %0, i8** %3, align 8
   %4 = load i8*, i8** %3, align 8
-  %5 = call i32 @memcmp(i8* noundef %4, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_acTL, i64 0, i64 0), i64 noundef 4)
+  %5 = call i32 @memcmp(i8* noundef %4, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_acTL, i64 0, i64 0), i64 noundef 4) #12
   %6 = icmp eq i32 %5, 0
   br i1 %6, label %15, label %7
 
 7:                                                ; preds = %1
   %8 = load i8*, i8** %3, align 8
-  %9 = call i32 @memcmp(i8* noundef %8, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_fcTL, i64 0, i64 0), i64 noundef 4)
+  %9 = call i32 @memcmp(i8* noundef %8, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_fcTL, i64 0, i64 0), i64 noundef 4) #12
   %10 = icmp eq i32 %9, 0
   br i1 %10, label %15, label %11
 
 11:                                               ; preds = %7
   %12 = load i8*, i8** %3, align 8
-  %13 = call i32 @memcmp(i8* noundef %12, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_fdAT, i64 0, i64 0), i64 noundef 4)
+  %13 = call i32 @memcmp(i8* noundef %12, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_fdAT, i64 0, i64 0), i64 noundef 4) #12
   %14 = icmp eq i32 %13, 0
   br i1 %14, label %15, label %16
 
@@ -4325,23 +4330,23 @@ define internal i32 @opng_is_apng_chunk(i8* noundef %0) #0 {
   ret i32 %18
 }
 
-declare i32 @png_handle_as_unknown(%struct.png_struct_def* noundef, i8* noundef) #4
+declare dso_local i32 @png_handle_as_unknown(%struct.png_struct_def* noundef, i8* noundef) #4
 
-declare i32 @png_get_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef) #4
+declare dso_local i32 @png_get_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef, i32* noundef) #4
 
-declare i32 @png_get_PLTE(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_struct** noundef, i32* noundef) #4
+declare dso_local i32 @png_get_PLTE(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_struct** noundef, i32* noundef) #4
 
-declare i32 @png_get_tRNS(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef, i32* noundef, %struct.png_color_16_struct** noundef) #4
+declare dso_local i32 @png_get_tRNS(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef, i32* noundef, %struct.png_color_16_struct** noundef) #4
 
-declare i32 @png_get_bKGD(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_16_struct** noundef) #4
+declare dso_local i32 @png_get_bKGD(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_16_struct** noundef) #4
 
-declare i32 @png_get_hIST(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i16** noundef) #4
+declare dso_local i32 @png_get_hIST(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i16** noundef) #4
 
-declare i32 @png_get_sBIT(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_8_struct** noundef) #4
+declare dso_local i32 @png_get_sBIT(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_8_struct** noundef) #4
 
-declare i32 @png_get_unknown_chunks(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_unknown_chunk_t** noundef) #4
+declare dso_local i32 @png_get_unknown_chunks(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_unknown_chunk_t** noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_init_iteration(i32 noundef %0, i32 noundef %1, i8* noundef %2, i32* noundef %3) #0 {
   %5 = alloca i32, align 4
   %6 = alloca i32, align 4
@@ -4371,13 +4376,13 @@ define internal void @opng_init_iteration(i32 noundef %0, i32 noundef %1, i8* no
   br label %21
 
 21:                                               ; preds = %20
-  store volatile i8* getelementptr inbounds ([36 x i8], [36 x i8]* @.str.91, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* getelementptr inbounds ([36 x i8], [36 x i8]* @.str.91, i64 0, i64 0), i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %22
 
 22:                                               ; preds = %21
-  %23 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %24 = getelementptr inbounds [48 x i32], [48 x i32]* %23, i64 0, i64 0
-  call void @longjmp(i32* noundef %24, i32 noundef 1) #8
+  %23 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %24 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %23, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %24, i32 noundef 1) #10
   unreachable
 
 25:                                               ; preds = %17, %4
@@ -4408,25 +4413,25 @@ define internal void @opng_init_iteration(i32 noundef %0, i32 noundef %1, i8* no
   ret void
 }
 
-declare i32 @opng_bitset_count(i32 noundef) #4
+declare dso_local i32 @opng_bitset_count(i32 noundef) #4
 
-declare i32 @opng_rangeset_string_to_bitset(i8* noundef, i64* noundef) #4
+declare dso_local i32 @opng_rangeset_string_to_bitset(i8* noundef, i64* noundef) #4
 
-declare i32 @opng_bitset_find_first(i32 noundef) #4
+declare dso_local i32 @opng_bitset_find_first(i32 noundef) #4
 
-declare noalias %struct.png_struct_def* @png_create_write_struct(i8* noundef, i8* noundef, void (%struct.png_struct_def*, i8*)* noundef, void (%struct.png_struct_def*, i8*)* noundef) #4
+declare dso_local noalias %struct.png_struct_def* @png_create_write_struct(i8* noundef, i8* noundef, void (%struct.png_struct_def*, i8*)* noundef, void (%struct.png_struct_def*, i8*)* noundef) #4
 
-declare void @png_set_compression_level(%struct.png_struct_def* noundef, i32 noundef) #4
+declare dso_local void @png_set_compression_level(%struct.png_struct_def* noundef, i32 noundef) #4
 
-declare void @png_set_compression_mem_level(%struct.png_struct_def* noundef, i32 noundef) #4
+declare dso_local void @png_set_compression_mem_level(%struct.png_struct_def* noundef, i32 noundef) #4
 
-declare void @png_set_compression_strategy(%struct.png_struct_def* noundef, i32 noundef) #4
+declare dso_local void @png_set_compression_strategy(%struct.png_struct_def* noundef, i32 noundef) #4
 
-declare void @png_set_filter(%struct.png_struct_def* noundef, i32 noundef, i32 noundef) #4
+declare dso_local void @png_set_filter(%struct.png_struct_def* noundef, i32 noundef, i32 noundef) #4
 
-declare void @png_set_compression_window_bits(%struct.png_struct_def* noundef, i32 noundef) #4
+declare dso_local void @png_set_compression_window_bits(%struct.png_struct_def* noundef, i32 noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_store_image_info(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i32 noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca %struct.png_info_def*, align 8
@@ -4572,7 +4577,7 @@ define internal void @opng_store_image_info(%struct.png_struct_def* noundef %0, 
   %93 = load i32, i32* %7, align 4
   %94 = add nsw i32 %93, 1
   store i32 %94, i32* %7, align 4
-  br label %77, !llvm.loop !26
+  br label %77, !llvm.loop !20
 
 95:                                               ; preds = %77
   br label %96
@@ -4581,7 +4586,7 @@ define internal void @opng_store_image_info(%struct.png_struct_def* noundef %0, 
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_init_write_data() #0 {
   store i64 0, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 4), align 8
   store i32 0, i32* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 10), align 4
@@ -4589,14 +4594,14 @@ define internal void @opng_init_write_data() #0 {
   ret void
 }
 
-declare void @png_set_write_fn(%struct.png_struct_def* noundef, i8* noundef, void (%struct.png_struct_def*, i8*, i64)* noundef, void (%struct.png_struct_def*)* noundef) #4
+declare dso_local void @png_set_write_fn(%struct.png_struct_def* noundef, i8* noundef, void (%struct.png_struct_def*, i8*, i64)* noundef, void (%struct.png_struct_def*)* noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* noundef %1, i64 noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca i8*, align 8
   %6 = alloca i64, align 8
-  %7 = alloca %struct.__sFILE*, align 8
+  %7 = alloca %struct._IO_FILE*, align 8
   %8 = alloca i32, align 4
   %9 = alloca i32, align 4
   %10 = alloca i8*, align 8
@@ -4606,8 +4611,8 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   store i64 %2, i64* %6, align 8
   %12 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
   %13 = call i8* @png_get_io_ptr(%struct.png_struct_def* noundef %12)
-  %14 = bitcast i8* %13 to %struct.__sFILE*
-  store %struct.__sFILE* %14, %struct.__sFILE** %7, align 8
+  %14 = bitcast i8* %13 to %struct._IO_FILE*
+  store %struct._IO_FILE* %14, %struct._IO_FILE** %7, align 8
   %15 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
   %16 = call i32 @png_get_io_state(%struct.png_struct_def* noundef %15)
   store i32 %16, i32* %8, align 4
@@ -4652,7 +4657,7 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   %39 = call i32 @opng_allow_chunk(i8* noundef %38)
   store i32 %39, i32* @opng_write_data.allow_crt_chunk, align 4
   %40 = load i8*, i8** %10, align 8
-  %41 = call i32 @memcmp(i8* noundef %40, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_IDAT, i64 0, i64 0), i64 noundef 4)
+  %41 = call i32 @memcmp(i8* noundef %40, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_IDAT, i64 0, i64 0), i64 noundef 4) #12
   %42 = icmp eq i32 %41, 0
   br i1 %42, label %43, label %81
 
@@ -4683,8 +4688,8 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   %66 = load i64, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 6), align 8
   %67 = add i64 %66, %65
   store i64 %67, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 6), align 8
-  %68 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %69 = icmp eq %struct.__sFILE* %68, null
+  %68 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %69 = icmp eq %struct._IO_FILE* %68, null
   br i1 %69, label %70, label %80
 
 70:                                               ; preds = %43
@@ -4697,13 +4702,13 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   br label %75
 
 75:                                               ; preds = %74
-  store volatile i8* null, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 8
+  store volatile i8* null, i8** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 2, i32 0), align 16
   br label %76
 
 76:                                               ; preds = %75
-  %77 = load [48 x i32]*, [48 x i32]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 8
-  %78 = getelementptr inbounds [48 x i32], [48 x i32]* %77, i64 0, i64 0
-  call void @longjmp(i32* noundef %78, i32 noundef 1) #8
+  %77 = load [1 x %struct.__jmp_buf_tag]*, [1 x %struct.__jmp_buf_tag]** getelementptr inbounds ([1 x %struct.exception_context], [1 x %struct.exception_context]* @the_exception_context, i64 0, i64 0, i32 0), align 16
+  %78 = getelementptr inbounds [1 x %struct.__jmp_buf_tag], [1 x %struct.__jmp_buf_tag]* %77, i64 0, i64 0
+  call void @longjmp(%struct.__jmp_buf_tag* noundef %78, i32 noundef 1) #10
   unreachable
 
 79:                                               ; preds = %70
@@ -4715,13 +4720,13 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
 81:                                               ; preds = %35
   store i32 0, i32* @opng_write_data.crt_chunk_is_idat, align 4
   %82 = load i8*, i8** %10, align 8
-  %83 = call i32 @memcmp(i8* noundef %82, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_PLTE, i64 0, i64 0), i64 noundef 4)
+  %83 = call i32 @memcmp(i8* noundef %82, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_PLTE, i64 0, i64 0), i64 noundef 4) #12
   %84 = icmp eq i32 %83, 0
   br i1 %84, label %89, label %85
 
 85:                                               ; preds = %81
   %86 = load i8*, i8** %10, align 8
-  %87 = call i32 @memcmp(i8* noundef %86, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_tRNS, i64 0, i64 0), i64 noundef 4)
+  %87 = call i32 @memcmp(i8* noundef %86, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_tRNS, i64 0, i64 0), i64 noundef 4) #12
   %88 = icmp eq i32 %87, 0
   br i1 %88, label %89, label %114
 
@@ -4781,8 +4786,8 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   br label %126
 
 126:                                              ; preds = %125, %115
-  %127 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %128 = icmp eq %struct.__sFILE* %127, null
+  %127 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %128 = icmp eq %struct._IO_FILE* %127, null
   br i1 %128, label %129, label %130
 
 129:                                              ; preds = %126
@@ -4820,8 +4825,8 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   br i1 %144, label %145, label %160
 
 145:                                              ; preds = %142
-  %146 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %147 = call i64 @osys_ftello(%struct.__sFILE* noundef %146)
+  %146 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %147 = call i64 @osys_ftello(%struct._IO_FILE* noundef %146)
   store i64 %147, i64* @opng_write_data.crt_idat_offset, align 8
   %148 = load i64, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 7), align 8
   %149 = icmp ugt i64 %148, 0
@@ -4863,8 +4868,8 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   %167 = load i32, i32* @opng_write_data.crt_idat_crc, align 4
   call void @png_save_uint_32(i8* noundef %166, i32 noundef %167)
   %168 = getelementptr inbounds [4 x i8], [4 x i8]* %11, i64 0, i64 0
-  %169 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %170 = call i64 @"\01_fwrite"(i8* noundef %168, i64 noundef 1, i64 noundef 4, %struct.__sFILE* noundef %169)
+  %169 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %170 = call i64 @fwrite(i8* noundef %168, i64 noundef 1, i64 noundef 4, %struct._IO_FILE* noundef %169)
   %171 = icmp ne i64 %170, 4
   br i1 %171, label %172, label %173
 
@@ -4898,10 +4903,10 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   %187 = load i64, i64* getelementptr inbounds (%struct.opng_process_struct, %struct.opng_process_struct* @process, i32 0, i32 6), align 8
   %188 = trunc i64 %187 to i32
   call void @png_save_uint_32(i8* noundef %186, i32 noundef %188)
-  %189 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
+  %189 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
   %190 = load i64, i64* @opng_write_data.crt_idat_offset, align 8
   %191 = getelementptr inbounds [4 x i8], [4 x i8]* %11, i64 0, i64 0
-  %192 = call i64 @osys_fwrite_at(%struct.__sFILE* noundef %189, i64 noundef %190, i32 noundef 0, i8* noundef %191, i64 noundef 4)
+  %192 = call i64 @osys_fwrite_at(%struct._IO_FILE* noundef %189, i64 noundef %190, i32 noundef 0, i8* noundef %191, i64 noundef 4)
   %193 = icmp ne i64 %192, 4
   br i1 %193, label %194, label %195
 
@@ -4919,7 +4924,7 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
 
 199:                                              ; preds = %196
   %200 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
-  call void @png_error(%struct.png_struct_def* noundef %200, i8* noundef getelementptr inbounds ([20 x i8], [20 x i8]* @.str.115, i64 0, i64 0)) #8
+  call void @png_error(%struct.png_struct_def* noundef %200, i8* noundef getelementptr inbounds ([20 x i8], [20 x i8]* @.str.115, i64 0, i64 0)) #13
   unreachable
 
 201:                                              ; preds = %196
@@ -4965,15 +4970,15 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
 221:                                              ; preds = %137, %220, %215, %203
   %222 = load i8*, i8** %5, align 8
   %223 = load i64, i64* %6, align 8
-  %224 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %225 = call i64 @"\01_fwrite"(i8* noundef %222, i64 noundef 1, i64 noundef %223, %struct.__sFILE* noundef %224)
+  %224 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %225 = call i64 @fwrite(i8* noundef %222, i64 noundef 1, i64 noundef %223, %struct._IO_FILE* noundef %224)
   %226 = load i64, i64* %6, align 8
   %227 = icmp ne i64 %225, %226
   br i1 %227, label %228, label %230
 
 228:                                              ; preds = %221
   %229 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
-  call void @png_error(%struct.png_struct_def* noundef %229, i8* noundef getelementptr inbounds ([28 x i8], [28 x i8]* @.str.116, i64 0, i64 0)) #8
+  call void @png_error(%struct.png_struct_def* noundef %229, i8* noundef getelementptr inbounds ([28 x i8], [28 x i8]* @.str.116, i64 0, i64 0)) #13
   unreachable
 
 230:                                              ; preds = %221
@@ -4987,29 +4992,29 @@ define internal void @opng_write_data(%struct.png_struct_def* noundef %0, i8* no
   ret void
 }
 
-declare void @png_write_png(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i8* noundef) #4
+declare dso_local void @png_write_png(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i8* noundef) #4
 
-declare void @png_destroy_write_struct(%struct.png_struct_def** noundef, %struct.png_info_def** noundef) #4
+declare dso_local void @png_destroy_write_struct(%struct.png_struct_def** noundef, %struct.png_info_def** noundef) #4
 
-declare void @png_set_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef) #4
+declare dso_local void @png_set_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef) #4
 
-declare void @png_set_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef) #4
+declare dso_local void @png_set_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef) #4
 
-declare void @png_set_PLTE(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_struct* noundef, i32 noundef) #4
+declare dso_local void @png_set_PLTE(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_struct* noundef, i32 noundef) #4
 
-declare void @png_set_tRNS(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8* noundef, i32 noundef, %struct.png_color_16_struct* noundef) #4
+declare dso_local void @png_set_tRNS(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8* noundef, i32 noundef, %struct.png_color_16_struct* noundef) #4
 
-declare void @png_set_bKGD(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_16_struct* noundef) #4
+declare dso_local void @png_set_bKGD(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_16_struct* noundef) #4
 
-declare void @png_set_hIST(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i16* noundef) #4
+declare dso_local void @png_set_hIST(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i16* noundef) #4
 
-declare void @png_set_sBIT(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_8_struct* noundef) #4
+declare dso_local void @png_set_sBIT(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_8_struct* noundef) #4
 
-declare void @png_set_unknown_chunks(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_unknown_chunk_t* noundef, i32 noundef) #4
+declare dso_local void @png_set_unknown_chunks(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_unknown_chunk_t* noundef, i32 noundef) #4
 
-declare void @png_set_unknown_chunk_location(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef) #4
+declare dso_local void @png_set_unknown_chunk_location(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i32 @opng_allow_chunk(i8* noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca i8*, align 8
@@ -5034,7 +5039,7 @@ define internal i32 @opng_allow_chunk(i8* noundef %0) #0 {
 
 12:                                               ; preds = %8
   %13 = load i8*, i8** %3, align 8
-  %14 = call i32 @memcmp(i8* noundef %13, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_dSIG, i64 0, i64 0), i64 noundef 4)
+  %14 = call i32 @memcmp(i8* noundef %13, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @sig_dSIG, i64 0, i64 0), i64 noundef 4) #12
   %15 = icmp eq i32 %14, 0
   br i1 %15, label %16, label %17
 
@@ -5066,27 +5071,27 @@ define internal i32 @opng_allow_chunk(i8* noundef %0) #0 {
   ret i32 %27
 }
 
-declare void @png_save_uint_32(i8* noundef, i32 noundef) #4
+declare dso_local void @png_save_uint_32(i8* noundef, i32 noundef) #4
 
-declare i64 @crc32(i64 noundef, i8* noundef, i32 noundef) #4
+declare dso_local i64 @crc32(i64 noundef, i8* noundef, i32 noundef) #4
 
-declare i64 @"\01_fwrite"(i8* noundef, i64 noundef, i64 noundef, %struct.__sFILE* noundef) #4
+declare dso_local i64 @fwrite(i8* noundef, i64 noundef, i64 noundef, %struct._IO_FILE* noundef) #4
 
-declare i64 @osys_fwrite_at(%struct.__sFILE* noundef, i64 noundef, i32 noundef, i8* noundef, i64 noundef) #4
+declare dso_local i64 @osys_fwrite_at(%struct._IO_FILE* noundef, i64 noundef, i32 noundef, i8* noundef, i64 noundef) #4
 
-declare void @png_write_sig(%struct.png_struct_def* noundef) #4
+declare dso_local void @png_write_sig(%struct.png_struct_def* noundef) #4
 
-declare void @png_free(%struct.png_struct_def* noundef, i8* noundef) #4
+declare dso_local void @png_free(%struct.png_struct_def* noundef, i8* noundef) #4
 
-declare noalias i8* @png_malloc(%struct.png_struct_def* noundef, i64 noundef) #4
+declare dso_local noalias i8* @png_malloc(%struct.png_struct_def* noundef, i64 noundef) #4
 
-declare void @png_write_chunk(%struct.png_struct_def* noundef, i8* noundef, i8* noundef, i64 noundef) #4
+declare dso_local void @png_write_chunk(%struct.png_struct_def* noundef, i8* noundef, i8* noundef, i64 noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_print_fsize_ratio(i64 noundef %0, i64 noundef %1) #0 {
   %3 = alloca i64, align 8
   %4 = alloca i64, align 8
-  %5 = alloca [32 x i8], align 1
+  %5 = alloca [32 x i8], align 16
   %6 = alloca %struct.opng_ulratio, align 8
   %7 = alloca i32, align 4
   store i64 %0, i64* %3, align 8
@@ -5110,57 +5115,56 @@ define internal void @opng_print_fsize_ratio(i64 noundef %0, i64 noundef %1) #0 
   ret void
 }
 
-declare i32 @opng_ulratio_to_factor_string(i8* noundef, i64 noundef, %struct.opng_ulratio* noundef) #4
+declare dso_local i32 @opng_ulratio_to_factor_string(i8* noundef, i64 noundef, %struct.opng_ulratio* noundef) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @opng_free(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
   %3 = load i8*, i8** %2, align 8
-  call void @free(i8* noundef %3)
+  call void @free(i8* noundef %3) #11
   ret void
 }
 
-declare void @free(i8* noundef) #4
+; Function Attrs: nounwind
+declare dso_local void @free(i8* noundef) #6
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { argmemonly nofree nounwind willreturn }
 attributes #2 = { argmemonly nofree nounwind willreturn writeonly }
-attributes #3 = { returns_twice "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #4 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #5 = { noreturn "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #6 = { nounwind "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #7 = { returns_twice }
-attributes #8 = { noreturn }
-attributes #9 = { nounwind }
+attributes #3 = { nounwind returns_twice "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #5 = { noreturn nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #6 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #7 = { nounwind readonly willreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #8 = { noreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #9 = { nounwind returns_twice }
+attributes #10 = { noreturn nounwind }
+attributes #11 = { nounwind }
+attributes #12 = { nounwind readonly willreturn }
+attributes #13 = { noreturn }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
-!13 = distinct !{!13, !11}
-!14 = distinct !{!14, !11}
-!15 = distinct !{!15, !11}
-!16 = distinct !{!16, !11}
-!17 = distinct !{!17, !11}
-!18 = distinct !{!18, !11}
-!19 = distinct !{!19, !11}
-!20 = distinct !{!20, !11}
-!21 = distinct !{!21, !11}
-!22 = distinct !{!22, !11}
-!23 = distinct !{!23, !11}
-!24 = distinct !{!24, !11}
-!25 = distinct !{!25, !11}
-!26 = distinct !{!26, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}
+!7 = distinct !{!7, !5}
+!8 = distinct !{!8, !5}
+!9 = distinct !{!9, !5}
+!10 = distinct !{!10, !5}
+!11 = distinct !{!11, !5}
+!12 = distinct !{!12, !5}
+!13 = distinct !{!13, !5}
+!14 = distinct !{!14, !5}
+!15 = distinct !{!15, !5}
+!16 = distinct !{!16, !5}
+!17 = distinct !{!17, !5}
+!18 = distinct !{!18, !5}
+!19 = distinct !{!19, !5}
+!20 = distinct !{!20, !5}

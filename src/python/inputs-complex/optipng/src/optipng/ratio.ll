@@ -1,10 +1,11 @@
 ; ModuleID = 'ratio.c'
 source_filename = "ratio.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.opng_ulratio = type { i64, i64 }
 %struct.opng_ullratio = type { i64, i64 }
+%struct.__va_list_tag = type { i32, i32, i8*, i8* }
 
 @.str = private unnamed_addr constant [5 x i8] c"??%%\00", align 1
 @.str.1 = private unnamed_addr constant [8 x i8] c"INFTY%%\00", align 1
@@ -13,8 +14,8 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.4 = private unnamed_addr constant [11 x i8] c"%llu.%02ux\00", align 1
 @.str.5 = private unnamed_addr constant [6 x i8] c"%llux\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @opng_ulratio_to_factor_string(i8* noundef %0, i64 noundef %1, %struct.opng_ulratio* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @opng_ulratio_to_factor_string(i8* noundef %0, i64 noundef %1, %struct.opng_ulratio* noundef %2) #0 {
   %4 = alloca i8*, align 8
   %5 = alloca i64, align 8
   %6 = alloca %struct.opng_ulratio*, align 8
@@ -39,7 +40,7 @@ define i32 @opng_ulratio_to_factor_string(i8* noundef %0, i64 noundef %1, %struc
   ret i32 %19
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i32 @opng_sprint_uratio_impl(i8* noundef %0, i64 noundef %1, i64 noundef %2, i64 noundef %3, i32 noundef %4) #0 {
   %6 = alloca i32, align 4
   %7 = alloca i8*, align 8
@@ -218,8 +219,8 @@ define internal i32 @opng_sprint_uratio_impl(i8* noundef %0, i64 noundef %1, i64
   ret i32 %124
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @opng_ulratio_to_percent_string(i8* noundef %0, i64 noundef %1, %struct.opng_ulratio* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @opng_ulratio_to_percent_string(i8* noundef %0, i64 noundef %1, %struct.opng_ulratio* noundef %2) #0 {
   %4 = alloca i8*, align 8
   %5 = alloca i64, align 8
   %6 = alloca %struct.opng_ulratio*, align 8
@@ -244,8 +245,8 @@ define i32 @opng_ulratio_to_percent_string(i8* noundef %0, i64 noundef %1, %stru
   ret i32 %19
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @opng_ullratio_to_factor_string(i8* noundef %0, i64 noundef %1, %struct.opng_ullratio* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @opng_ullratio_to_factor_string(i8* noundef %0, i64 noundef %1, %struct.opng_ullratio* noundef %2) #0 {
   %4 = alloca i8*, align 8
   %5 = alloca i64, align 8
   %6 = alloca %struct.opng_ullratio*, align 8
@@ -270,8 +271,8 @@ define i32 @opng_ullratio_to_factor_string(i8* noundef %0, i64 noundef %1, %stru
   ret i32 %19
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @opng_ullratio_to_percent_string(i8* noundef %0, i64 noundef %1, %struct.opng_ullratio* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @opng_ullratio_to_percent_string(i8* noundef %0, i64 noundef %1, %struct.opng_ullratio* noundef %2) #0 {
   %4 = alloca i8*, align 8
   %5 = alloca i64, align 8
   %6 = alloca %struct.opng_ullratio*, align 8
@@ -296,28 +297,28 @@ define i32 @opng_ullratio_to_percent_string(i8* noundef %0, i64 noundef %1, %str
   ret i32 %19
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i32 @opng_snprintf_impl(i8* noundef %0, i64 noundef %1, i8* noundef %2, ...) #0 {
   %4 = alloca i32, align 4
   %5 = alloca i8*, align 8
   %6 = alloca i64, align 8
   %7 = alloca i8*, align 8
-  %8 = alloca i8*, align 8
+  %8 = alloca [1 x %struct.__va_list_tag], align 16
   %9 = alloca i32, align 4
   store i8* %0, i8** %5, align 8
   store i64 %1, i64* %6, align 8
   store i8* %2, i8** %7, align 8
-  %10 = bitcast i8** %8 to i8*
-  call void @llvm.va_start(i8* %10)
-  %11 = load i8*, i8** %5, align 8
-  %12 = load i64, i64* %6, align 8
-  %13 = load i8*, i8** %5, align 8
-  %14 = call i64 @llvm.objectsize.i64.p0i8(i8* %13, i1 false, i1 true, i1 false)
-  %15 = load i8*, i8** %7, align 8
-  %16 = load i8*, i8** %8, align 8
-  %17 = call i32 @__vsnprintf_chk(i8* noundef %11, i64 noundef %12, i32 noundef 0, i64 noundef %14, i8* noundef %15, i8* noundef %16)
-  store i32 %17, i32* %9, align 4
-  %18 = bitcast i8** %8 to i8*
+  %10 = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %8, i64 0, i64 0
+  %11 = bitcast %struct.__va_list_tag* %10 to i8*
+  call void @llvm.va_start(i8* %11)
+  %12 = load i8*, i8** %5, align 8
+  %13 = load i64, i64* %6, align 8
+  %14 = load i8*, i8** %7, align 8
+  %15 = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %8, i64 0, i64 0
+  %16 = call i32 @vsnprintf(i8* noundef %12, i64 noundef %13, i8* noundef %14, %struct.__va_list_tag* noundef %15) #3
+  store i32 %16, i32* %9, align 4
+  %17 = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %8, i64 0, i64 0
+  %18 = bitcast %struct.__va_list_tag* %17 to i8*
   call void @llvm.va_end(i8* %18)
   %19 = load i32, i32* %9, align 4
   %20 = icmp slt i32 %19, 0
@@ -360,29 +361,21 @@ define internal i32 @opng_snprintf_impl(i8* noundef %0, i64 noundef %1, i8* noun
 ; Function Attrs: nofree nosync nounwind willreturn
 declare void @llvm.va_start(i8*) #1
 
-declare i32 @__vsnprintf_chk(i8* noundef, i64 noundef, i32 noundef, i64 noundef, i8* noundef, i8* noundef) #2
-
-; Function Attrs: nofree nosync nounwind readnone speculatable willreturn
-declare i64 @llvm.objectsize.i64.p0i8(i8*, i1 immarg, i1 immarg, i1 immarg) #3
+; Function Attrs: nounwind
+declare dso_local i32 @vsnprintf(i8* noundef, i64 noundef, i8* noundef, %struct.__va_list_tag* noundef) #2
 
 ; Function Attrs: nofree nosync nounwind willreturn
 declare void @llvm.va_end(i8*) #1
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nofree nosync nounwind willreturn }
-attributes #2 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { nofree nosync nounwind readnone speculatable willreturn }
+attributes #2 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { nounwind }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}

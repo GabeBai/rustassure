@@ -1,16 +1,17 @@
 ; ModuleID = 'tiffread.c'
 source_filename = "tiffread.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.minitiff_info = type { void (i8*)*, void (i8*)*, i32, i64, i64, i32, i32, i32, i64, i64*, i32, i32 }
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 %struct.minitiff_get_struct = type { i32 (i8*)*, i64 (i8*)* }
 
-@minitiff_sig_m = external constant [4 x i8], align 1
-@minitiff_sig_i = external constant [4 x i8], align 1
+@minitiff_sig_m = external dso_local constant [4 x i8], align 1
+@minitiff_sig_i = external dso_local constant [4 x i8], align 1
 @tiff_err_notiff = internal global i8* getelementptr inbounds ([16 x i8], [16 x i8]* @.str.1, i32 0, i32 0), align 8
 @tiff_err_compr = internal global i8* getelementptr inbounds ([37 x i8], [37 x i8]* @.str.2, i32 0, i32 0), align 8
 @.str = private unnamed_addr constant [35 x i8] c"Non-default TIFF image orientation\00", align 1
@@ -31,10 +32,10 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.8 = private unnamed_addr constant [37 x i8] c"Unsupported data format in TIFF file\00", align 1
 @.str.9 = private unnamed_addr constant [14 x i8] c"Out of memory\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca %struct.minitiff_info*, align 8
-  %4 = alloca %struct.__sFILE*, align 8
+  %4 = alloca %struct._IO_FILE*, align 8
   %5 = alloca %struct.minitiff_get_struct, align 8
   %6 = alloca [12 x i8], align 1
   %7 = alloca i8*, align 8
@@ -51,15 +52,15 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   %18 = alloca i64, align 8
   %19 = alloca i32, align 4
   %20 = alloca i32, align 4
-  %21 = alloca [4 x i64], align 8
+  %21 = alloca [4 x i64], align 16
   store %struct.minitiff_info* %0, %struct.minitiff_info** %3, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %4, align 8
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %4, align 8
   %22 = getelementptr inbounds [12 x i8], [12 x i8]* %6, i64 0, i64 0
   %23 = getelementptr inbounds i8, i8* %22, i64 8
   store i8* %23, i8** %7, align 8
   %24 = getelementptr inbounds [12 x i8], [12 x i8]* %6, i64 0, i64 0
-  %25 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %26 = call i64 @fread(i8* noundef %24, i64 noundef 8, i64 noundef 1, %struct.__sFILE* noundef %25)
+  %25 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %26 = call i64 @fread(i8* noundef %24, i64 noundef 8, i64 noundef 1, %struct._IO_FILE* noundef %25)
   %27 = icmp ne i64 %26, 1
   br i1 %27, label %28, label %29
 
@@ -68,7 +69,7 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
 
 29:                                               ; preds = %2
   %30 = getelementptr inbounds [12 x i8], [12 x i8]* %6, i64 0, i64 0
-  %31 = call i32 @memcmp(i8* noundef %30, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @minitiff_sig_m, i64 0, i64 0), i64 noundef 4)
+  %31 = call i32 @memcmp(i8* noundef %30, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @minitiff_sig_m, i64 0, i64 0), i64 noundef 4) #4
   %32 = icmp eq i32 %31, 0
   br i1 %32, label %33, label %38
 
@@ -84,7 +85,7 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
 
 38:                                               ; preds = %29
   %39 = getelementptr inbounds [12 x i8], [12 x i8]* %6, i64 0, i64 0
-  %40 = call i32 @memcmp(i8* noundef %39, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @minitiff_sig_i, i64 0, i64 0), i64 noundef 4)
+  %40 = call i32 @memcmp(i8* noundef %39, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @minitiff_sig_i, i64 0, i64 0), i64 noundef 4) #4
   %41 = icmp eq i32 %40, 0
   br i1 %41, label %42, label %47
 
@@ -127,9 +128,9 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   br label %398
 
 60:                                               ; preds = %51
-  %61 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
+  %61 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
   %62 = load i64, i64* %8, align 8
-  %63 = call i32 @fseek(%struct.__sFILE* noundef %61, i64 noundef %62, i32 noundef 0)
+  %63 = call i32 @fseek(%struct._IO_FILE* noundef %61, i64 noundef %62, i32 noundef 0)
   %64 = icmp ne i32 %63, 0
   br i1 %64, label %65, label %66
 
@@ -138,8 +139,8 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
 
 66:                                               ; preds = %60
   %67 = getelementptr inbounds [12 x i8], [12 x i8]* %6, i64 0, i64 0
-  %68 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %69 = call i64 @fread(i8* noundef %67, i64 noundef 2, i64 noundef 1, %struct.__sFILE* noundef %68)
+  %68 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %69 = call i64 @fread(i8* noundef %67, i64 noundef 2, i64 noundef 1, %struct._IO_FILE* noundef %68)
   %70 = icmp ne i64 %69, 1
   br i1 %70, label %71, label %72
 
@@ -165,8 +166,8 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
 
 81:                                               ; preds = %77
   %82 = getelementptr inbounds [12 x i8], [12 x i8]* %6, i64 0, i64 0
-  %83 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %84 = call i64 @fread(i8* noundef %82, i64 noundef 12, i64 noundef 1, %struct.__sFILE* noundef %83)
+  %83 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %84 = call i64 @fread(i8* noundef %82, i64 noundef 12, i64 noundef 1, %struct._IO_FILE* noundef %83)
   %85 = icmp ne i64 %84, 1
   br i1 %85, label %86, label %87
 
@@ -387,7 +388,7 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   br label %398
 
 194:                                              ; preds = %188
-  %195 = call i8* @malloc(i64 noundef 8) #3
+  %195 = call noalias i8* @malloc(i64 noundef 8) #5
   %196 = bitcast i8* %195 to i64*
   %197 = load %struct.minitiff_info*, %struct.minitiff_info** %3, align 8
   %198 = getelementptr inbounds %struct.minitiff_info, %struct.minitiff_info* %197, i32 0, i32 9
@@ -542,12 +543,12 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   %280 = load i32, i32* %10, align 4
   %281 = add i32 %280, 1
   store i32 %281, i32* %10, align 4
-  br label %77, !llvm.loop !10
+  br label %77, !llvm.loop !4
 
 282:                                              ; preds = %77
   %283 = getelementptr inbounds [12 x i8], [12 x i8]* %6, i64 0, i64 0
-  %284 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %285 = call i64 @fread(i8* noundef %283, i64 noundef 4, i64 noundef 1, %struct.__sFILE* noundef %284)
+  %284 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %285 = call i64 @fread(i8* noundef %283, i64 noundef 4, i64 noundef 1, %struct._IO_FILE* noundef %284)
   %286 = icmp ne i64 %285, 1
   br i1 %286, label %287, label %288
 
@@ -596,9 +597,9 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   br label %401
 
 313:                                              ; preds = %309
-  %314 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
+  %314 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
   %315 = load i64, i64* %17, align 8
-  %316 = call i32 @fseek(%struct.__sFILE* noundef %314, i64 noundef %315, i32 noundef 0)
+  %316 = call i32 @fseek(%struct._IO_FILE* noundef %314, i64 noundef %315, i32 noundef 0)
   %317 = icmp ne i32 %316, 0
   br i1 %317, label %318, label %319
 
@@ -609,8 +610,8 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   %320 = load i32, i32* %15, align 4
   %321 = getelementptr inbounds [4 x i64], [4 x i64]* %21, i64 0, i64 0
   %322 = load i64, i64* %13, align 8
-  %323 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %324 = call i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %5, i32 noundef %320, i64* noundef %321, i64 noundef %322, %struct.__sFILE* noundef %323)
+  %323 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %324 = call i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %5, i32 noundef %320, i64* noundef %321, i64 noundef %322, %struct._IO_FILE* noundef %323)
   %325 = load i64, i64* %13, align 8
   %326 = icmp ne i64 %324, %325
   br i1 %326, label %327, label %328
@@ -630,7 +631,7 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
 
 333:                                              ; preds = %329
   %334 = getelementptr inbounds [4 x i64], [4 x i64]* %21, i64 0, i64 0
-  %335 = load i64, i64* %334, align 8
+  %335 = load i64, i64* %334, align 16
   %336 = load i64, i64* %13, align 8
   %337 = getelementptr inbounds [4 x i64], [4 x i64]* %21, i64 0, i64 %336
   %338 = load i64, i64* %337, align 8
@@ -641,11 +642,11 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   br label %401
 
 341:                                              ; preds = %333
-  br label %329, !llvm.loop !12
+  br label %329, !llvm.loop !6
 
 342:                                              ; preds = %329
   %343 = getelementptr inbounds [4 x i64], [4 x i64]* %21, i64 0, i64 0
-  %344 = load i64, i64* %343, align 8
+  %344 = load i64, i64* %343, align 16
   %345 = trunc i64 %344 to i32
   %346 = load %struct.minitiff_info*, %struct.minitiff_info** %3, align 8
   %347 = getelementptr inbounds %struct.minitiff_info, %struct.minitiff_info* %346, i32 0, i32 5
@@ -680,7 +681,7 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
 364:                                              ; preds = %357
   %365 = load i64, i64* %13, align 8
   %366 = mul i64 %365, 8
-  %367 = call i8* @malloc(i64 noundef %366) #3
+  %367 = call noalias i8* @malloc(i64 noundef %366) #5
   %368 = bitcast i8* %367 to i64*
   %369 = load %struct.minitiff_info*, %struct.minitiff_info** %3, align 8
   %370 = getelementptr inbounds %struct.minitiff_info, %struct.minitiff_info* %369, i32 0, i32 9
@@ -695,9 +696,9 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   br label %404
 
 376:                                              ; preds = %364
-  %377 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
+  %377 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
   %378 = load i64, i64* %18, align 8
-  %379 = call i32 @fseek(%struct.__sFILE* noundef %377, i64 noundef %378, i32 noundef 0)
+  %379 = call i32 @fseek(%struct._IO_FILE* noundef %377, i64 noundef %378, i32 noundef 0)
   %380 = icmp ne i32 %379, 0
   br i1 %380, label %381, label %382
 
@@ -710,8 +711,8 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   %385 = getelementptr inbounds %struct.minitiff_info, %struct.minitiff_info* %384, i32 0, i32 9
   %386 = load i64*, i64** %385, align 8
   %387 = load i64, i64* %13, align 8
-  %388 = load %struct.__sFILE*, %struct.__sFILE** %4, align 8
-  %389 = call i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %5, i32 noundef %383, i64* noundef %386, i64 noundef %387, %struct.__sFILE* noundef %388)
+  %388 = load %struct._IO_FILE*, %struct._IO_FILE** %4, align 8
+  %389 = call i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %5, i32 noundef %383, i64* noundef %386, i64 noundef %387, %struct._IO_FILE* noundef %388)
   %390 = load i64, i64* %13, align 8
   %391 = icmp ne i64 %389, %390
   br i1 %391, label %392, label %393
@@ -753,11 +754,12 @@ define void @minitiff_read_info(%struct.minitiff_info* noundef %0, %struct.__sFI
   ret void
 }
 
-declare i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct.__sFILE* noundef) #1
+declare dso_local i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct._IO_FILE* noundef) #1
 
-declare i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #1
+; Function Attrs: nounwind readonly willreturn
+declare dso_local i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #2
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i32 @get_ushort_m(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -774,7 +776,7 @@ define internal i32 @get_ushort_m(i8* noundef %0) #0 {
   ret i32 %12
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i64 @get_ulong_m(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -803,7 +805,7 @@ define internal i64 @get_ulong_m(i8* noundef %0) #0 {
   ret i64 %24
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i32 @get_ushort_i(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -820,7 +822,7 @@ define internal i32 @get_ushort_i(i8* noundef %0) #0 {
   ret i32 %12
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i64 @get_ulong_i(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -849,11 +851,11 @@ define internal i64 @get_ulong_i(i8* noundef %0) #0 {
   ret i64 %24
 }
 
-declare void @minitiff_error(%struct.minitiff_info* noundef, i8* noundef) #1
+declare dso_local void @minitiff_error(%struct.minitiff_info* noundef, i8* noundef) #1
 
-declare i32 @fseek(%struct.__sFILE* noundef, i64 noundef, i32 noundef) #1
+declare dso_local i32 @fseek(%struct._IO_FILE* noundef, i64 noundef, i32 noundef) #1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal i64 @get_ulong_value(%struct.minitiff_get_struct* noundef %0, i32 noundef %1, i8* noundef %2) #0 {
   %4 = alloca i64, align 8
   %5 = alloca %struct.minitiff_get_struct*, align 8
@@ -905,19 +907,19 @@ define internal i64 @get_ulong_value(%struct.minitiff_get_struct* noundef %0, i3
   ret i64 %29
 }
 
-; Function Attrs: allocsize(0)
-declare i8* @malloc(i64 noundef) #2
+; Function Attrs: nounwind
+declare dso_local noalias i8* @malloc(i64 noundef) #3
 
-declare void @minitiff_warning(%struct.minitiff_info* noundef, i8* noundef) #1
+declare dso_local void @minitiff_warning(%struct.minitiff_info* noundef, i8* noundef) #1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %0, i32 noundef %1, i64* noundef %2, i64 noundef %3, %struct.__sFILE* noundef %4) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %0, i32 noundef %1, i64* noundef %2, i64 noundef %3, %struct._IO_FILE* noundef %4) #0 {
   %6 = alloca i64, align 8
   %7 = alloca %struct.minitiff_get_struct*, align 8
   %8 = alloca i32, align 4
   %9 = alloca i64*, align 8
   %10 = alloca i64, align 8
-  %11 = alloca %struct.__sFILE*, align 8
+  %11 = alloca %struct._IO_FILE*, align 8
   %12 = alloca [4 x i8], align 1
   %13 = alloca i64, align 8
   %14 = alloca i64, align 8
@@ -925,7 +927,7 @@ define internal i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %0, 
   store i32 %1, i32* %8, align 4
   store i64* %2, i64** %9, align 8
   store i64 %3, i64* %10, align 8
-  store %struct.__sFILE* %4, %struct.__sFILE** %11, align 8
+  store %struct._IO_FILE* %4, %struct._IO_FILE** %11, align 8
   %15 = load i32, i32* %8, align 4
   %16 = icmp eq i32 %15, 1
   br i1 %16, label %17, label %18
@@ -975,8 +977,8 @@ define internal i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %0, 
 34:                                               ; preds = %30
   %35 = getelementptr inbounds [4 x i8], [4 x i8]* %12, i64 0, i64 0
   %36 = load i64, i64* %13, align 8
-  %37 = load %struct.__sFILE*, %struct.__sFILE** %11, align 8
-  %38 = call i64 @fread(i8* noundef %35, i64 noundef %36, i64 noundef 1, %struct.__sFILE* noundef %37)
+  %37 = load %struct._IO_FILE*, %struct._IO_FILE** %11, align 8
+  %38 = call i64 @fread(i8* noundef %35, i64 noundef %36, i64 noundef 1, %struct._IO_FILE* noundef %37)
   %39 = icmp ne i64 %38, 1
   br i1 %39, label %40, label %41
 
@@ -998,7 +1000,7 @@ define internal i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %0, 
   %50 = load i64, i64* %14, align 8
   %51 = add i64 %50, 1
   store i64 %51, i64* %14, align 8
-  br label %30, !llvm.loop !13
+  br label %30, !llvm.loop !7
 
 52:                                               ; preds = %40, %30
   %53 = load i64, i64* %14, align 8
@@ -1010,12 +1012,12 @@ define internal i64 @read_ulong_values(%struct.minitiff_get_struct* noundef %0, 
   ret i64 %55
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @minitiff_read_row(%struct.minitiff_info* noundef %0, i8* noundef %1, i64 noundef %2, %struct.__sFILE* noundef %3) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @minitiff_read_row(%struct.minitiff_info* noundef %0, i8* noundef %1, i64 noundef %2, %struct._IO_FILE* noundef %3) #0 {
   %5 = alloca %struct.minitiff_info*, align 8
   %6 = alloca i8*, align 8
   %7 = alloca i64, align 8
-  %8 = alloca %struct.__sFILE*, align 8
+  %8 = alloca %struct._IO_FILE*, align 8
   %9 = alloca i64, align 8
   %10 = alloca i64, align 8
   %11 = alloca i32, align 4
@@ -1025,7 +1027,7 @@ define void @minitiff_read_row(%struct.minitiff_info* noundef %0, i8* noundef %1
   store %struct.minitiff_info* %0, %struct.minitiff_info** %5, align 8
   store i8* %1, i8** %6, align 8
   store i64 %2, i64* %7, align 8
-  store %struct.__sFILE* %3, %struct.__sFILE** %8, align 8
+  store %struct._IO_FILE* %3, %struct._IO_FILE** %8, align 8
   %15 = load %struct.minitiff_info*, %struct.minitiff_info** %5, align 8
   %16 = getelementptr inbounds %struct.minitiff_info, %struct.minitiff_info* %15, i32 0, i32 5
   %17 = load i32, i32* %16, align 8
@@ -1086,16 +1088,16 @@ define void @minitiff_read_row(%struct.minitiff_info* noundef %0, i8* noundef %1
   br label %120
 
 62:                                               ; preds = %43
-  %63 = load %struct.__sFILE*, %struct.__sFILE** %8, align 8
-  %64 = call i64 @ftell(%struct.__sFILE* noundef %63)
+  %63 = load %struct._IO_FILE*, %struct._IO_FILE** %8, align 8
+  %64 = call i64 @ftell(%struct._IO_FILE* noundef %63)
   %65 = load i64, i64* %13, align 8
   %66 = icmp ne i64 %64, %65
   br i1 %66, label %67, label %74
 
 67:                                               ; preds = %62
-  %68 = load %struct.__sFILE*, %struct.__sFILE** %8, align 8
+  %68 = load %struct._IO_FILE*, %struct._IO_FILE** %8, align 8
   %69 = load i64, i64* %13, align 8
-  %70 = call i32 @fseek(%struct.__sFILE* noundef %68, i64 noundef %69, i32 noundef 0)
+  %70 = call i32 @fseek(%struct._IO_FILE* noundef %68, i64 noundef %69, i32 noundef 0)
   %71 = icmp ne i32 %70, 0
   br i1 %71, label %72, label %73
 
@@ -1108,8 +1110,8 @@ define void @minitiff_read_row(%struct.minitiff_info* noundef %0, i8* noundef %1
 74:                                               ; preds = %73, %62
   %75 = load i8*, i8** %6, align 8
   %76 = load i64, i64* %9, align 8
-  %77 = load %struct.__sFILE*, %struct.__sFILE** %8, align 8
-  %78 = call i64 @fread(i8* noundef %75, i64 noundef %76, i64 noundef 1, %struct.__sFILE* noundef %77)
+  %77 = load %struct._IO_FILE*, %struct._IO_FILE** %8, align 8
+  %78 = call i64 @fread(i8* noundef %75, i64 noundef %76, i64 noundef 1, %struct._IO_FILE* noundef %77)
   %79 = icmp ne i64 %78, 1
   br i1 %79, label %80, label %81
 
@@ -1166,7 +1168,7 @@ define void @minitiff_read_row(%struct.minitiff_info* noundef %0, i8* noundef %1
   %113 = load i64, i64* %14, align 8
   %114 = add i64 %113, 1
   store i64 %114, i64* %14, align 8
-  br label %96, !llvm.loop !14
+  br label %96, !llvm.loop !8
 
 115:                                              ; preds = %96
   br label %116
@@ -1196,28 +1198,24 @@ define void @minitiff_read_row(%struct.minitiff_info* noundef %0, i8* noundef %1
   ret void
 }
 
-declare i64 @ftell(%struct.__sFILE* noundef) #1
+declare dso_local i64 @ftell(%struct._IO_FILE* noundef) #1
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #2 = { allocsize(0) "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { allocsize(0) }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { nounwind readonly willreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { nounwind readonly willreturn }
+attributes #5 = { nounwind }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
-!13 = distinct !{!13, !11}
-!14 = distinct !{!14, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}
+!7 = distinct !{!7, !5}
+!8 = distinct !{!8, !5}

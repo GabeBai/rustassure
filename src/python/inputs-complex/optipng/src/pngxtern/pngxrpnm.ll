@@ -1,26 +1,27 @@
 ; ModuleID = 'pngxrpnm.c'
 source_filename = "pngxrpnm.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.png_struct_def = type opaque
 %struct.png_info_def = type opaque
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 %struct.pnm_struct = type { i32, i32, i32, i32, i32 }
 %struct.png_color_8_struct = type { i8, i8, i8, i8, i8 }
 
-@pngx_sig_is_pnm.fmt_names = internal global [7 x i8*] [i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pbm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pgm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @ppm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pbm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pgm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @ppm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pam_fmt_name, i32 0, i32 0)], align 8
+@pngx_sig_is_pnm.fmt_names = internal global [7 x i8*] [i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pbm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pgm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @ppm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pbm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pgm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @ppm_fmt_name, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @pam_fmt_name, i32 0, i32 0)], align 16
 @pbm_fmt_name = internal constant [4 x i8] c"PBM\00", align 1
 @pgm_fmt_name = internal constant [4 x i8] c"PGM\00", align 1
 @ppm_fmt_name = internal constant [4 x i8] c"PPM\00", align 1
 @pam_fmt_name = internal constant [4 x i8] c"PAM\00", align 1
-@pngx_sig_is_pnm.fmt_long_names = internal global [7 x i8*] [i8* getelementptr inbounds ([16 x i8], [16 x i8]* @pbm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([17 x i8], [17 x i8]* @pgm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @ppm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @pbm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([17 x i8], [17 x i8]* @pgm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @ppm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @pam_fmt_long_name, i32 0, i32 0)], align 8
-@pbm_fmt_long_name = internal constant [16 x i8] c"Portable Bitmap\00", align 1
-@pgm_fmt_long_name = internal constant [17 x i8] c"Portable Graymap\00", align 1
-@ppm_fmt_long_name = internal constant [16 x i8] c"Portable Pixmap\00", align 1
-@pam_fmt_long_name = internal constant [16 x i8] c"Portable Anymap\00", align 1
+@pngx_sig_is_pnm.fmt_long_names = internal global [7 x i8*] [i8* getelementptr inbounds ([16 x i8], [16 x i8]* @pbm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([17 x i8], [17 x i8]* @pgm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @ppm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @pbm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([17 x i8], [17 x i8]* @pgm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @ppm_fmt_long_name, i32 0, i32 0), i8* getelementptr inbounds ([16 x i8], [16 x i8]* @pam_fmt_long_name, i32 0, i32 0)], align 16
+@pbm_fmt_long_name = internal constant [16 x i8] c"Portable Bitmap\00", align 16
+@pgm_fmt_long_name = internal constant [17 x i8] c"Portable Graymap\00", align 16
+@ppm_fmt_long_name = internal constant [16 x i8] c"Portable Pixmap\00", align 16
+@pam_fmt_long_name = internal constant [16 x i8] c"Portable Anymap\00", align 16
 @.str = private unnamed_addr constant [47 x i8] c"Can't handle PNM formats newer than PPM (\22P6\22)\00", align 1
 @.str.1 = private unnamed_addr constant [46 x i8] c"Can't handle exceedingly large PNM dimensions\00", align 1
 @.str.2 = private unnamed_addr constant [45 x i8] c"Can't handle PNM samples larger than 16 bits\00", align 1
@@ -29,8 +30,8 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.5 = private unnamed_addr constant [24 x i8] c"Error in PNM image file\00", align 1
 @.str.6 = private unnamed_addr constant [38 x i8] c"Extraneous data found after PNM image\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pngx_sig_is_pnm(i8* noundef %0, i64 noundef %1, i8** noundef %2, i8** noundef %3) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pngx_sig_is_pnm(i8* noundef %0, i64 noundef %1, i8** noundef %2, i8** noundef %3) #0 {
   %5 = alloca i32, align 4
   %6 = alloca i8*, align 8
   %7 = alloca i64, align 8
@@ -165,12 +166,12 @@ define i32 @pngx_sig_is_pnm(i8* noundef %0, i64 noundef %1, i8** noundef %2, i8*
   ret i32 %91
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, %struct.__sFILE* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, %struct._IO_FILE* noundef %2) #0 {
   %4 = alloca i32, align 4
   %5 = alloca %struct.png_struct_def*, align 8
   %6 = alloca %struct.png_info_def*, align 8
-  %7 = alloca %struct.__sFILE*, align 8
+  %7 = alloca %struct._IO_FILE*, align 8
   %8 = alloca %struct.pnm_struct, align 4
   %9 = alloca i32, align 4
   %10 = alloca i32, align 4
@@ -192,15 +193,15 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %26 = alloca i32, align 4
   store %struct.png_struct_def* %0, %struct.png_struct_def** %5, align 8
   store %struct.png_info_def* %1, %struct.png_info_def** %6, align 8
-  store %struct.__sFILE* %2, %struct.__sFILE** %7, align 8
-  %27 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %28 = call i32 @pnm_fget_header(%struct.pnm_struct* noundef %8, %struct.__sFILE* noundef %27)
+  store %struct._IO_FILE* %2, %struct._IO_FILE** %7, align 8
+  %27 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %28 = call i32 @pnm_fget_header(%struct.pnm_struct* noundef %8, %struct._IO_FILE* noundef %27)
   %29 = icmp ne i32 %28, 1
   br i1 %29, label %30, label %31
 
 30:                                               ; preds = %3
   store i32 0, i32* %4, align 4
-  br label %339
+  br label %332
 
 31:                                               ; preds = %3
   %32 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %8, i32 0, i32 0
@@ -224,7 +225,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
 
 44:                                               ; preds = %31
   %45 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
-  call void @png_error(%struct.png_struct_def* noundef %45, i8* noundef getelementptr inbounds ([47 x i8], [47 x i8]* @.str, i64 0, i64 0)) #5
+  call void @png_error(%struct.png_struct_def* noundef %45, i8* noundef getelementptr inbounds ([47 x i8], [47 x i8]* @.str, i64 0, i64 0)) #4
   unreachable
 
 46:                                               ; preds = %31
@@ -245,7 +246,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
 
 54:                                               ; preds = %50
   %55 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
-  call void @png_error(%struct.png_struct_def* noundef %55, i8* noundef getelementptr inbounds ([46 x i8], [46 x i8]* @.str.1, i64 0, i64 0)) #5
+  call void @png_error(%struct.png_struct_def* noundef %55, i8* noundef getelementptr inbounds ([46 x i8], [46 x i8]* @.str.1, i64 0, i64 0)) #4
   unreachable
 
 56:                                               ; preds = %50
@@ -262,7 +263,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
 
 63:                                               ; preds = %56
   %64 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
-  call void @png_error(%struct.png_struct_def* noundef %64, i8* noundef getelementptr inbounds ([45 x i8], [45 x i8]* @.str.2, i64 0, i64 0)) #5
+  call void @png_error(%struct.png_struct_def* noundef %64, i8* noundef getelementptr inbounds ([45 x i8], [45 x i8]* @.str.2, i64 0, i64 0)) #4
   unreachable
 
 65:                                               ; preds = %56
@@ -315,7 +316,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %94 = load i32, i32* %22, align 4
   %95 = shl i32 %94, 1
   store i32 %95, i32* %22, align 4
-  br label %85, !llvm.loop !10
+  br label %85, !llvm.loop !4
 
 96:                                               ; preds = %85
   %97 = load i32, i32* %22, align 4
@@ -419,8 +420,8 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
 
 153:                                              ; preds = %149
   %154 = load i32*, i32** %17, align 8
-  %155 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %156 = call i32 @pnm_fget_values(%struct.pnm_struct* noundef %8, i32* noundef %154, i32 noundef 1, %struct.__sFILE* noundef %155)
+  %155 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %156 = call i32 @pnm_fget_values(%struct.pnm_struct* noundef %8, i32* noundef %154, i32 noundef 1, %struct._IO_FILE* noundef %155)
   %157 = icmp sle i32 %156, 0
   br i1 %157, label %158, label %159
 
@@ -497,7 +498,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %201 = load i32, i32* %22, align 4
   %202 = add i32 %201, 1
   store i32 %202, i32* %22, align 4
-  br label %163, !llvm.loop !12
+  br label %163, !llvm.loop !6
 
 203:                                              ; preds = %163
   br label %261
@@ -582,7 +583,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %258 = load i32, i32* %22, align 4
   %259 = add i32 %258, 1
   store i32 %259, i32* %22, align 4
-  br label %205, !llvm.loop !13
+  br label %205, !llvm.loop !7
 
 260:                                              ; preds = %205
   br label %261
@@ -602,7 +603,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %267 = load i32, i32* %21, align 4
   %268 = add i32 %267, 1
   store i32 %268, i32* %21, align 4
-  br label %149, !llvm.loop !14
+  br label %149, !llvm.loop !8
 
 269:                                              ; preds = %264, %149
   br label %292
@@ -625,8 +626,8 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %280 = load i8*, i8** %279, align 8
   %281 = load i32, i32* %16, align 4
   %282 = zext i32 %281 to i64
-  %283 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %284 = call i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %8, i8* noundef %280, i64 noundef %282, i32 noundef 1, %struct.__sFILE* noundef %283)
+  %283 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %284 = call i32 @pnm_fget_bytes(%struct.pnm_struct* noundef %8, i8* noundef %280, i64 noundef %282, i32 noundef 1, %struct._IO_FILE* noundef %283)
   %285 = icmp sle i32 %284, 0
   br i1 %285, label %286, label %287
 
@@ -641,7 +642,7 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %289 = load i32, i32* %21, align 4
   %290 = add i32 %289, 1
   store i32 %290, i32* %21, align 4
-  br label %271, !llvm.loop !15
+  br label %271, !llvm.loop !9
 
 291:                                              ; preds = %286, %271
   br label %292
@@ -649,11 +650,11 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
 292:                                              ; preds = %291, %269
   br label %293
 
-293:                                              ; preds = %311, %292
+293:                                              ; preds = %304, %292
   %294 = load i32, i32* %21, align 4
   %295 = load i32, i32* %12, align 4
   %296 = icmp ult i32 %294, %295
-  br i1 %296, label %297, label %314
+  br i1 %296, label %297, label %307
 
 297:                                              ; preds = %293
   %298 = load i8**, i8*** %19, align 8
@@ -662,111 +663,102 @@ define i32 @pngx_read_pnm(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %301 = getelementptr inbounds i8*, i8** %298, i64 %300
   %302 = load i8*, i8** %301, align 8
   %303 = load i64, i64* %18, align 8
-  %304 = load i8**, i8*** %19, align 8
+  call void @llvm.memset.p0i8.i64(i8* align 1 %302, i8 0, i64 %303, i1 false)
+  br label %304
+
+304:                                              ; preds = %297
   %305 = load i32, i32* %21, align 4
-  %306 = zext i32 %305 to i64
-  %307 = getelementptr inbounds i8*, i8** %304, i64 %306
-  %308 = load i8*, i8** %307, align 8
-  %309 = call i64 @llvm.objectsize.i64.p0i8(i8* %308, i1 false, i1 true, i1 false)
-  %310 = call i8* @__memset_chk(i8* noundef %302, i32 noundef 0, i64 noundef %303, i64 noundef %309) #6
-  br label %311
+  %306 = add i32 %305, 1
+  store i32 %306, i32* %21, align 4
+  br label %293, !llvm.loop !10
 
-311:                                              ; preds = %297
-  %312 = load i32, i32* %21, align 4
-  %313 = add i32 %312, 1
-  store i32 %313, i32* %21, align 4
-  br label %293, !llvm.loop !16
+307:                                              ; preds = %293
+  %308 = load i32*, i32** %17, align 8
+  %309 = icmp ne i32* %308, null
+  br i1 %309, label %310, label %314
 
-314:                                              ; preds = %293
-  %315 = load i32*, i32** %17, align 8
-  %316 = icmp ne i32* %315, null
-  br i1 %316, label %317, label %321
+310:                                              ; preds = %307
+  %311 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
+  %312 = load i32*, i32** %17, align 8
+  %313 = bitcast i32* %312 to i8*
+  call void @png_free(%struct.png_struct_def* noundef %311, i8* noundef %313)
+  br label %314
+
+314:                                              ; preds = %310, %307
+  %315 = load i32, i32* %24, align 4
+  %316 = icmp ne i32 %315, 0
+  br i1 %316, label %317, label %319
 
 317:                                              ; preds = %314
   %318 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
-  %319 = load i32*, i32** %17, align 8
-  %320 = bitcast i32* %319 to i8*
-  call void @png_free(%struct.png_struct_def* noundef %318, i8* noundef %320)
-  br label %321
+  call void @png_warning(%struct.png_struct_def* noundef %318, i8* noundef getelementptr inbounds ([24 x i8], [24 x i8]* @.str.4, i64 0, i64 0))
+  br label %319
 
-321:                                              ; preds = %317, %314
-  %322 = load i32, i32* %24, align 4
-  %323 = icmp ne i32 %322, 0
-  br i1 %323, label %324, label %326
+319:                                              ; preds = %317, %314
+  %320 = load i32, i32* %23, align 4
+  %321 = icmp ne i32 %320, 0
+  br i1 %321, label %322, label %324
 
-324:                                              ; preds = %321
-  %325 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
-  call void @png_warning(%struct.png_struct_def* noundef %325, i8* noundef getelementptr inbounds ([24 x i8], [24 x i8]* @.str.4, i64 0, i64 0))
-  br label %326
-
-326:                                              ; preds = %324, %321
-  %327 = load i32, i32* %23, align 4
-  %328 = icmp ne i32 %327, 0
-  br i1 %328, label %329, label %331
-
-329:                                              ; preds = %326
-  %330 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
-  call void @png_error(%struct.png_struct_def* noundef %330, i8* noundef getelementptr inbounds ([24 x i8], [24 x i8]* @.str.5, i64 0, i64 0)) #5
+322:                                              ; preds = %319
+  %323 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
+  call void @png_error(%struct.png_struct_def* noundef %323, i8* noundef getelementptr inbounds ([24 x i8], [24 x i8]* @.str.5, i64 0, i64 0)) #4
   unreachable
 
-331:                                              ; preds = %326
-  %332 = load %struct.__sFILE*, %struct.__sFILE** %7, align 8
-  %333 = call i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %8, %struct.__sFILE* noundef %332)
-  %334 = icmp ne i32 %333, 0
-  br i1 %334, label %337, label %335
+324:                                              ; preds = %319
+  %325 = load %struct._IO_FILE*, %struct._IO_FILE** %7, align 8
+  %326 = call i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %8, %struct._IO_FILE* noundef %325)
+  %327 = icmp ne i32 %326, 0
+  br i1 %327, label %330, label %328
 
-335:                                              ; preds = %331
-  %336 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
-  call void @png_warning(%struct.png_struct_def* noundef %336, i8* noundef getelementptr inbounds ([38 x i8], [38 x i8]* @.str.6, i64 0, i64 0))
-  br label %337
+328:                                              ; preds = %324
+  %329 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
+  call void @png_warning(%struct.png_struct_def* noundef %329, i8* noundef getelementptr inbounds ([38 x i8], [38 x i8]* @.str.6, i64 0, i64 0))
+  br label %330
 
-337:                                              ; preds = %335, %331
-  br label %338
+330:                                              ; preds = %328, %324
+  br label %331
 
-338:                                              ; preds = %337
+331:                                              ; preds = %330
   store i32 1, i32* %4, align 4
-  br label %339
+  br label %332
 
-339:                                              ; preds = %338, %30
-  %340 = load i32, i32* %4, align 4
-  ret i32 %340
+332:                                              ; preds = %331, %30
+  %333 = load i32, i32* %4, align 4
+  ret i32 %333
 }
 
-declare i32 @pnm_fget_header(%struct.pnm_struct* noundef, %struct.__sFILE* noundef) #1
+declare dso_local i32 @pnm_fget_header(%struct.pnm_struct* noundef, %struct._IO_FILE* noundef) #1
 
 ; Function Attrs: noreturn
-declare void @png_error(%struct.png_struct_def* noundef, i8* noundef) #2
+declare dso_local void @png_error(%struct.png_struct_def* noundef, i8* noundef) #2
 
-declare void @png_set_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef) #1
+declare dso_local void @png_set_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef) #1
 
-declare void @png_warning(%struct.png_struct_def* noundef, i8* noundef) #1
+declare dso_local void @png_warning(%struct.png_struct_def* noundef, i8* noundef) #1
 
-declare void @png_set_sBIT(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_8_struct* noundef) #1
+declare dso_local void @png_set_sBIT(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_8_struct* noundef) #1
 
-declare i8** @pngx_malloc_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #1
+declare dso_local i8** @pngx_malloc_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #1
 
-declare noalias i8* @png_malloc(%struct.png_struct_def* noundef, i64 noundef) #1
+declare dso_local noalias i8* @png_malloc(%struct.png_struct_def* noundef, i64 noundef) #1
 
-declare i32 @pnm_fget_values(%struct.pnm_struct* noundef, i32* noundef, i32 noundef, %struct.__sFILE* noundef) #1
+declare dso_local i32 @pnm_fget_values(%struct.pnm_struct* noundef, i32* noundef, i32 noundef, %struct._IO_FILE* noundef) #1
 
-declare i32 @pnm_fget_bytes(%struct.pnm_struct* noundef, i8* noundef, i64 noundef, i32 noundef, %struct.__sFILE* noundef) #1
+declare dso_local i32 @pnm_fget_bytes(%struct.pnm_struct* noundef, i8* noundef, i64 noundef, i32 noundef, %struct._IO_FILE* noundef) #1
 
-; Function Attrs: nounwind
-declare i8* @__memset_chk(i8* noundef, i32 noundef, i64 noundef, i64 noundef) #3
+; Function Attrs: argmemonly nofree nounwind willreturn writeonly
+declare void @llvm.memset.p0i8.i64(i8* nocapture writeonly, i8, i64, i1 immarg) #3
 
-; Function Attrs: nofree nosync nounwind readnone speculatable willreturn
-declare i64 @llvm.objectsize.i64.p0i8(i8*, i1 immarg, i1 immarg, i1 immarg) #4
+declare dso_local void @png_free(%struct.png_struct_def* noundef, i8* noundef) #1
 
-declare void @png_free(%struct.png_struct_def* noundef, i8* noundef) #1
-
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca %struct.pnm_struct*, align 8
-  %5 = alloca %struct.__sFILE*, align 8
+  %5 = alloca %struct._IO_FILE*, align 8
   %6 = alloca i32, align 4
   store %struct.pnm_struct* %0, %struct.pnm_struct** %4, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %5, align 8
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %5, align 8
   %7 = load %struct.pnm_struct*, %struct.pnm_struct** %4, align 8
   %8 = getelementptr inbounds %struct.pnm_struct, %struct.pnm_struct* %7, i32 0, i32 0
   %9 = load i32, i32* %8, align 4
@@ -784,8 +776,8 @@ define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct.__sFI
   br label %17
 
 17:                                               ; preds = %55, %16
-  %18 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %19 = call i32 @getc(%struct.__sFILE* noundef %18)
+  %18 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %19 = call i32 @getc(%struct._IO_FILE* noundef %18)
   store i32 %19, i32* %6, align 4
   %20 = load i32, i32* %6, align 4
   %21 = icmp eq i32 %20, 35
@@ -795,8 +787,8 @@ define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct.__sFI
   br label %23
 
 23:                                               ; preds = %35, %22
-  %24 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %25 = call i32 @getc(%struct.__sFILE* noundef %24)
+  %24 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %25 = call i32 @getc(%struct._IO_FILE* noundef %24)
   store i32 %25, i32* %6, align 4
   br label %26
 
@@ -817,7 +809,7 @@ define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct.__sFI
 
 35:                                               ; preds = %32, %29, %26
   %36 = phi i1 [ false, %29 ], [ false, %26 ], [ %34, %32 ]
-  br i1 %36, label %23, label %37, !llvm.loop !17
+  br i1 %36, label %23, label %37, !llvm.loop !11
 
 37:                                               ; preds = %35
   br label %38
@@ -856,14 +848,14 @@ define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct.__sFI
 
 55:                                               ; preds = %52, %49, %46, %43
   %56 = phi i1 [ true, %49 ], [ true, %46 ], [ true, %43 ], [ %54, %52 ]
-  br i1 %56, label %17, label %57, !llvm.loop !18
+  br i1 %56, label %17, label %57, !llvm.loop !12
 
 57:                                               ; preds = %55
   br label %65
 
 58:                                               ; preds = %11, %2
-  %59 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %60 = call i32 @getc(%struct.__sFILE* noundef %59)
+  %59 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %60 = call i32 @getc(%struct._IO_FILE* noundef %59)
   store i32 %60, i32* %6, align 4
   %61 = load i32, i32* %6, align 4
   %62 = icmp eq i32 %61, -1
@@ -878,8 +870,8 @@ define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct.__sFI
 
 65:                                               ; preds = %64, %57
   %66 = load i32, i32* %6, align 4
-  %67 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %68 = call i32 @ungetc(i32 noundef %66, %struct.__sFILE* noundef %67)
+  %67 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %68 = call i32 @ungetc(i32 noundef %66, %struct._IO_FILE* noundef %67)
   store i32 0, i32* %3, align 4
   br label %69
 
@@ -888,37 +880,29 @@ define internal i32 @pnm_fpeek_eof(%struct.pnm_struct* noundef %0, %struct.__sFI
   ret i32 %70
 }
 
-declare i32 @getc(%struct.__sFILE* noundef) #1
+declare dso_local i32 @getc(%struct._IO_FILE* noundef) #1
 
-declare i32 @ungetc(i32 noundef, %struct.__sFILE* noundef) #1
+declare dso_local i32 @ungetc(i32 noundef, %struct._IO_FILE* noundef) #1
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #2 = { noreturn "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { nounwind "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #4 = { nofree nosync nounwind readnone speculatable willreturn }
-attributes #5 = { noreturn }
-attributes #6 = { nounwind }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { noreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { argmemonly nofree nounwind willreturn writeonly }
+attributes #4 = { noreturn }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
-!13 = distinct !{!13, !11}
-!14 = distinct !{!14, !11}
-!15 = distinct !{!15, !11}
-!16 = distinct !{!16, !11}
-!17 = distinct !{!17, !11}
-!18 = distinct !{!18, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}
+!7 = distinct !{!7, !5}
+!8 = distinct !{!8, !5}
+!9 = distinct !{!9, !5}
+!10 = distinct !{!10, !5}
+!11 = distinct !{!11, !5}
+!12 = distinct !{!12, !5}

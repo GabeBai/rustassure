@@ -1,21 +1,22 @@
 ; ModuleID = 'test5.c'
 source_filename = "test5.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 
 @.str = private unnamed_addr constant [3 x i8] c"Aa\00", align 1
 @.str.1 = private unnamed_addr constant [4 x i8] c"\C3\A8a\00", align 1
 @.str.2 = private unnamed_addr constant [7 x i8] c"\E4\BC\9A\E5\93\A1\00", align 1
 @.str.3 = private unnamed_addr constant [9 x i8] c"\F0\A7\80\80\F0\A7\80\8D\00", align 1
-@s = local_unnamed_addr global [4 x i8*] [i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i32 0, i32 0), i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str.2, i32 0, i32 0), i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i32 0, i32 0)], align 8
-@cp = local_unnamed_addr global [4 x i32] [i32 65, i32 232, i32 20250, i32 159744], align 4
+@s = dso_local local_unnamed_addr global [4 x i8*] [i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i32 0, i32 0), i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str.2, i32 0, i32 0), i8* getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i32 0, i32 0)], align 16
+@cp = dso_local local_unnamed_addr global [4 x i32] [i32 65, i32 232, i32 20250, i32 159744], align 16
 @.str.4 = private unnamed_addr constant [5 x i8] c"b\C3\A8a\00", align 1
-@__stdoutp = external local_unnamed_addr global %struct.__sFILE*, align 8
-@__stderrp = external local_unnamed_addr global %struct.__sFILE*, align 8
+@stdout = external dso_local local_unnamed_addr global %struct._IO_FILE*, align 8
+@stderr = external dso_local local_unnamed_addr global %struct._IO_FILE*, align 8
 @.str.5 = private unnamed_addr constant [17 x i8] c"%s: (%s) \09%s:%d\0A\00", align 1
 @.str.6 = private unnamed_addr constant [5 x i8] c"FAIL\00", align 1
 @.str.7 = private unnamed_addr constant [5 x i8] c"PASS\00", align 1
@@ -27,575 +28,619 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str.13 = private unnamed_addr constant [36 x i8] c"    : u8nstrcpy failed at %d (%02X)\00", align 1
 @.str.14 = private unnamed_addr constant [15 x i8] c"buf[0] == '\\0'\00", align 1
 @.str.15 = private unnamed_addr constant [15 x i8] c"buf[4] == '\\0'\00", align 1
-@s1 = local_unnamed_addr global i8* null, align 8
+@s1 = dso_local local_unnamed_addr global i8* null, align 8
 
-; Function Attrs: nounwind ssp uwtable
-define i32 @main(i32 noundef %0, i8** nocapture noundef readnone %1) local_unnamed_addr #0 {
+; Function Attrs: nounwind uwtable
+define dso_local i32 @main(i32 noundef %0, i8** nocapture noundef readnone %1) local_unnamed_addr #0 {
   %3 = alloca [9 x i8], align 1
   %4 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 0
-  call void @llvm.lifetime.start.p0i8(i64 9, i8* nonnull %4) #4
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %5 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.4, i64 0, i64 0), i64 noundef 8) #4
-  br label %6
+  call void @llvm.lifetime.start.p0i8(i64 9, i8* nonnull %4) #5
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %5 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.4, i64 0, i64 0), i64 noundef 8) #5
+  %6 = tail call i32* @__errno_location() #6
+  %7 = load i8, i8* %4, align 1, !tbaa !3
+  %8 = icmp ne i8 %7, 98
+  %9 = zext i1 %8 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %10 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %11 = call i32 @fflush(%struct._IO_FILE* noundef %10)
+  %12 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %13 = select i1 %8, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %14 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %12, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %13, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 19) #7
+  br i1 %8, label %15, label %22
 
-6:                                                ; preds = %2, %29
-  %7 = phi i64 [ 0, %2 ], [ %33, %29 ]
-  %8 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 %7
-  %9 = load i8, i8* %8, align 1, !tbaa !10
-  %10 = getelementptr inbounds [5 x i8], [5 x i8]* @.str.4, i64 0, i64 %7
-  %11 = load i8, i8* %10, align 1, !tbaa !10
-  %12 = icmp ne i8 %9, %11
-  %13 = zext i1 %12 to i32
-  %14 = call i32* @__error() #4
-  store i32 0, i32* %14, align 4, !tbaa !13
-  %15 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %16 = call i32 @fflush(%struct.__sFILE* noundef %15)
-  %17 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %18 = select i1 %12, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %19 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %17, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %18, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 19)
-  br i1 %12, label %20, label %29
+15:                                               ; preds = %2
+  %16 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %17 = load i8, i8* %4, align 1, !tbaa !3
+  %18 = sext i8 %17 to i32
+  %19 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %16, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %18, i32 noundef 98) #7
+  %20 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %21 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %20)
+  br label %22
 
-20:                                               ; preds = %6
-  %21 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %22 = load i8, i8* %8, align 1, !tbaa !10
-  %23 = sext i8 %22 to i32
-  %24 = sext i8 %11 to i32
-  %25 = trunc i64 %7 to i32
-  %26 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %21, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef %25, i32 noundef %23, i32 noundef %24)
-  %27 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %28 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %27)
-  br label %29
+22:                                               ; preds = %15, %2
+  %23 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %24 = call i32 @fflush(%struct._IO_FILE* noundef %23)
+  store i32 %9, i32* %6, align 4, !tbaa !6
+  %25 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 1
+  %26 = load i8, i8* %25, align 1, !tbaa !3
+  %27 = icmp ne i8 %26, -61
+  %28 = zext i1 %27 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %29 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %30 = call i32 @fflush(%struct._IO_FILE* noundef %29)
+  %31 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %32 = select i1 %27, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %33 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %31, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %32, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 19) #7
+  br i1 %27, label %34, label %41
 
-29:                                               ; preds = %20, %6
-  %30 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %31 = call i32 @fflush(%struct.__sFILE* noundef %30)
-  %32 = call i32* @__error() #4
-  store i32 %13, i32* %32, align 4, !tbaa !13
-  %33 = add nuw nsw i64 %7, 1
-  %34 = icmp eq i64 %33, 5
-  br i1 %34, label %35, label %6
+34:                                               ; preds = %22
+  %35 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %36 = load i8, i8* %25, align 1, !tbaa !3
+  %37 = sext i8 %36 to i32
+  %38 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %35, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %37, i32 noundef -61) #7
+  %39 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %40 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %39)
+  br label %41
 
-35:                                               ; preds = %29
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %36 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.4, i64 0, i64 0), i64 noundef 3) #4
-  %37 = load i8, i8* %4, align 1, !tbaa !10
-  %38 = icmp ne i8 %37, 98
-  %39 = zext i1 %38 to i32
-  %40 = call i32* @__error() #4
-  store i32 0, i32* %40, align 4, !tbaa !13
-  %41 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %42 = call i32 @fflush(%struct.__sFILE* noundef %41)
-  %43 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %44 = select i1 %38, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %45 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %43, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %44, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 26)
-  br i1 %38, label %46, label %53
+41:                                               ; preds = %34, %22
+  %42 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %43 = call i32 @fflush(%struct._IO_FILE* noundef %42)
+  store i32 %28, i32* %6, align 4, !tbaa !6
+  %44 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 2
+  %45 = load i8, i8* %44, align 1, !tbaa !3
+  %46 = icmp ne i8 %45, -88
+  %47 = zext i1 %46 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %48 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %49 = call i32 @fflush(%struct._IO_FILE* noundef %48)
+  %50 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %51 = select i1 %46, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %52 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %50, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %51, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 19) #7
+  br i1 %46, label %53, label %60
 
-46:                                               ; preds = %35
-  %47 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %48 = load i8, i8* %4, align 1, !tbaa !10
-  %49 = sext i8 %48 to i32
-  %50 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %47, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %49, i32 noundef 98)
-  %51 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %52 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %51)
-  br label %53
+53:                                               ; preds = %41
+  %54 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %55 = load i8, i8* %44, align 1, !tbaa !3
+  %56 = sext i8 %55 to i32
+  %57 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %54, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 2, i32 noundef %56, i32 noundef -88) #7
+  %58 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %59 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %58)
+  br label %60
 
-53:                                               ; preds = %46, %35
-  %54 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %55 = call i32 @fflush(%struct.__sFILE* noundef %54)
-  %56 = call i32* @__error() #4
-  store i32 %39, i32* %56, align 4, !tbaa !13
-  %57 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 1
-  %58 = load i8, i8* %57, align 1, !tbaa !10
-  %59 = icmp ne i8 %58, -61
-  %60 = zext i1 %59 to i32
-  %61 = call i32* @__error() #4
-  store i32 0, i32* %61, align 4, !tbaa !13
-  %62 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %63 = call i32 @fflush(%struct.__sFILE* noundef %62)
-  %64 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %65 = select i1 %59, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %66 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %64, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %65, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 26)
-  br i1 %59, label %67, label %74
+60:                                               ; preds = %53, %41
+  %61 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %62 = call i32 @fflush(%struct._IO_FILE* noundef %61)
+  store i32 %47, i32* %6, align 4, !tbaa !6
+  %63 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 3
+  %64 = load i8, i8* %63, align 1, !tbaa !3
+  %65 = icmp ne i8 %64, 97
+  %66 = zext i1 %65 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %67 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %68 = call i32 @fflush(%struct._IO_FILE* noundef %67)
+  %69 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %70 = select i1 %65, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %71 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %69, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %70, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 19) #7
+  br i1 %65, label %72, label %79
 
-67:                                               ; preds = %53
-  %68 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %69 = load i8, i8* %57, align 1, !tbaa !10
-  %70 = sext i8 %69 to i32
-  %71 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %68, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %70, i32 noundef -61)
-  %72 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %73 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %72)
-  br label %74
+72:                                               ; preds = %60
+  %73 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %74 = load i8, i8* %63, align 1, !tbaa !3
+  %75 = sext i8 %74 to i32
+  %76 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %73, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 3, i32 noundef %75, i32 noundef 97) #7
+  %77 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %78 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %77)
+  br label %79
 
-74:                                               ; preds = %67, %53
-  %75 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %76 = call i32 @fflush(%struct.__sFILE* noundef %75)
-  %77 = call i32* @__error() #4
-  store i32 %60, i32* %77, align 4, !tbaa !13
-  %78 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 2
-  %79 = load i8, i8* %78, align 1, !tbaa !10
-  %80 = icmp ne i8 %79, -88
-  %81 = zext i1 %80 to i32
-  %82 = call i32* @__error() #4
-  store i32 0, i32* %82, align 4, !tbaa !13
-  %83 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %84 = call i32 @fflush(%struct.__sFILE* noundef %83)
-  %85 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %86 = select i1 %80, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %87 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %85, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %86, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 26)
-  br i1 %80, label %88, label %95
+79:                                               ; preds = %72, %60
+  %80 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %81 = call i32 @fflush(%struct._IO_FILE* noundef %80)
+  store i32 %66, i32* %6, align 4, !tbaa !6
+  %82 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 4
+  %83 = load i8, i8* %82, align 1, !tbaa !3
+  %84 = icmp ne i8 %83, 0
+  %85 = zext i1 %84 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %86 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %87 = call i32 @fflush(%struct._IO_FILE* noundef %86)
+  %88 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %89 = select i1 %84, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %90 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %88, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %89, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 19) #7
+  br i1 %84, label %91, label %98
 
-88:                                               ; preds = %74
-  %89 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %90 = load i8, i8* %78, align 1, !tbaa !10
-  %91 = sext i8 %90 to i32
-  %92 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %89, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 2, i32 noundef %91, i32 noundef -88)
-  %93 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %94 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %93)
-  br label %95
+91:                                               ; preds = %79
+  %92 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %93 = load i8, i8* %82, align 1, !tbaa !3
+  %94 = sext i8 %93 to i32
+  %95 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %92, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 4, i32 noundef %94, i32 noundef 0) #7
+  %96 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %97 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %96)
+  br label %98
 
-95:                                               ; preds = %88, %74
-  %96 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %97 = call i32 @fflush(%struct.__sFILE* noundef %96)
-  %98 = call i32* @__error() #4
-  store i32 %81, i32* %98, align 4, !tbaa !13
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %99 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.4, i64 0, i64 0), i64 noundef 2) #4
-  %100 = load i8, i8* %4, align 1, !tbaa !10
-  %101 = icmp ne i8 %100, 98
-  %102 = zext i1 %101 to i32
-  %103 = call i32* @__error() #4
-  store i32 0, i32* %103, align 4, !tbaa !13
-  %104 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %105 = call i32 @fflush(%struct.__sFILE* noundef %104)
-  %106 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %107 = select i1 %101, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %108 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %106, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %107, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 32)
-  br i1 %101, label %109, label %116
+98:                                               ; preds = %91, %79
+  %99 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %100 = call i32 @fflush(%struct._IO_FILE* noundef %99)
+  store i32 %85, i32* %6, align 4, !tbaa !6
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %101 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.4, i64 0, i64 0), i64 noundef 3) #5
+  %102 = load i8, i8* %4, align 1, !tbaa !3
+  %103 = icmp ne i8 %102, 98
+  %104 = zext i1 %103 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %105 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %106 = call i32 @fflush(%struct._IO_FILE* noundef %105)
+  %107 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %108 = select i1 %103, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %109 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %107, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %108, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 26) #7
+  br i1 %103, label %110, label %117
 
-109:                                              ; preds = %95
-  %110 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %111 = load i8, i8* %4, align 1, !tbaa !10
-  %112 = sext i8 %111 to i32
-  %113 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %110, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %112, i32 noundef 98)
-  %114 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %115 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %114)
-  br label %116
+110:                                              ; preds = %98
+  %111 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %112 = load i8, i8* %4, align 1, !tbaa !3
+  %113 = sext i8 %112 to i32
+  %114 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %111, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %113, i32 noundef 98) #7
+  %115 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %116 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %115)
+  br label %117
 
-116:                                              ; preds = %109, %95
-  %117 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %118 = call i32 @fflush(%struct.__sFILE* noundef %117)
-  %119 = call i32* @__error() #4
-  store i32 %102, i32* %119, align 4, !tbaa !13
-  %120 = load i8, i8* %57, align 1, !tbaa !10
-  %121 = icmp eq i8 %120, -61
+117:                                              ; preds = %110, %98
+  %118 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %119 = call i32 @fflush(%struct._IO_FILE* noundef %118)
+  store i32 %104, i32* %6, align 4, !tbaa !6
+  %120 = load i8, i8* %25, align 1, !tbaa !3
+  %121 = icmp ne i8 %120, -61
   %122 = zext i1 %121 to i32
-  %123 = call i32* @__error() #4
-  store i32 0, i32* %123, align 4, !tbaa !13
-  %124 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %125 = call i32 @fflush(%struct.__sFILE* noundef %124)
-  %126 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %127 = select i1 %121, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %128 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %126, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %127, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.11, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 33)
-  br i1 %121, label %129, label %136
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %123 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %124 = call i32 @fflush(%struct._IO_FILE* noundef %123)
+  %125 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %126 = select i1 %121, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %127 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %125, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %126, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 26) #7
+  br i1 %121, label %128, label %135
 
-129:                                              ; preds = %116
-  %130 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %131 = load i8, i8* %57, align 1, !tbaa !10
-  %132 = sext i8 %131 to i32
-  %133 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %130, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %132, i32 noundef -61)
-  %134 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %135 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %134)
-  br label %136
+128:                                              ; preds = %117
+  %129 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %130 = load i8, i8* %25, align 1, !tbaa !3
+  %131 = sext i8 %130 to i32
+  %132 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %129, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %131, i32 noundef -61) #7
+  %133 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %134 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %133)
+  br label %135
 
-136:                                              ; preds = %129, %116
-  %137 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %138 = call i32 @fflush(%struct.__sFILE* noundef %137)
-  %139 = call i32* @__error() #4
-  store i32 %122, i32* %139, align 4, !tbaa !13
-  %140 = load i8, i8* %57, align 1, !tbaa !10
-  %141 = icmp ne i8 %140, 0
-  %142 = zext i1 %141 to i32
-  %143 = call i32* @__error() #4
-  store i32 0, i32* %143, align 4, !tbaa !13
-  %144 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %145 = call i32 @fflush(%struct.__sFILE* noundef %144)
-  %146 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %147 = select i1 %141, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %148 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %146, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %147, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.12, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 34)
-  br i1 %141, label %149, label %156
+135:                                              ; preds = %128, %117
+  %136 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %137 = call i32 @fflush(%struct._IO_FILE* noundef %136)
+  store i32 %122, i32* %6, align 4, !tbaa !6
+  %138 = load i8, i8* %44, align 1, !tbaa !3
+  %139 = icmp ne i8 %138, -88
+  %140 = zext i1 %139 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %141 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %142 = call i32 @fflush(%struct._IO_FILE* noundef %141)
+  %143 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %144 = select i1 %139, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %145 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %143, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %144, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 26) #7
+  br i1 %139, label %146, label %153
 
-149:                                              ; preds = %136
-  %150 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %151 = load i8, i8* %57, align 1, !tbaa !10
-  %152 = sext i8 %151 to i32
-  %153 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %150, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 1, i32 noundef %152)
-  %154 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %155 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %154)
-  br label %156
+146:                                              ; preds = %135
+  %147 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %148 = load i8, i8* %44, align 1, !tbaa !3
+  %149 = sext i8 %148 to i32
+  %150 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %147, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 2, i32 noundef %149, i32 noundef -88) #7
+  %151 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %152 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %151)
+  br label %153
 
-156:                                              ; preds = %149, %136
-  %157 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %158 = call i32 @fflush(%struct.__sFILE* noundef %157)
-  %159 = call i32* @__error() #4
-  store i32 %142, i32* %159, align 4, !tbaa !13
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %160 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i64 0, i64 0), i64 noundef 2) #4
-  %161 = load i8, i8* %4, align 1, !tbaa !10
-  %162 = icmp ne i8 %161, -61
-  %163 = zext i1 %162 to i32
-  %164 = call i32* @__error() #4
-  store i32 0, i32* %164, align 4, !tbaa !13
-  %165 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %166 = call i32 @fflush(%struct.__sFILE* noundef %165)
-  %167 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %168 = select i1 %162, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %169 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %167, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %168, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 39)
-  br i1 %162, label %170, label %177
+153:                                              ; preds = %146, %135
+  %154 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %155 = call i32 @fflush(%struct._IO_FILE* noundef %154)
+  store i32 %140, i32* %6, align 4, !tbaa !6
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %156 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([5 x i8], [5 x i8]* @.str.4, i64 0, i64 0), i64 noundef 2) #5
+  %157 = load i8, i8* %4, align 1, !tbaa !3
+  %158 = icmp ne i8 %157, 98
+  %159 = zext i1 %158 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %160 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %161 = call i32 @fflush(%struct._IO_FILE* noundef %160)
+  %162 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %163 = select i1 %158, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %164 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %162, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %163, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 32) #7
+  br i1 %158, label %165, label %172
 
-170:                                              ; preds = %156
-  %171 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %172 = load i8, i8* %4, align 1, !tbaa !10
-  %173 = sext i8 %172 to i32
-  %174 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %171, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %173, i32 noundef -61)
-  %175 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %176 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %175)
-  br label %177
+165:                                              ; preds = %153
+  %166 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %167 = load i8, i8* %4, align 1, !tbaa !3
+  %168 = sext i8 %167 to i32
+  %169 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %166, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %168, i32 noundef 98) #7
+  %170 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %171 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %170)
+  br label %172
 
-177:                                              ; preds = %170, %156
-  %178 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %179 = call i32 @fflush(%struct.__sFILE* noundef %178)
-  %180 = call i32* @__error() #4
-  store i32 %163, i32* %180, align 4, !tbaa !13
-  %181 = load i8, i8* %57, align 1, !tbaa !10
-  %182 = icmp ne i8 %181, -88
-  %183 = zext i1 %182 to i32
-  %184 = call i32* @__error() #4
-  store i32 0, i32* %184, align 4, !tbaa !13
-  %185 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %186 = call i32 @fflush(%struct.__sFILE* noundef %185)
-  %187 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %188 = select i1 %182, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %189 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %187, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %188, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 40)
-  br i1 %182, label %190, label %197
+172:                                              ; preds = %165, %153
+  %173 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %174 = call i32 @fflush(%struct._IO_FILE* noundef %173)
+  store i32 %159, i32* %6, align 4, !tbaa !6
+  %175 = load i8, i8* %25, align 1, !tbaa !3
+  %176 = icmp eq i8 %175, -61
+  %177 = zext i1 %176 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %178 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %179 = call i32 @fflush(%struct._IO_FILE* noundef %178)
+  %180 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %181 = select i1 %176, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %182 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %180, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %181, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.11, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 33) #7
+  br i1 %176, label %183, label %190
 
-190:                                              ; preds = %177
-  %191 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %192 = load i8, i8* %57, align 1, !tbaa !10
-  %193 = sext i8 %192 to i32
-  %194 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %191, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %193, i32 noundef -88)
-  %195 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %196 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %195)
-  br label %197
+183:                                              ; preds = %172
+  %184 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %185 = load i8, i8* %25, align 1, !tbaa !3
+  %186 = sext i8 %185 to i32
+  %187 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %184, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %186, i32 noundef -61) #7
+  %188 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %189 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %188)
+  br label %190
 
-197:                                              ; preds = %190, %177
-  %198 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %199 = call i32 @fflush(%struct.__sFILE* noundef %198)
-  %200 = call i32* @__error() #4
-  store i32 %183, i32* %200, align 4, !tbaa !13
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %201 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i64 0, i64 0), i64 noundef 1) #4
-  %202 = load i8, i8* %4, align 1, !tbaa !10
-  %203 = icmp eq i8 %202, -61
-  %204 = zext i1 %203 to i32
-  %205 = call i32* @__error() #4
-  store i32 0, i32* %205, align 4, !tbaa !13
-  %206 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %207 = call i32 @fflush(%struct.__sFILE* noundef %206)
-  %208 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %209 = select i1 %203, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %210 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %208, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %209, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.11, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 45)
-  br i1 %203, label %211, label %218
+190:                                              ; preds = %183, %172
+  %191 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %192 = call i32 @fflush(%struct._IO_FILE* noundef %191)
+  store i32 %177, i32* %6, align 4, !tbaa !6
+  %193 = load i8, i8* %25, align 1, !tbaa !3
+  %194 = icmp ne i8 %193, 0
+  %195 = zext i1 %194 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %196 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %197 = call i32 @fflush(%struct._IO_FILE* noundef %196)
+  %198 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %199 = select i1 %194, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %200 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %198, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %199, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.12, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 34) #7
+  br i1 %194, label %201, label %208
 
-211:                                              ; preds = %197
-  %212 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %213 = load i8, i8* %4, align 1, !tbaa !10
-  %214 = sext i8 %213 to i32
-  %215 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %212, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %214, i32 noundef -61)
-  %216 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %217 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %216)
-  br label %218
+201:                                              ; preds = %190
+  %202 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %203 = load i8, i8* %25, align 1, !tbaa !3
+  %204 = sext i8 %203 to i32
+  %205 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %202, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 1, i32 noundef %204) #7
+  %206 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %207 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %206)
+  br label %208
 
-218:                                              ; preds = %211, %197
-  %219 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %220 = call i32 @fflush(%struct.__sFILE* noundef %219)
-  %221 = call i32* @__error() #4
-  store i32 %204, i32* %221, align 4, !tbaa !13
-  %222 = load i8, i8* %4, align 1, !tbaa !10
-  %223 = icmp ne i8 %222, 0
-  %224 = zext i1 %223 to i32
-  %225 = call i32* @__error() #4
-  store i32 0, i32* %225, align 4, !tbaa !13
-  %226 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %227 = call i32 @fflush(%struct.__sFILE* noundef %226)
-  %228 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %229 = select i1 %223, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %230 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %228, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %229, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.14, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 46)
-  br i1 %223, label %231, label %238
+208:                                              ; preds = %201, %190
+  %209 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %210 = call i32 @fflush(%struct._IO_FILE* noundef %209)
+  store i32 %195, i32* %6, align 4, !tbaa !6
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %211 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i64 0, i64 0), i64 noundef 2) #5
+  %212 = load i8, i8* %4, align 1, !tbaa !3
+  %213 = icmp ne i8 %212, -61
+  %214 = zext i1 %213 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %215 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %216 = call i32 @fflush(%struct._IO_FILE* noundef %215)
+  %217 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %218 = select i1 %213, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %219 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %217, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %218, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 39) #7
+  br i1 %213, label %220, label %227
 
-231:                                              ; preds = %218
-  %232 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %233 = load i8, i8* %4, align 1, !tbaa !10
-  %234 = sext i8 %233 to i32
-  %235 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %232, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 0, i32 noundef %234)
-  %236 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %237 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %236)
-  br label %238
+220:                                              ; preds = %208
+  %221 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %222 = load i8, i8* %4, align 1, !tbaa !3
+  %223 = sext i8 %222 to i32
+  %224 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %221, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %223, i32 noundef -61) #7
+  %225 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %226 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %225)
+  br label %227
 
-238:                                              ; preds = %231, %218
-  %239 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %240 = call i32 @fflush(%struct.__sFILE* noundef %239)
-  %241 = call i32* @__error() #4
-  store i32 %224, i32* %241, align 4, !tbaa !13
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %242 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i64 0, i64 0), i64 noundef 8) #4
-  br label %243
+227:                                              ; preds = %220, %208
+  %228 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %229 = call i32 @fflush(%struct._IO_FILE* noundef %228)
+  store i32 %214, i32* %6, align 4, !tbaa !6
+  %230 = load i8, i8* %25, align 1, !tbaa !3
+  %231 = icmp ne i8 %230, -88
+  %232 = zext i1 %231 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %233 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %234 = call i32 @fflush(%struct._IO_FILE* noundef %233)
+  %235 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %236 = select i1 %231, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %237 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %235, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %236, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 40) #7
+  br i1 %231, label %238, label %245
 
-243:                                              ; preds = %238, %266
-  %244 = phi i64 [ 0, %238 ], [ %270, %266 ]
-  %245 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 %244
-  %246 = load i8, i8* %245, align 1, !tbaa !10
-  %247 = getelementptr inbounds [9 x i8], [9 x i8]* @.str.3, i64 0, i64 %244
-  %248 = load i8, i8* %247, align 1, !tbaa !10
-  %249 = icmp ne i8 %246, %248
-  %250 = zext i1 %249 to i32
-  %251 = call i32* @__error() #4
-  store i32 0, i32* %251, align 4, !tbaa !13
-  %252 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %253 = call i32 @fflush(%struct.__sFILE* noundef %252)
-  %254 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %255 = select i1 %249, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %256 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %254, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %255, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 58)
-  br i1 %249, label %257, label %266
+238:                                              ; preds = %227
+  %239 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %240 = load i8, i8* %25, align 1, !tbaa !3
+  %241 = sext i8 %240 to i32
+  %242 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %239, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %241, i32 noundef -88) #7
+  %243 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %244 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %243)
+  br label %245
 
-257:                                              ; preds = %243
-  %258 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %259 = load i8, i8* %245, align 1, !tbaa !10
+245:                                              ; preds = %238, %227
+  %246 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %247 = call i32 @fflush(%struct._IO_FILE* noundef %246)
+  store i32 %232, i32* %6, align 4, !tbaa !6
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %248 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([4 x i8], [4 x i8]* @.str.1, i64 0, i64 0), i64 noundef 1) #5
+  %249 = load i8, i8* %4, align 1, !tbaa !3
+  %250 = icmp eq i8 %249, -61
+  %251 = zext i1 %250 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %252 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %253 = call i32 @fflush(%struct._IO_FILE* noundef %252)
+  %254 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %255 = select i1 %250, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %256 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %254, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %255, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.11, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 45) #7
+  br i1 %250, label %257, label %264
+
+257:                                              ; preds = %245
+  %258 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %259 = load i8, i8* %4, align 1, !tbaa !3
   %260 = sext i8 %259 to i32
-  %261 = sext i8 %248 to i32
-  %262 = trunc i64 %244 to i32
-  %263 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %258, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef %262, i32 noundef %260, i32 noundef %261)
-  %264 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %265 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %264)
-  br label %266
+  %261 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %258, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %260, i32 noundef -61) #7
+  %262 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %263 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %262)
+  br label %264
 
-266:                                              ; preds = %257, %243
-  %267 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %268 = call i32 @fflush(%struct.__sFILE* noundef %267)
-  %269 = call i32* @__error() #4
-  store i32 %250, i32* %269, align 4, !tbaa !13
-  %270 = add nuw nsw i64 %244, 1
-  %271 = icmp eq i64 %270, 8
-  br i1 %271, label %272, label %243
+264:                                              ; preds = %257, %245
+  %265 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %266 = call i32 @fflush(%struct._IO_FILE* noundef %265)
+  store i32 %251, i32* %6, align 4, !tbaa !6
+  %267 = load i8, i8* %4, align 1, !tbaa !3
+  %268 = icmp ne i8 %267, 0
+  %269 = zext i1 %268 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %270 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %271 = call i32 @fflush(%struct._IO_FILE* noundef %270)
+  %272 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %273 = select i1 %268, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %274 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %272, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %273, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.14, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 46) #7
+  br i1 %268, label %275, label %282
 
-272:                                              ; preds = %266
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %273 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i64 0, i64 0), i64 noundef 7) #4
-  %274 = load i8, i8* %4, align 1, !tbaa !10
-  %275 = icmp ne i8 %274, -16
-  %276 = zext i1 %275 to i32
-  %277 = call i32* @__error() #4
-  store i32 0, i32* %277, align 4, !tbaa !13
-  %278 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %279 = call i32 @fflush(%struct.__sFILE* noundef %278)
-  %280 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %281 = select i1 %275, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %282 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %280, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %281, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64)
-  br i1 %275, label %283, label %290
+275:                                              ; preds = %264
+  %276 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %277 = load i8, i8* %4, align 1, !tbaa !3
+  %278 = sext i8 %277 to i32
+  %279 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %276, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 0, i32 noundef %278) #7
+  %280 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %281 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %280)
+  br label %282
 
-283:                                              ; preds = %272
-  %284 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %285 = load i8, i8* %4, align 1, !tbaa !10
-  %286 = sext i8 %285 to i32
-  %287 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %284, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %286, i32 noundef -16)
-  %288 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %289 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %288)
-  br label %290
+282:                                              ; preds = %275, %264
+  %283 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %284 = call i32 @fflush(%struct._IO_FILE* noundef %283)
+  store i32 %269, i32* %6, align 4, !tbaa !6
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %285 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i64 0, i64 0), i64 noundef 8) #5
+  br label %286
 
-290:                                              ; preds = %283, %272
-  %291 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %292 = call i32 @fflush(%struct.__sFILE* noundef %291)
-  %293 = call i32* @__error() #4
-  store i32 %276, i32* %293, align 4, !tbaa !13
-  %294 = load i8, i8* %57, align 1, !tbaa !10
-  %295 = icmp ne i8 %294, -89
-  %296 = zext i1 %295 to i32
-  %297 = call i32* @__error() #4
-  store i32 0, i32* %297, align 4, !tbaa !13
-  %298 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %299 = call i32 @fflush(%struct.__sFILE* noundef %298)
-  %300 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %301 = select i1 %295, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %302 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %300, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %301, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64)
-  br i1 %295, label %303, label %310
+286:                                              ; preds = %282, %308
+  %287 = phi i64 [ 0, %282 ], [ %311, %308 ]
+  %288 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 %287
+  %289 = load i8, i8* %288, align 1, !tbaa !3
+  %290 = getelementptr inbounds [9 x i8], [9 x i8]* @.str.3, i64 0, i64 %287
+  %291 = load i8, i8* %290, align 1, !tbaa !3
+  %292 = icmp ne i8 %289, %291
+  %293 = zext i1 %292 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %294 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %295 = call i32 @fflush(%struct._IO_FILE* noundef %294)
+  %296 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %297 = select i1 %292, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %298 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %296, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %297, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 58) #7
+  br i1 %292, label %299, label %308
 
-303:                                              ; preds = %290
-  %304 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %305 = load i8, i8* %57, align 1, !tbaa !10
-  %306 = sext i8 %305 to i32
-  %307 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %304, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %306, i32 noundef -89)
-  %308 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %309 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %308)
-  br label %310
+299:                                              ; preds = %286
+  %300 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %301 = load i8, i8* %288, align 1, !tbaa !3
+  %302 = sext i8 %301 to i32
+  %303 = sext i8 %291 to i32
+  %304 = trunc i64 %287 to i32
+  %305 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %300, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef %304, i32 noundef %302, i32 noundef %303) #7
+  %306 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %307 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %306)
+  br label %308
 
-310:                                              ; preds = %303, %290
-  %311 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %312 = call i32 @fflush(%struct.__sFILE* noundef %311)
-  %313 = call i32* @__error() #4
-  store i32 %296, i32* %313, align 4, !tbaa !13
-  %314 = load i8, i8* %78, align 1, !tbaa !10
-  %315 = icmp ne i8 %314, -128
-  %316 = zext i1 %315 to i32
-  %317 = call i32* @__error() #4
-  store i32 0, i32* %317, align 4, !tbaa !13
-  %318 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %319 = call i32 @fflush(%struct.__sFILE* noundef %318)
-  %320 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %321 = select i1 %315, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %322 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %320, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %321, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64)
-  br i1 %315, label %323, label %330
+308:                                              ; preds = %299, %286
+  %309 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %310 = call i32 @fflush(%struct._IO_FILE* noundef %309)
+  store i32 %293, i32* %6, align 4, !tbaa !6
+  %311 = add nuw nsw i64 %287, 1
+  %312 = icmp eq i64 %311, 8
+  br i1 %312, label %313, label %286
 
-323:                                              ; preds = %310
-  %324 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %325 = load i8, i8* %78, align 1, !tbaa !10
+313:                                              ; preds = %308
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %314 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i64 0, i64 0), i64 noundef 7) #5
+  %315 = load i8, i8* %4, align 1, !tbaa !3
+  %316 = icmp ne i8 %315, -16
+  %317 = zext i1 %316 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %318 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %319 = call i32 @fflush(%struct._IO_FILE* noundef %318)
+  %320 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %321 = select i1 %316, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %322 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %320, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %321, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64) #7
+  br i1 %316, label %323, label %330
+
+323:                                              ; preds = %313
+  %324 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %325 = load i8, i8* %4, align 1, !tbaa !3
   %326 = sext i8 %325 to i32
-  %327 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %324, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 2, i32 noundef %326, i32 noundef -128)
-  %328 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %329 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %328)
+  %327 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %324, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 0, i32 noundef %326, i32 noundef -16) #7
+  %328 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %329 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %328)
   br label %330
 
-330:                                              ; preds = %323, %310
-  %331 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %332 = call i32 @fflush(%struct.__sFILE* noundef %331)
-  %333 = call i32* @__error() #4
-  store i32 %316, i32* %333, align 4, !tbaa !13
-  %334 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 3
-  %335 = load i8, i8* %334, align 1, !tbaa !10
-  %336 = icmp ne i8 %335, -128
-  %337 = zext i1 %336 to i32
-  %338 = call i32* @__error() #4
-  store i32 0, i32* %338, align 4, !tbaa !13
-  %339 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %340 = call i32 @fflush(%struct.__sFILE* noundef %339)
-  %341 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %342 = select i1 %336, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %343 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %341, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %342, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64)
-  br i1 %336, label %344, label %351
+330:                                              ; preds = %323, %313
+  %331 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %332 = call i32 @fflush(%struct._IO_FILE* noundef %331)
+  store i32 %317, i32* %6, align 4, !tbaa !6
+  %333 = load i8, i8* %25, align 1, !tbaa !3
+  %334 = icmp ne i8 %333, -89
+  %335 = zext i1 %334 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %336 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %337 = call i32 @fflush(%struct._IO_FILE* noundef %336)
+  %338 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %339 = select i1 %334, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %340 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %338, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %339, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64) #7
+  br i1 %334, label %341, label %348
 
-344:                                              ; preds = %330
-  %345 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %346 = load i8, i8* %334, align 1, !tbaa !10
-  %347 = sext i8 %346 to i32
-  %348 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %345, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 3, i32 noundef %347, i32 noundef -128)
-  %349 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %350 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %349)
-  br label %351
+341:                                              ; preds = %330
+  %342 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %343 = load i8, i8* %25, align 1, !tbaa !3
+  %344 = sext i8 %343 to i32
+  %345 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %342, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 1, i32 noundef %344, i32 noundef -89) #7
+  %346 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %347 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %346)
+  br label %348
 
-351:                                              ; preds = %344, %330
-  %352 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %353 = call i32 @fflush(%struct.__sFILE* noundef %352)
-  %354 = call i32* @__error() #4
-  store i32 %337, i32* %354, align 4, !tbaa !13
-  %355 = getelementptr inbounds [9 x i8], [9 x i8]* %3, i64 0, i64 4
-  %356 = load i8, i8* %355, align 1, !tbaa !10
-  %357 = icmp ne i8 %356, 0
-  %358 = zext i1 %357 to i32
-  %359 = call i32* @__error() #4
-  store i32 0, i32* %359, align 4, !tbaa !13
-  %360 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %361 = call i32 @fflush(%struct.__sFILE* noundef %360)
-  %362 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %363 = select i1 %357, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %364 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %362, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %363, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.15, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 66)
-  br i1 %357, label %365, label %372
+348:                                              ; preds = %341, %330
+  %349 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %350 = call i32 @fflush(%struct._IO_FILE* noundef %349)
+  store i32 %335, i32* %6, align 4, !tbaa !6
+  %351 = load i8, i8* %44, align 1, !tbaa !3
+  %352 = icmp ne i8 %351, -128
+  %353 = zext i1 %352 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %354 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %355 = call i32 @fflush(%struct._IO_FILE* noundef %354)
+  %356 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %357 = select i1 %352, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %358 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %356, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %357, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64) #7
+  br i1 %352, label %359, label %366
 
-365:                                              ; preds = %351
-  %366 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %367 = load i8, i8* %355, align 1, !tbaa !10
-  %368 = sext i8 %367 to i32
-  %369 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %366, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 4, i32 noundef %368)
-  %370 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %371 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %370)
-  br label %372
+359:                                              ; preds = %348
+  %360 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %361 = load i8, i8* %44, align 1, !tbaa !3
+  %362 = sext i8 %361 to i32
+  %363 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %360, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 2, i32 noundef %362, i32 noundef -128) #7
+  %364 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %365 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %364)
+  br label %366
 
-372:                                              ; preds = %365, %351
-  %373 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %374 = call i32 @fflush(%struct.__sFILE* noundef %373)
-  %375 = call i32* @__error() #4
-  store i32 %358, i32* %375, align 4, !tbaa !13
-  store i8 0, i8* %4, align 1, !tbaa !10
-  %376 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i64 0, i64 0), i64 noundef 3) #4
-  %377 = load i8, i8* %4, align 1, !tbaa !10
-  %378 = icmp ne i8 %377, 0
-  %379 = call i32* @__error() #4
-  store i32 0, i32* %379, align 4, !tbaa !13
-  %380 = load %struct.__sFILE*, %struct.__sFILE** @__stdoutp, align 8, !tbaa !15
-  %381 = call i32 @fflush(%struct.__sFILE* noundef %380)
-  %382 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %383 = select i1 %378, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
-  %384 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %382, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %383, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.14, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 70)
-  br i1 %378, label %385, label %392
+366:                                              ; preds = %359, %348
+  %367 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %368 = call i32 @fflush(%struct._IO_FILE* noundef %367)
+  store i32 %353, i32* %6, align 4, !tbaa !6
+  %369 = load i8, i8* %63, align 1, !tbaa !3
+  %370 = icmp ne i8 %369, -128
+  %371 = zext i1 %370 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %372 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %373 = call i32 @fflush(%struct._IO_FILE* noundef %372)
+  %374 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %375 = select i1 %370, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %376 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %374, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %375, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.8, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 64) #7
+  br i1 %370, label %377, label %384
 
-385:                                              ; preds = %372
-  %386 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %387 = load i8, i8* %4, align 1, !tbaa !10
-  %388 = sext i8 %387 to i32
-  %389 = call i32 (%struct.__sFILE*, i8*, ...) @fprintf(%struct.__sFILE* noundef %386, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 4, i32 noundef %388)
-  %390 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %391 = call i32 @fputc(i32 noundef 10, %struct.__sFILE* noundef %390)
-  br label %392
+377:                                              ; preds = %366
+  %378 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %379 = load i8, i8* %63, align 1, !tbaa !3
+  %380 = sext i8 %379 to i32
+  %381 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %378, i8* noundef getelementptr inbounds ([44 x i8], [44 x i8]* @.str.10, i64 0, i64 0), i32 noundef 3, i32 noundef %380, i32 noundef -128) #7
+  %382 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %383 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %382)
+  br label %384
 
-392:                                              ; preds = %385, %372
-  %393 = zext i1 %378 to i32
-  %394 = load %struct.__sFILE*, %struct.__sFILE** @__stderrp, align 8, !tbaa !15
-  %395 = call i32 @fflush(%struct.__sFILE* noundef %394)
-  %396 = call i32* @__error() #4
-  store i32 %393, i32* %396, align 4, !tbaa !13
-  call void @llvm.lifetime.end.p0i8(i64 9, i8* nonnull %4) #4
+384:                                              ; preds = %377, %366
+  %385 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %386 = call i32 @fflush(%struct._IO_FILE* noundef %385)
+  store i32 %371, i32* %6, align 4, !tbaa !6
+  %387 = load i8, i8* %82, align 1, !tbaa !3
+  %388 = icmp ne i8 %387, 0
+  %389 = zext i1 %388 to i32
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %390 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %391 = call i32 @fflush(%struct._IO_FILE* noundef %390)
+  %392 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %393 = select i1 %388, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %394 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %392, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %393, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.15, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 66) #7
+  br i1 %388, label %395, label %402
+
+395:                                              ; preds = %384
+  %396 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %397 = load i8, i8* %82, align 1, !tbaa !3
+  %398 = sext i8 %397 to i32
+  %399 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %396, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 4, i32 noundef %398) #7
+  %400 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %401 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %400)
+  br label %402
+
+402:                                              ; preds = %395, %384
+  %403 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %404 = call i32 @fflush(%struct._IO_FILE* noundef %403)
+  store i32 %389, i32* %6, align 4, !tbaa !6
+  store i8 0, i8* %4, align 1, !tbaa !3
+  %405 = call i8* @u8strncpy(i8* noundef nonnull %4, i8* noundef getelementptr inbounds ([9 x i8], [9 x i8]* @.str.3, i64 0, i64 0), i64 noundef 3) #5
+  %406 = load i8, i8* %4, align 1, !tbaa !3
+  %407 = icmp ne i8 %406, 0
+  store i32 0, i32* %6, align 4, !tbaa !6
+  %408 = load %struct._IO_FILE*, %struct._IO_FILE** @stdout, align 8, !tbaa !8
+  %409 = call i32 @fflush(%struct._IO_FILE* noundef %408)
+  %410 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %411 = select i1 %407, i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.6, i64 0, i64 0), i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.7, i64 0, i64 0)
+  %412 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %410, i8* noundef getelementptr inbounds ([17 x i8], [17 x i8]* @.str.5, i64 0, i64 0), i8* noundef %411, i8* noundef getelementptr inbounds ([15 x i8], [15 x i8]* @.str.14, i64 0, i64 0), i8* noundef getelementptr inbounds ([8 x i8], [8 x i8]* @.str.9, i64 0, i64 0), i32 noundef 70) #7
+  br i1 %407, label %413, label %420
+
+413:                                              ; preds = %402
+  %414 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %415 = load i8, i8* %4, align 1, !tbaa !3
+  %416 = sext i8 %415 to i32
+  %417 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* noundef %414, i8* noundef getelementptr inbounds ([36 x i8], [36 x i8]* @.str.13, i64 0, i64 0), i32 noundef 4, i32 noundef %416) #7
+  %418 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %419 = call i32 @fputc(i32 noundef 10, %struct._IO_FILE* noundef %418)
+  br label %420
+
+420:                                              ; preds = %413, %402
+  %421 = zext i1 %407 to i32
+  %422 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr, align 8, !tbaa !8
+  %423 = call i32 @fflush(%struct._IO_FILE* noundef %422)
+  store i32 %421, i32* %6, align 4, !tbaa !6
+  call void @llvm.lifetime.end.p0i8(i64 9, i8* nonnull %4) #5
   ret i32 0
 }
 
 ; Function Attrs: argmemonly mustprogress nofree nosync nounwind willreturn
 declare void @llvm.lifetime.start.p0i8(i64 immarg, i8* nocapture) #1
 
-declare i8* @u8strncpy(i8* noundef, i8* noundef, i64 noundef) local_unnamed_addr #2
+declare dso_local i8* @u8strncpy(i8* noundef, i8* noundef, i64 noundef) local_unnamed_addr #2
 
-declare i32* @__error() local_unnamed_addr #2
-
-; Function Attrs: nofree nounwind
-declare noundef i32 @fflush(%struct.__sFILE* nocapture noundef) local_unnamed_addr #3
+; Function Attrs: mustprogress nofree nosync nounwind readnone willreturn
+declare dso_local i32* @__errno_location() local_unnamed_addr #3
 
 ; Function Attrs: nofree nounwind
-declare noundef i32 @fprintf(%struct.__sFILE* nocapture noundef, i8* nocapture noundef readonly, ...) local_unnamed_addr #3
+declare dso_local noundef i32 @fflush(%struct._IO_FILE* nocapture noundef) local_unnamed_addr #4
 
 ; Function Attrs: nofree nounwind
-declare noundef i32 @fputc(i32 noundef, %struct.__sFILE* nocapture noundef) local_unnamed_addr #3
+declare dso_local noundef i32 @fprintf(%struct._IO_FILE* nocapture noundef, i8* nocapture noundef readonly, ...) local_unnamed_addr #4
+
+; Function Attrs: nofree nounwind
+declare dso_local noundef i32 @fputc(i32 noundef, %struct._IO_FILE* nocapture noundef) local_unnamed_addr #4
 
 ; Function Attrs: argmemonly mustprogress nofree nosync nounwind willreturn
 declare void @llvm.lifetime.end.p0i8(i64 immarg, i8* nocapture) #1
 
-attributes #0 = { nounwind ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
+attributes #0 = { nounwind uwtable "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { argmemonly mustprogress nofree nosync nounwind willreturn }
-attributes #2 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { nofree nounwind "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #4 = { nounwind }
+attributes #2 = { "frame-pointer"="none" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { mustprogress nofree nosync nounwind readnone willreturn "frame-pointer"="none" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { nofree nounwind "frame-pointer"="none" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #5 = { nounwind }
+attributes #6 = { nounwind readnone willreturn }
+attributes #7 = { cold }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1}
+!llvm.ident = !{!2}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = !{!11, !11, i64 0}
-!11 = !{!"omnipotent char", !12, i64 0}
-!12 = !{!"Simple C/C++ TBAA"}
-!13 = !{!14, !14, i64 0}
-!14 = !{!"int", !11, i64 0}
-!15 = !{!16, !16, i64 0}
-!16 = !{!"any pointer", !11, i64 0}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!3 = !{!4, !4, i64 0}
+!4 = !{!"omnipotent char", !5, i64 0}
+!5 = !{!"Simple C/C++ TBAA"}
+!6 = !{!7, !7, i64 0}
+!7 = !{!"int", !4, i64 0}
+!8 = !{!9, !9, i64 0}
+!9 = !{!"any pointer", !4, i64 0}

@@ -352,12 +352,6 @@ then
         ZLIB_DISTCLEAN=clean
     else
         echo "Configuring zlib..."
-        (cd src/zlib && ./configure --static)
-        if test $? -ne 0
-        then
-            echo "$0: error: could not configure: zlib"
-            exit 1
-        fi
     fi
 else
     USE_SYSTEM_ZLIB_TRUE=""

@@ -1,16 +1,17 @@
 ; ModuleID = 'pngxrgif.c'
 source_filename = "pngxrgif.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.png_struct_def = type opaque
 %struct.GIFImage = type { %struct.GIFScreen*, i32, i32, i32, i32, i32, i32, i32, i32, [768 x i8], i8** }
 %struct.GIFScreen = type { i32, i32, i32, i32, i32, i32, i32, i32, [768 x i8] }
 %struct.GIFExtension = type { %struct.GIFScreen*, i8*, i32, i8 }
 %struct.png_info_def = type opaque
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 %struct.GIFGraphicCtlExt = type { i32, i32, i32, i32, i32 }
 %struct.png_color_struct = type { i8, i8, i8 }
 %struct.png_color_16_struct = type { i8, i16, i16, i16, i16 }
@@ -18,16 +19,16 @@ target triple = "arm64-apple-macosx14.0.0"
 @gif_sig_gif87a = internal constant [6 x i8] c"GIF87a", align 1
 @gif_sig_gif89a = internal constant [6 x i8] c"GIF89a", align 1
 @gif_fmt_name = internal constant [4 x i8] c"GIF\00", align 1
-@gif_fmt_long_name = internal constant [28 x i8] c"Graphics Interchange Format\00", align 1
-@GIFError = external global void (i8*)*, align 8
-@GIFWarning = external global void (i8*)*, align 8
+@gif_fmt_long_name = internal constant [28 x i8] c"Graphics Interchange Format\00", align 16
+@GIFError = external dso_local global void (i8*)*, align 8
+@GIFWarning = external dso_local global void (i8*)*, align 8
 @err_png_ptr = internal global %struct.png_struct_def* null, align 8
 @err_gif_image_ptr = internal global %struct.GIFImage* null, align 8
 @err_gif_ext_ptr = internal global %struct.GIFExtension* null, align 8
 @.str = private unnamed_addr constant [21 x i8] c"No image in GIF file\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pngx_sig_is_gif(i8* noundef %0, i64 noundef %1, i8** noundef %2, i8** noundef %3) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pngx_sig_is_gif(i8* noundef %0, i64 noundef %1, i8** noundef %2, i8** noundef %3) #0 {
   %5 = alloca i32, align 4
   %6 = alloca i8*, align 8
   %7 = alloca i64, align 8
@@ -47,13 +48,13 @@ define i32 @pngx_sig_is_gif(i8* noundef %0, i64 noundef %1, i8** noundef %2, i8*
 
 13:                                               ; preds = %4
   %14 = load i8*, i8** %6, align 8
-  %15 = call i32 @memcmp(i8* noundef %14, i8* noundef getelementptr inbounds ([6 x i8], [6 x i8]* @gif_sig_gif87a, i64 0, i64 0), i64 noundef 6)
+  %15 = call i32 @memcmp(i8* noundef %14, i8* noundef getelementptr inbounds ([6 x i8], [6 x i8]* @gif_sig_gif87a, i64 0, i64 0), i64 noundef 6) #4
   %16 = icmp ne i32 %15, 0
   br i1 %16, label %17, label %22
 
 17:                                               ; preds = %13
   %18 = load i8*, i8** %6, align 8
-  %19 = call i32 @memcmp(i8* noundef %18, i8* noundef getelementptr inbounds ([6 x i8], [6 x i8]* @gif_sig_gif89a, i64 0, i64 0), i64 noundef 6)
+  %19 = call i32 @memcmp(i8* noundef %18, i8* noundef getelementptr inbounds ([6 x i8], [6 x i8]* @gif_sig_gif89a, i64 0, i64 0), i64 noundef 6) #4
   %20 = icmp ne i32 %19, 0
   br i1 %20, label %21, label %22
 
@@ -90,13 +91,14 @@ define i32 @pngx_sig_is_gif(i8* noundef %0, i64 noundef %1, i8** noundef %2, i8*
   ret i32 %34
 }
 
-declare i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #1
+; Function Attrs: nounwind readonly willreturn
+declare dso_local i32 @memcmp(i8* noundef, i8* noundef, i64 noundef) #1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pngx_read_gif(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, %struct.__sFILE* noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pngx_read_gif(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, %struct._IO_FILE* noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca %struct.png_info_def*, align 8
-  %6 = alloca %struct.__sFILE*, align 8
+  %6 = alloca %struct._IO_FILE*, align 8
   %7 = alloca %struct.GIFScreen, align 4
   %8 = alloca %struct.GIFImage, align 8
   %9 = alloca %struct.GIFExtension, align 8
@@ -111,15 +113,15 @@ define i32 @pngx_read_gif(%struct.png_struct_def* noundef %0, %struct.png_info_d
   %18 = alloca i8**, align 8
   store %struct.png_struct_def* %0, %struct.png_struct_def** %4, align 8
   store %struct.png_info_def* %1, %struct.png_info_def** %5, align 8
-  store %struct.__sFILE* %2, %struct.__sFILE** %6, align 8
+  store %struct._IO_FILE* %2, %struct._IO_FILE** %6, align 8
   store void (i8*)* @pngx_gif_error, void (i8*)** @GIFError, align 8
   store void (i8*)* @pngx_gif_warning, void (i8*)** @GIFWarning, align 8
   %19 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
   store %struct.png_struct_def* %19, %struct.png_struct_def** @err_png_ptr, align 8
   store %struct.GIFImage* null, %struct.GIFImage** @err_gif_image_ptr, align 8
   store %struct.GIFExtension* null, %struct.GIFExtension** @err_gif_ext_ptr, align 8
-  %20 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  call void @GIFReadScreen(%struct.GIFScreen* noundef %7, %struct.__sFILE* noundef %20)
+  %20 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  call void @GIFReadScreen(%struct.GIFScreen* noundef %7, %struct._IO_FILE* noundef %20)
   %21 = getelementptr inbounds %struct.GIFScreen, %struct.GIFScreen* %7, i32 0, i32 0
   %22 = load i32, i32* %21, align 4
   store i32 %22, i32* %16, align 4
@@ -147,8 +149,8 @@ define i32 @pngx_read_gif(%struct.png_struct_def* noundef %0, %struct.png_info_d
   br label %35
 
 35:                                               ; preds = %98, %3
-  %36 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %37 = call i32 @GIFReadNextBlock(%struct.GIFImage* noundef %8, %struct.GIFExtension* noundef %9, %struct.__sFILE* noundef %36)
+  %36 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %37 = call i32 @GIFReadNextBlock(%struct.GIFImage* noundef %8, %struct.GIFExtension* noundef %9, %struct._IO_FILE* noundef %36)
   store i32 %37, i32* %11, align 4
   %38 = load i32, i32* %11, align 4
   %39 = icmp eq i32 %38, 44
@@ -271,7 +273,7 @@ define i32 @pngx_read_gif(%struct.png_struct_def* noundef %0, %struct.png_info_d
 
 103:                                              ; preds = %99
   %104 = load %struct.png_struct_def*, %struct.png_struct_def** %4, align 8
-  call void @png_error(%struct.png_struct_def* noundef %104, i8* noundef getelementptr inbounds ([21 x i8], [21 x i8]* @.str, i64 0, i64 0)) #3
+  call void @png_error(%struct.png_struct_def* noundef %104, i8* noundef getelementptr inbounds ([21 x i8], [21 x i8]* @.str, i64 0, i64 0)) #5
   unreachable
 
 105:                                              ; preds = %99
@@ -281,7 +283,7 @@ define i32 @pngx_read_gif(%struct.png_struct_def* noundef %0, %struct.png_info_d
   ret i32 %106
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @pngx_gif_error(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -307,11 +309,11 @@ define internal void @pngx_gif_error(i8* noundef %0) #0 {
 12:                                               ; preds = %10, %7
   %13 = load %struct.png_struct_def*, %struct.png_struct_def** @err_png_ptr, align 8
   %14 = load i8*, i8** %2, align 8
-  call void @png_error(%struct.png_struct_def* noundef %13, i8* noundef %14) #3
+  call void @png_error(%struct.png_struct_def* noundef %13, i8* noundef %14) #5
   unreachable
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @pngx_gif_warning(i8* noundef %0) #0 {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
@@ -321,29 +323,29 @@ define internal void @pngx_gif_warning(i8* noundef %0) #0 {
   ret void
 }
 
-declare void @GIFReadScreen(%struct.GIFScreen* noundef, %struct.__sFILE* noundef) #1
+declare dso_local void @GIFReadScreen(%struct.GIFScreen* noundef, %struct._IO_FILE* noundef) #2
 
-declare void @png_set_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef) #1
+declare dso_local void @png_set_IHDR(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef, i32 noundef) #2
 
-declare i8** @pngx_malloc_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #1
+declare dso_local i8** @pngx_malloc_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #2
 
-declare void @GIFInitImage(%struct.GIFImage* noundef, %struct.GIFScreen* noundef, i8** noundef) #1
+declare dso_local void @GIFInitImage(%struct.GIFImage* noundef, %struct.GIFScreen* noundef, i8** noundef) #2
 
-declare void @GIFInitExtension(%struct.GIFExtension* noundef, %struct.GIFScreen* noundef, i32 noundef) #1
+declare dso_local void @GIFInitExtension(%struct.GIFExtension* noundef, %struct.GIFScreen* noundef, i32 noundef) #2
 
-declare i32 @GIFReadNextBlock(%struct.GIFImage* noundef, %struct.GIFExtension* noundef, %struct.__sFILE* noundef) #1
+declare dso_local i32 @GIFReadNextBlock(%struct.GIFImage* noundef, %struct.GIFExtension* noundef, %struct._IO_FILE* noundef) #2
 
-declare void @pngx_set_interlace_type(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #1
+declare dso_local void @pngx_set_interlace_type(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef) #2
 
-declare void @GIFGetColorTable(i8** noundef, i32* noundef, %struct.GIFImage* noundef) #1
+declare dso_local void @GIFGetColorTable(i8** noundef, i32* noundef, %struct.GIFImage* noundef) #2
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @pngx_set_gif_palette(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i8* noundef %2, i32 noundef %3) #0 {
   %5 = alloca %struct.png_struct_def*, align 8
   %6 = alloca %struct.png_info_def*, align 8
   %7 = alloca i8*, align 8
   %8 = alloca i32, align 4
-  %9 = alloca [256 x %struct.png_color_struct], align 1
+  %9 = alloca [256 x %struct.png_color_struct], align 16
   %10 = alloca i32, align 4
   store %struct.png_struct_def* %0, %struct.png_struct_def** %5, align 8
   store %struct.png_info_def* %1, %struct.png_info_def** %6, align 8
@@ -400,7 +402,7 @@ define internal void @pngx_set_gif_palette(%struct.png_struct_def* noundef %0, %
   %49 = load i32, i32* %10, align 4
   %50 = add i32 %49, 1
   store i32 %50, i32* %10, align 4
-  br label %11, !llvm.loop !10
+  br label %11, !llvm.loop !4
 
 51:                                               ; preds = %11
   %52 = load %struct.png_struct_def*, %struct.png_struct_def** %5, align 8
@@ -411,12 +413,12 @@ define internal void @pngx_set_gif_palette(%struct.png_struct_def* noundef %0, %
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
+; Function Attrs: noinline nounwind optnone uwtable
 define internal void @pngx_set_gif_transparent(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i32 noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca %struct.png_info_def*, align 8
   %6 = alloca i32, align 4
-  %7 = alloca [256 x i8], align 1
+  %7 = alloca [256 x i8], align 16
   %8 = alloca i32, align 4
   store %struct.png_struct_def* %0, %struct.png_struct_def** %4, align 8
   store %struct.png_info_def* %1, %struct.png_info_def** %5, align 8
@@ -441,7 +443,7 @@ define internal void @pngx_set_gif_transparent(%struct.png_struct_def* noundef %
   %18 = load i32, i32* %8, align 4
   %19 = add i32 %18, 1
   store i32 %19, i32* %8, align 4
-  br label %9, !llvm.loop !12
+  br label %9, !llvm.loop !6
 
 20:                                               ; preds = %9
   %21 = load i32, i32* %6, align 4
@@ -457,39 +459,35 @@ define internal void @pngx_set_gif_transparent(%struct.png_struct_def* noundef %
   ret void
 }
 
-declare void @GIFGetGraphicCtl(%struct.GIFGraphicCtlExt* noundef, %struct.GIFExtension* noundef) #1
+declare dso_local void @GIFGetGraphicCtl(%struct.GIFGraphicCtlExt* noundef, %struct.GIFExtension* noundef) #2
 
 ; Function Attrs: noreturn
-declare void @png_error(%struct.png_struct_def* noundef, i8* noundef) #2
+declare dso_local void @png_error(%struct.png_struct_def* noundef, i8* noundef) #3
 
-declare void @GIFDestroyImage(%struct.GIFImage* noundef) #1
+declare dso_local void @GIFDestroyImage(%struct.GIFImage* noundef) #2
 
-declare void @GIFDestroyExtension(%struct.GIFExtension* noundef) #1
+declare dso_local void @GIFDestroyExtension(%struct.GIFExtension* noundef) #2
 
-declare void @png_warning(%struct.png_struct_def* noundef, i8* noundef) #1
+declare dso_local void @png_warning(%struct.png_struct_def* noundef, i8* noundef) #2
 
-declare void @png_set_PLTE(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_struct* noundef, i32 noundef) #1
+declare dso_local void @png_set_PLTE(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, %struct.png_color_struct* noundef, i32 noundef) #2
 
-declare void @png_set_tRNS(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8* noundef, i32 noundef, %struct.png_color_16_struct* noundef) #1
+declare dso_local void @png_set_tRNS(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8* noundef, i32 noundef, %struct.png_color_16_struct* noundef) #2
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #2 = { noreturn "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { noreturn }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { nounwind readonly willreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { noreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #4 = { nounwind readonly willreturn }
+attributes #5 = { noreturn }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}

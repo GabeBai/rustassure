@@ -12,7 +12,7 @@ ZLIBINC = ../zlib
 ZLIBLIB = ../zlib
 
 # Compiler, linker, lib and other tools
-CC = gcc
+CC = ./clang-wrapper.sh
 LD = $(CC)
 AR_RC = ar rcs
 RANLIB = ranlib
@@ -23,7 +23,7 @@ WARNMORE = -Wwrite-strings -Wpointer-arith -Wshadow \
 	-Wmissing-declarations -Wtraditional -Wcast-align \
 	-Wstrict-prototypes -Wmissing-prototypes # -Wconversion
 CPPFLAGS = -I$(ZLIBINC) # -DPNG_DEBUG=5
-CFLAGS = -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+CFLAGS = -W -Wall -O2 # $(WARNMORE) -g
 LDFLAGS =
 LIBS = -lz -lm
 

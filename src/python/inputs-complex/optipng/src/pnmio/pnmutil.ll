@@ -1,12 +1,12 @@
 ; ModuleID = 'pnmutil.c'
 source_filename = "pnmutil.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.pnm_struct = type { i32, i32, i32, i32, i32 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @pnm_is_valid(%struct.pnm_struct* noundef %0) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @pnm_is_valid(%struct.pnm_struct* noundef %0) #0 {
   %2 = alloca i32, align 4
   %3 = alloca %struct.pnm_struct*, align 8
   %4 = alloca i32, align 4
@@ -116,8 +116,8 @@ define i32 @pnm_is_valid(%struct.pnm_struct* noundef %0) #0 {
   ret i32 %61
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i64 @pnm_raw_sample_size(%struct.pnm_struct* noundef %0) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i64 @pnm_raw_sample_size(%struct.pnm_struct* noundef %0) #0 {
   %2 = alloca i64, align 8
   %3 = alloca %struct.pnm_struct*, align 8
   %4 = alloca i32, align 4
@@ -131,7 +131,7 @@ define i64 @pnm_raw_sample_size(%struct.pnm_struct* noundef %0) #0 {
   br i1 %9, label %10, label %12
 
 10:                                               ; preds = %1
-  %11 = call i32* @__error()
+  %11 = call i32* @__errno_location() #2
   store i32 22, i32* %11, align 4
   br label %12
 
@@ -172,7 +172,7 @@ define i64 @pnm_raw_sample_size(%struct.pnm_struct* noundef %0) #0 {
   br label %30
 
 28:                                               ; preds = %24
-  %29 = call i32* @__error()
+  %29 = call i32* @__errno_location() #2
   store i32 22, i32* %29, align 4
   store i64 0, i64* %2, align 8
   br label %30
@@ -182,10 +182,11 @@ define i64 @pnm_raw_sample_size(%struct.pnm_struct* noundef %0) #0 {
   ret i64 %31
 }
 
-declare i32* @__error() #1
+; Function Attrs: nounwind readnone willreturn
+declare dso_local i32* @__errno_location() #1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i64 @pnm_mem_size(%struct.pnm_struct* noundef %0, i64 noundef %1, i32 noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i64 @pnm_mem_size(%struct.pnm_struct* noundef %0, i64 noundef %1, i32 noundef %2) #0 {
   %4 = alloca i64, align 8
   %5 = alloca %struct.pnm_struct*, align 8
   %6 = alloca i64, align 8
@@ -218,7 +219,7 @@ define i64 @pnm_mem_size(%struct.pnm_struct* noundef %0, i64 noundef %1, i32 nou
   br i1 %23, label %24, label %26
 
 24:                                               ; preds = %21, %18, %3
-  %25 = call i32* @__error()
+  %25 = call i32* @__errno_location() #2
   store i32 22, i32* %25, align 4
   store i64 0, i64* %4, align 8
   br label %51
@@ -238,7 +239,7 @@ define i64 @pnm_mem_size(%struct.pnm_struct* noundef %0, i64 noundef %1, i32 nou
   br i1 %37, label %38, label %40
 
 38:                                               ; preds = %26
-  %39 = call i32* @__error()
+  %39 = call i32* @__errno_location() #2
   store i32 34, i32* %39, align 4
   store i64 0, i64* %4, align 8
   br label %51
@@ -262,19 +263,14 @@ define i64 @pnm_mem_size(%struct.pnm_struct* noundef %0, i64 noundef %1, i32 nou
   ret i64 %52
 }
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { nounwind readnone willreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { nounwind readnone willreturn }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}

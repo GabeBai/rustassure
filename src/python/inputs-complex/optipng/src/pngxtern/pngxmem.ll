@@ -1,7 +1,7 @@
 ; ModuleID = 'pngxmem.c'
 source_filename = "pngxmem.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct.png_struct_def = type opaque
 %struct.png_info_def = type opaque
@@ -9,8 +9,8 @@ target triple = "arm64-apple-macosx14.0.0"
 @.str = private unnamed_addr constant [13 x i8] c"Missing IHDR\00", align 1
 @.str.1 = private unnamed_addr constant [48 x i8] c"Can't handle exceedingly large image dimensions\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i8** @pngx_malloc_rows(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i32 noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i8** @pngx_malloc_rows(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i32 noundef %2) #0 {
   %4 = alloca %struct.png_struct_def*, align 8
   %5 = alloca %struct.png_info_def*, align 8
   %6 = alloca i32, align 4
@@ -24,8 +24,8 @@ define i8** @pngx_malloc_rows(%struct.png_struct_def* noundef %0, %struct.png_in
   ret i8** %10
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i8** @pngx_malloc_rows_extended(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i64 noundef %2, i32 noundef %3) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i8** @pngx_malloc_rows_extended(%struct.png_struct_def* noundef %0, %struct.png_info_def* noundef %1, i64 noundef %2, i32 noundef %3) #0 {
   %5 = alloca i8**, align 8
   %6 = alloca %struct.png_struct_def*, align 8
   %7 = alloca %struct.png_info_def*, align 8
@@ -50,7 +50,7 @@ define i8** @pngx_malloc_rows_extended(%struct.png_struct_def* noundef %0, %stru
 
 20:                                               ; preds = %4
   %21 = load %struct.png_struct_def*, %struct.png_struct_def** %6, align 8
-  call void @png_error(%struct.png_struct_def* noundef %21, i8* noundef getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i64 0, i64 0)) #5
+  call void @png_error(%struct.png_struct_def* noundef %21, i8* noundef getelementptr inbounds ([13 x i8], [13 x i8]* @.str, i64 0, i64 0)) #4
   unreachable
 
 22:                                               ; preds = %4
@@ -70,7 +70,7 @@ define i8** @pngx_malloc_rows_extended(%struct.png_struct_def* noundef %0, %stru
 
 32:                                               ; preds = %28, %22
   %33 = load %struct.png_struct_def*, %struct.png_struct_def** %6, align 8
-  call void @png_error(%struct.png_struct_def* noundef %33, i8* noundef getelementptr inbounds ([48 x i8], [48 x i8]* @.str.1, i64 0, i64 0)) #5
+  call void @png_error(%struct.png_struct_def* noundef %33, i8* noundef getelementptr inbounds ([48 x i8], [48 x i8]* @.str.1, i64 0, i64 0)) #4
   unreachable
 
 34:                                               ; preds = %28
@@ -101,17 +101,17 @@ define i8** @pngx_malloc_rows_extended(%struct.png_struct_def* noundef %0, %stru
 
 51:                                               ; preds = %40
   store i8** null, i8*** %5, align 8
-  br label %103
+  br label %101
 
 52:                                               ; preds = %40
   store i32 0, i32* %14, align 4
   br label %53
 
-53:                                               ; preds = %95, %52
+53:                                               ; preds = %93, %52
   %54 = load i32, i32* %14, align 4
   %55 = load i32, i32* %13, align 4
   %56 = icmp ult i32 %54, %55
-  br i1 %56, label %57, label %98
+  br i1 %56, label %57, label %96
 
 57:                                               ; preds = %53
   %58 = load %struct.png_struct_def*, %struct.png_struct_def** %6, align 8
@@ -140,7 +140,7 @@ define i8** @pngx_malloc_rows_extended(%struct.png_struct_def* noundef %0, %stru
   %73 = getelementptr inbounds i8*, i8** %69, i64 %72
   %74 = load i8*, i8** %73, align 8
   call void @png_free(%struct.png_struct_def* noundef %68, i8* noundef %74)
-  br label %64, !llvm.loop !10
+  br label %64, !llvm.loop !4
 
 75:                                               ; preds = %64
   %76 = load %struct.png_struct_def*, %struct.png_struct_def** %6, align 8
@@ -148,93 +148,81 @@ define i8** @pngx_malloc_rows_extended(%struct.png_struct_def* noundef %0, %stru
   %78 = bitcast i8** %77 to i8*
   call void @png_free(%struct.png_struct_def* noundef %76, i8* noundef %78)
   store i8** null, i8*** %5, align 8
-  br label %103
+  br label %101
 
 79:                                               ; preds = %57
   %80 = load i32, i32* %9, align 4
   %81 = icmp sge i32 %80, 0
-  br i1 %81, label %82, label %89
+  br i1 %81, label %82, label %87
 
 82:                                               ; preds = %79
   %83 = load i8*, i8** %11, align 8
   %84 = load i32, i32* %9, align 4
-  %85 = load i64, i64* %10, align 8
-  %86 = load i8*, i8** %11, align 8
-  %87 = call i64 @llvm.objectsize.i64.p0i8(i8* %86, i1 false, i1 true, i1 false)
-  %88 = call i8* @__memset_chk(i8* noundef %83, i32 noundef %84, i64 noundef %85, i64 noundef %87) #6
-  br label %89
+  %85 = trunc i32 %84 to i8
+  %86 = load i64, i64* %10, align 8
+  call void @llvm.memset.p0i8.i64(i8* align 1 %83, i8 %85, i64 %86, i1 false)
+  br label %87
 
-89:                                               ; preds = %82, %79
-  %90 = load i8*, i8** %11, align 8
-  %91 = load i8**, i8*** %12, align 8
-  %92 = load i32, i32* %14, align 4
-  %93 = zext i32 %92 to i64
-  %94 = getelementptr inbounds i8*, i8** %91, i64 %93
-  store i8* %90, i8** %94, align 8
-  br label %95
+87:                                               ; preds = %82, %79
+  %88 = load i8*, i8** %11, align 8
+  %89 = load i8**, i8*** %12, align 8
+  %90 = load i32, i32* %14, align 4
+  %91 = zext i32 %90 to i64
+  %92 = getelementptr inbounds i8*, i8** %89, i64 %91
+  store i8* %88, i8** %92, align 8
+  br label %93
 
-95:                                               ; preds = %89
-  %96 = load i32, i32* %14, align 4
-  %97 = add i32 %96, 1
-  store i32 %97, i32* %14, align 4
-  br label %53, !llvm.loop !12
+93:                                               ; preds = %87
+  %94 = load i32, i32* %14, align 4
+  %95 = add i32 %94, 1
+  store i32 %95, i32* %14, align 4
+  br label %53, !llvm.loop !6
 
-98:                                               ; preds = %53
-  %99 = load %struct.png_struct_def*, %struct.png_struct_def** %6, align 8
-  %100 = load %struct.png_info_def*, %struct.png_info_def** %7, align 8
-  %101 = load i8**, i8*** %12, align 8
-  call void @png_set_rows(%struct.png_struct_def* noundef %99, %struct.png_info_def* noundef %100, i8** noundef %101)
-  %102 = load i8**, i8*** %12, align 8
-  store i8** %102, i8*** %5, align 8
-  br label %103
+96:                                               ; preds = %53
+  %97 = load %struct.png_struct_def*, %struct.png_struct_def** %6, align 8
+  %98 = load %struct.png_info_def*, %struct.png_info_def** %7, align 8
+  %99 = load i8**, i8*** %12, align 8
+  call void @png_set_rows(%struct.png_struct_def* noundef %97, %struct.png_info_def* noundef %98, i8** noundef %99)
+  %100 = load i8**, i8*** %12, align 8
+  store i8** %100, i8*** %5, align 8
+  br label %101
 
-103:                                              ; preds = %98, %75, %51
-  %104 = load i8**, i8*** %5, align 8
-  ret i8** %104
+101:                                              ; preds = %96, %75, %51
+  %102 = load i8**, i8*** %5, align 8
+  ret i8** %102
 }
 
-declare i32 @png_get_image_height(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #1
+declare dso_local i32 @png_get_image_height(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #1
 
 ; Function Attrs: noreturn
-declare void @png_error(%struct.png_struct_def* noundef, i8* noundef) #2
+declare dso_local void @png_error(%struct.png_struct_def* noundef, i8* noundef) #2
 
-declare i64 @png_get_rowbytes(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #1
+declare dso_local i64 @png_get_rowbytes(%struct.png_struct_def* noundef, %struct.png_info_def* noundef) #1
 
-declare void @png_free_data(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef) #1
+declare dso_local void @png_free_data(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i32 noundef, i32 noundef) #1
 
-declare noalias i8* @png_malloc(%struct.png_struct_def* noundef, i64 noundef) #1
+declare dso_local noalias i8* @png_malloc(%struct.png_struct_def* noundef, i64 noundef) #1
 
-declare void @png_free(%struct.png_struct_def* noundef, i8* noundef) #1
+declare dso_local void @png_free(%struct.png_struct_def* noundef, i8* noundef) #1
 
-; Function Attrs: nounwind
-declare i8* @__memset_chk(i8* noundef, i32 noundef, i64 noundef, i64 noundef) #3
+; Function Attrs: argmemonly nofree nounwind willreturn writeonly
+declare void @llvm.memset.p0i8.i64(i8* nocapture writeonly, i8, i64, i1 immarg) #3
 
-; Function Attrs: nofree nosync nounwind readnone speculatable willreturn
-declare i64 @llvm.objectsize.i64.p0i8(i8*, i1 immarg, i1 immarg, i1 immarg) #4
+declare dso_local void @png_set_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef) #1
 
-declare void @png_set_rows(%struct.png_struct_def* noundef, %struct.png_info_def* noundef, i8** noundef) #1
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { noreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { argmemonly nofree nounwind willreturn writeonly }
+attributes #4 = { noreturn }
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #2 = { noreturn "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { nounwind "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #4 = { nofree nosync nounwind readnone speculatable willreturn }
-attributes #5 = { noreturn }
-attributes #6 = { nounwind }
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
-
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}

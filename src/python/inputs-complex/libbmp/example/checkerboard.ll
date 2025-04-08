@@ -1,7 +1,7 @@
 ; ModuleID = 'checkerboard.c'
 source_filename = "checkerboard.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct._bmp_img = type { %struct._bmp_header, %struct._bmp_pixel** }
 %struct._bmp_header = type { i32, i32, i32, i32, i32, i32, i16, i16, i32, i32, i32, i32, i32, i32 }
@@ -9,8 +9,8 @@ target triple = "arm64-apple-macosx14.0.0"
 
 @.str = private unnamed_addr constant [9 x i8] c"test.bmp\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @main(i32 noundef %0, i8** noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @main(i32 noundef %0, i8** noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
   %5 = alloca i8**, align 8
@@ -91,7 +91,7 @@ define i32 @main(i32 noundef %0, i8** noundef %1) #0 {
   %50 = load i64, i64* %8, align 8
   %51 = add i64 %50, 1
   store i64 %51, i64* %8, align 8
-  br label %13, !llvm.loop !10
+  br label %13, !llvm.loop !4
 
 52:                                               ; preds = %13
   br label %53
@@ -100,7 +100,7 @@ define i32 @main(i32 noundef %0, i8** noundef %1) #0 {
   %54 = load i64, i64* %7, align 8
   %55 = add i64 %54, 1
   store i64 %55, i64* %7, align 8
-  br label %9, !llvm.loop !12
+  br label %9, !llvm.loop !6
 
 56:                                               ; preds = %9
   %57 = call i32 @bmp_img_write(%struct._bmp_img* noundef %6, i8* noundef getelementptr inbounds ([9 x i8], [9 x i8]* @.str, i64 0, i64 0))
@@ -108,30 +108,24 @@ define i32 @main(i32 noundef %0, i8** noundef %1) #0 {
   ret i32 0
 }
 
-declare void @bmp_img_init_df(%struct._bmp_img* noundef, i32 noundef, i32 noundef) #1
+declare dso_local void @bmp_img_init_df(%struct._bmp_img* noundef, i32 noundef, i32 noundef) #1
 
-declare void @bmp_pixel_init(%struct._bmp_pixel* noundef, i8 noundef zeroext, i8 noundef zeroext, i8 noundef zeroext) #1
+declare dso_local void @bmp_pixel_init(%struct._bmp_pixel* noundef, i8 noundef zeroext, i8 noundef zeroext, i8 noundef zeroext) #1
 
-declare i32 @bmp_img_write(%struct._bmp_img* noundef, i8* noundef) #1
+declare dso_local i32 @bmp_img_write(%struct._bmp_img* noundef, i8* noundef) #1
 
-declare void @bmp_img_free(%struct._bmp_img* noundef) #1
+declare dso_local void @bmp_img_free(%struct._bmp_img* noundef) #1
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}

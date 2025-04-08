@@ -1,20 +1,21 @@
 ; ModuleID = '../libbmp.c'
 source_filename = "../libbmp.c"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128"
-target triple = "arm64-apple-macosx14.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
 %struct._bmp_header = type { i32, i32, i32, i32, i32, i32, i16, i16, i32, i32, i32, i32, i32, i32 }
-%struct.__sFILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
-%struct.__sFILEX = type opaque
-%struct.__sbuf = type { i8*, i32 }
+%struct._IO_FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct._IO_FILE*, i32, i32, i64, i16, i8, [1 x i8], i8*, i64, %struct._IO_codecvt*, %struct._IO_wide_data*, %struct._IO_FILE*, i8*, %struct._IO_FILE**, i32, [20 x i8] }
+%struct._IO_marker = type opaque
+%struct._IO_codecvt = type opaque
+%struct._IO_wide_data = type opaque
 %struct._bmp_pixel = type { i8, i8, i8 }
 %struct._bmp_img = type { %struct._bmp_header, %struct._bmp_pixel** }
 
 @.str = private unnamed_addr constant [3 x i8] c"wb\00", align 1
 @.str.1 = private unnamed_addr constant [3 x i8] c"rb\00", align 1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @bmp_header_init_df(%struct._bmp_header* noundef %0, i32 noundef %1, i32 noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @bmp_header_init_df(%struct._bmp_header* noundef %0, i32 noundef %1, i32 noundef %2) #0 {
   %4 = alloca %struct._bmp_header*, align 8
   %5 = alloca i32, align 4
   %6 = alloca i32, align 4
@@ -81,16 +82,16 @@ define void @bmp_header_init_df(%struct._bmp_header* noundef %0, i32 noundef %1,
 }
 
 ; Function Attrs: nounwind readnone willreturn
-declare i32 @abs(i32 noundef) #1
+declare dso_local i32 @abs(i32 noundef) #1
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @bmp_header_write(%struct._bmp_header* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @bmp_header_write(%struct._bmp_header* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca %struct._bmp_header*, align 8
-  %5 = alloca %struct.__sFILE*, align 8
+  %5 = alloca %struct._IO_FILE*, align 8
   %6 = alloca i16, align 2
   store %struct._bmp_header* %0, %struct._bmp_header** %4, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %5, align 8
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %5, align 8
   %7 = load %struct._bmp_header*, %struct._bmp_header** %4, align 8
   %8 = icmp eq %struct._bmp_header* %7, null
   br i1 %8, label %9, label %10
@@ -100,8 +101,8 @@ define i32 @bmp_header_write(%struct._bmp_header* noundef %0, %struct.__sFILE* n
   br label %23
 
 10:                                               ; preds = %2
-  %11 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %12 = icmp eq %struct.__sFILE* %11, null
+  %11 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %12 = icmp eq %struct._IO_FILE* %11, null
   br i1 %12, label %13, label %14
 
 13:                                               ; preds = %10
@@ -114,12 +115,12 @@ define i32 @bmp_header_write(%struct._bmp_header* noundef %0, %struct.__sFILE* n
 15:                                               ; preds = %14
   store i16 19778, i16* %6, align 2
   %16 = bitcast i16* %6 to i8*
-  %17 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %18 = call i64 @"\01_fwrite"(i8* noundef %16, i64 noundef 2, i64 noundef 1, %struct.__sFILE* noundef %17)
+  %17 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %18 = call i64 @fwrite(i8* noundef %16, i64 noundef 2, i64 noundef 1, %struct._IO_FILE* noundef %17)
   %19 = load %struct._bmp_header*, %struct._bmp_header** %4, align 8
   %20 = bitcast %struct._bmp_header* %19 to i8*
-  %21 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %22 = call i64 @"\01_fwrite"(i8* noundef %20, i64 noundef 52, i64 noundef 1, %struct.__sFILE* noundef %21)
+  %21 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %22 = call i64 @fwrite(i8* noundef %20, i64 noundef 52, i64 noundef 1, %struct._IO_FILE* noundef %21)
   store i32 0, i32* %3, align 4
   br label %23
 
@@ -128,18 +129,18 @@ define i32 @bmp_header_write(%struct._bmp_header* noundef %0, %struct.__sFILE* n
   ret i32 %24
 }
 
-declare i64 @"\01_fwrite"(i8* noundef, i64 noundef, i64 noundef, %struct.__sFILE* noundef) #2
+declare dso_local i64 @fwrite(i8* noundef, i64 noundef, i64 noundef, %struct._IO_FILE* noundef) #2
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @bmp_header_read(%struct._bmp_header* noundef %0, %struct.__sFILE* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @bmp_header_read(%struct._bmp_header* noundef %0, %struct._IO_FILE* noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca %struct._bmp_header*, align 8
-  %5 = alloca %struct.__sFILE*, align 8
+  %5 = alloca %struct._IO_FILE*, align 8
   %6 = alloca i16, align 2
   store %struct._bmp_header* %0, %struct._bmp_header** %4, align 8
-  store %struct.__sFILE* %1, %struct.__sFILE** %5, align 8
-  %7 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %8 = icmp eq %struct.__sFILE* %7, null
+  store %struct._IO_FILE* %1, %struct._IO_FILE** %5, align 8
+  %7 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %8 = icmp eq %struct._IO_FILE* %7, null
   br i1 %8, label %9, label %10
 
 9:                                                ; preds = %2
@@ -148,8 +149,8 @@ define i32 @bmp_header_read(%struct._bmp_header* noundef %0, %struct.__sFILE* no
 
 10:                                               ; preds = %2
   %11 = bitcast i16* %6 to i8*
-  %12 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %13 = call i64 @fread(i8* noundef %11, i64 noundef 2, i64 noundef 1, %struct.__sFILE* noundef %12)
+  %12 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %13 = call i64 @fread(i8* noundef %11, i64 noundef 2, i64 noundef 1, %struct._IO_FILE* noundef %12)
   %14 = icmp ne i64 %13, 1
   br i1 %14, label %19, label %15
 
@@ -166,8 +167,8 @@ define i32 @bmp_header_read(%struct._bmp_header* noundef %0, %struct.__sFILE* no
 20:                                               ; preds = %15
   %21 = load %struct._bmp_header*, %struct._bmp_header** %4, align 8
   %22 = bitcast %struct._bmp_header* %21 to i8*
-  %23 = load %struct.__sFILE*, %struct.__sFILE** %5, align 8
-  %24 = call i64 @fread(i8* noundef %22, i64 noundef 52, i64 noundef 1, %struct.__sFILE* noundef %23)
+  %23 = load %struct._IO_FILE*, %struct._IO_FILE** %5, align 8
+  %24 = call i64 @fread(i8* noundef %22, i64 noundef 52, i64 noundef 1, %struct._IO_FILE* noundef %23)
   %25 = icmp ne i64 %24, 1
   br i1 %25, label %26, label %27
 
@@ -184,10 +185,10 @@ define i32 @bmp_header_read(%struct._bmp_header* noundef %0, %struct.__sFILE* no
   ret i32 %29
 }
 
-declare i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct.__sFILE* noundef) #2
+declare dso_local i64 @fread(i8* noundef, i64 noundef, i64 noundef, %struct._IO_FILE* noundef) #2
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @bmp_pixel_init(%struct._bmp_pixel* noundef %0, i8 noundef zeroext %1, i8 noundef zeroext %2, i8 noundef zeroext %3) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @bmp_pixel_init(%struct._bmp_pixel* noundef %0, i8 noundef zeroext %1, i8 noundef zeroext %2, i8 noundef zeroext %3) #0 {
   %5 = alloca %struct._bmp_pixel*, align 8
   %6 = alloca i8, align 1
   %7 = alloca i8, align 1
@@ -211,8 +212,8 @@ define void @bmp_pixel_init(%struct._bmp_pixel* noundef %0, i8 noundef zeroext %
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @bmp_img_alloc(%struct._bmp_img* noundef %0) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @bmp_img_alloc(%struct._bmp_img* noundef %0) #0 {
   %2 = alloca %struct._bmp_img*, align 8
   %3 = alloca i64, align 8
   %4 = alloca i64, align 8
@@ -226,7 +227,7 @@ define void @bmp_img_alloc(%struct._bmp_img* noundef %0) #0 {
   store i64 %10, i64* %3, align 8
   %11 = load i64, i64* %3, align 8
   %12 = mul i64 8, %11
-  %13 = call i8* @malloc(i64 noundef %12) #6
+  %13 = call noalias i8* @malloc(i64 noundef %12) #6
   %14 = bitcast i8* %13 to %struct._bmp_pixel**
   %15 = load %struct._bmp_img*, %struct._bmp_img** %2, align 8
   %16 = getelementptr inbounds %struct._bmp_img, %struct._bmp_img* %15, i32 0, i32 1
@@ -247,7 +248,7 @@ define void @bmp_img_alloc(%struct._bmp_img* noundef %0) #0 {
   %25 = load i32, i32* %24, align 8
   %26 = sext i32 %25 to i64
   %27 = mul i64 3, %26
-  %28 = call i8* @malloc(i64 noundef %27) #6
+  %28 = call noalias i8* @malloc(i64 noundef %27) #6
   %29 = bitcast i8* %28 to %struct._bmp_pixel*
   %30 = load %struct._bmp_img*, %struct._bmp_img** %2, align 8
   %31 = getelementptr inbounds %struct._bmp_img, %struct._bmp_img* %30, i32 0, i32 1
@@ -261,17 +262,17 @@ define void @bmp_img_alloc(%struct._bmp_img* noundef %0) #0 {
   %36 = load i64, i64* %4, align 8
   %37 = add i64 %36, 1
   store i64 %37, i64* %4, align 8
-  br label %17, !llvm.loop !10
+  br label %17, !llvm.loop !4
 
 38:                                               ; preds = %17
   ret void
 }
 
-; Function Attrs: allocsize(0)
-declare i8* @malloc(i64 noundef) #3
+; Function Attrs: nounwind
+declare dso_local noalias i8* @malloc(i64 noundef) #3
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @bmp_img_init_df(%struct._bmp_img* noundef %0, i32 noundef %1, i32 noundef %2) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @bmp_img_init_df(%struct._bmp_img* noundef %0, i32 noundef %1, i32 noundef %2) #0 {
   %4 = alloca %struct._bmp_img*, align 8
   %5 = alloca i32, align 4
   %6 = alloca i32, align 4
@@ -288,8 +289,8 @@ define void @bmp_img_init_df(%struct._bmp_img* noundef %0, i32 noundef %1, i32 n
   ret void
 }
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define void @bmp_img_free(%struct._bmp_img* noundef %0) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local void @bmp_img_free(%struct._bmp_img* noundef %0) #0 {
   %2 = alloca %struct._bmp_img*, align 8
   %3 = alloca i64, align 8
   %4 = alloca i64, align 8
@@ -318,32 +319,33 @@ define void @bmp_img_free(%struct._bmp_img* noundef %0) #0 {
   %20 = getelementptr inbounds %struct._bmp_pixel*, %struct._bmp_pixel** %18, i64 %19
   %21 = load %struct._bmp_pixel*, %struct._bmp_pixel** %20, align 8
   %22 = bitcast %struct._bmp_pixel* %21 to i8*
-  call void @free(i8* noundef %22)
+  call void @free(i8* noundef %22) #6
   br label %23
 
 23:                                               ; preds = %15
   %24 = load i64, i64* %4, align 8
   %25 = add i64 %24, 1
   store i64 %25, i64* %4, align 8
-  br label %11, !llvm.loop !12
+  br label %11, !llvm.loop !6
 
 26:                                               ; preds = %11
   %27 = load %struct._bmp_img*, %struct._bmp_img** %2, align 8
   %28 = getelementptr inbounds %struct._bmp_img, %struct._bmp_img* %27, i32 0, i32 1
   %29 = load %struct._bmp_pixel**, %struct._bmp_pixel*** %28, align 8
   %30 = bitcast %struct._bmp_pixel** %29 to i8*
-  call void @free(i8* noundef %30)
+  call void @free(i8* noundef %30) #6
   ret void
 }
 
-declare void @free(i8* noundef) #2
+; Function Attrs: nounwind
+declare dso_local void @free(i8* noundef) #3
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @bmp_img_write(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @bmp_img_write(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca %struct._bmp_img*, align 8
   %5 = alloca i8*, align 8
-  %6 = alloca %struct.__sFILE*, align 8
+  %6 = alloca %struct._IO_FILE*, align 8
   %7 = alloca i32, align 4
   %8 = alloca i64, align 8
   %9 = alloca i64, align 8
@@ -352,10 +354,10 @@ define i32 @bmp_img_write(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   store %struct._bmp_img* %0, %struct._bmp_img** %4, align 8
   store i8* %1, i8** %5, align 8
   %12 = load i8*, i8** %5, align 8
-  %13 = call %struct.__sFILE* @"\01_fopen"(i8* noundef %12, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0))
-  store %struct.__sFILE* %13, %struct.__sFILE** %6, align 8
-  %14 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %15 = icmp eq %struct.__sFILE* %14, null
+  %13 = call noalias %struct._IO_FILE* @fopen(i8* noundef %12, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0))
+  store %struct._IO_FILE* %13, %struct._IO_FILE** %6, align 8
+  %14 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %15 = icmp eq %struct._IO_FILE* %14, null
   br i1 %15, label %16, label %17
 
 16:                                               ; preds = %2
@@ -365,16 +367,16 @@ define i32 @bmp_img_write(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
 17:                                               ; preds = %2
   %18 = load %struct._bmp_img*, %struct._bmp_img** %4, align 8
   %19 = getelementptr inbounds %struct._bmp_img, %struct._bmp_img* %18, i32 0, i32 0
-  %20 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %21 = call i32 @bmp_header_write(%struct._bmp_header* noundef %19, %struct.__sFILE* noundef %20)
+  %20 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %21 = call i32 @bmp_header_write(%struct._bmp_header* noundef %19, %struct._IO_FILE* noundef %20)
   store i32 %21, i32* %7, align 4
   %22 = load i32, i32* %7, align 4
   %23 = icmp ne i32 %22, 0
   br i1 %23, label %24, label %28
 
 24:                                               ; preds = %17
-  %25 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %26 = call i32 @fclose(%struct.__sFILE* noundef %25)
+  %25 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %26 = call i32 @fclose(%struct._IO_FILE* noundef %25)
   %27 = load i32, i32* %7, align 4
   store i32 %27, i32* %3, align 4
   br label %86
@@ -434,8 +436,8 @@ define i32 @bmp_img_write(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   %66 = getelementptr inbounds %struct._bmp_header, %struct._bmp_header* %65, i32 0, i32 4
   %67 = load i32, i32* %66, align 8
   %68 = sext i32 %67 to i64
-  %69 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %70 = call i64 @"\01_fwrite"(i8* noundef %63, i64 noundef 3, i64 noundef %68, %struct.__sFILE* noundef %69)
+  %69 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %70 = call i64 @fwrite(i8* noundef %63, i64 noundef 3, i64 noundef %68, %struct._IO_FILE* noundef %69)
   %71 = getelementptr inbounds [3 x i8], [3 x i8]* %10, i64 0, i64 0
   %72 = load %struct._bmp_img*, %struct._bmp_img** %4, align 8
   %73 = getelementptr inbounds %struct._bmp_img, %struct._bmp_img* %72, i32 0, i32 0
@@ -443,19 +445,19 @@ define i32 @bmp_img_write(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   %75 = load i32, i32* %74, align 8
   %76 = srem i32 %75, 4
   %77 = sext i32 %76 to i64
-  %78 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %79 = call i64 @"\01_fwrite"(i8* noundef %71, i64 noundef 1, i64 noundef %77, %struct.__sFILE* noundef %78)
+  %78 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %79 = call i64 @fwrite(i8* noundef %71, i64 noundef 1, i64 noundef %77, %struct._IO_FILE* noundef %78)
   br label %80
 
 80:                                               ; preds = %51
   %81 = load i64, i64* %11, align 8
   %82 = add i64 %81, 1
   store i64 %82, i64* %11, align 8
-  br label %47, !llvm.loop !13
+  br label %47, !llvm.loop !7
 
 83:                                               ; preds = %47
-  %84 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %85 = call i32 @fclose(%struct.__sFILE* noundef %84)
+  %84 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %85 = call i32 @fclose(%struct._IO_FILE* noundef %84)
   store i32 0, i32* %3, align 4
   br label %86
 
@@ -464,19 +466,19 @@ define i32 @bmp_img_write(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   ret i32 %87
 }
 
-declare %struct.__sFILE* @"\01_fopen"(i8* noundef, i8* noundef) #2
+declare dso_local noalias %struct._IO_FILE* @fopen(i8* noundef, i8* noundef) #2
 
-declare i32 @fclose(%struct.__sFILE* noundef) #2
+declare dso_local i32 @fclose(%struct._IO_FILE* noundef) #2
 
 ; Function Attrs: argmemonly nofree nounwind willreturn writeonly
 declare void @llvm.memset.p0i8.i64(i8* nocapture writeonly, i8, i64, i1 immarg) #4
 
-; Function Attrs: noinline nounwind optnone ssp uwtable
-define i32 @bmp_img_read(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @bmp_img_read(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   %3 = alloca i32, align 4
   %4 = alloca %struct._bmp_img*, align 8
   %5 = alloca i8*, align 8
-  %6 = alloca %struct.__sFILE*, align 8
+  %6 = alloca %struct._IO_FILE*, align 8
   %7 = alloca i32, align 4
   %8 = alloca i64, align 8
   %9 = alloca i64, align 8
@@ -486,10 +488,10 @@ define i32 @bmp_img_read(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   store %struct._bmp_img* %0, %struct._bmp_img** %4, align 8
   store i8* %1, i8** %5, align 8
   %13 = load i8*, i8** %5, align 8
-  %14 = call %struct.__sFILE* @"\01_fopen"(i8* noundef %13, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.1, i64 0, i64 0))
-  store %struct.__sFILE* %14, %struct.__sFILE** %6, align 8
-  %15 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %16 = icmp eq %struct.__sFILE* %15, null
+  %14 = call noalias %struct._IO_FILE* @fopen(i8* noundef %13, i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str.1, i64 0, i64 0))
+  store %struct._IO_FILE* %14, %struct._IO_FILE** %6, align 8
+  %15 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %16 = icmp eq %struct._IO_FILE* %15, null
   br i1 %16, label %17, label %18
 
 17:                                               ; preds = %2
@@ -499,16 +501,16 @@ define i32 @bmp_img_read(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
 18:                                               ; preds = %2
   %19 = load %struct._bmp_img*, %struct._bmp_img** %4, align 8
   %20 = getelementptr inbounds %struct._bmp_img, %struct._bmp_img* %19, i32 0, i32 0
-  %21 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %22 = call i32 @bmp_header_read(%struct._bmp_header* noundef %20, %struct.__sFILE* noundef %21)
+  %21 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %22 = call i32 @bmp_header_read(%struct._bmp_header* noundef %20, %struct._IO_FILE* noundef %21)
   store i32 %22, i32* %7, align 4
   %23 = load i32, i32* %7, align 4
   %24 = icmp ne i32 %23, 0
   br i1 %24, label %25, label %29
 
 25:                                               ; preds = %18
-  %26 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %27 = call i32 @fclose(%struct.__sFILE* noundef %26)
+  %26 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %27 = call i32 @fclose(%struct._IO_FILE* noundef %26)
   %28 = load i32, i32* %7, align 4
   store i32 %28, i32* %3, align 4
   br label %94
@@ -577,33 +579,33 @@ define i32 @bmp_img_read(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   %74 = load %struct._bmp_pixel*, %struct._bmp_pixel** %73, align 8
   %75 = bitcast %struct._bmp_pixel* %74 to i8*
   %76 = load i64, i64* %11, align 8
-  %77 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %78 = call i64 @fread(i8* noundef %75, i64 noundef 3, i64 noundef %76, %struct.__sFILE* noundef %77)
+  %77 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %78 = call i64 @fread(i8* noundef %75, i64 noundef 3, i64 noundef %76, %struct._IO_FILE* noundef %77)
   %79 = load i64, i64* %11, align 8
   %80 = icmp ne i64 %78, %79
   br i1 %80, label %81, label %84
 
 81:                                               ; preds = %63
-  %82 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %83 = call i32 @fclose(%struct.__sFILE* noundef %82)
+  %82 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %83 = call i32 @fclose(%struct._IO_FILE* noundef %82)
   store i32 -1, i32* %3, align 4
   br label %94
 
 84:                                               ; preds = %63
-  %85 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
+  %85 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
   %86 = load i64, i64* %10, align 8
-  %87 = call i32 @fseek(%struct.__sFILE* noundef %85, i64 noundef %86, i32 noundef 1)
+  %87 = call i32 @fseek(%struct._IO_FILE* noundef %85, i64 noundef %86, i32 noundef 1)
   br label %88
 
 88:                                               ; preds = %84
   %89 = load i64, i64* %12, align 8
   %90 = add i64 %89, 1
   store i64 %90, i64* %12, align 8
-  br label %59, !llvm.loop !14
+  br label %59, !llvm.loop !8
 
 91:                                               ; preds = %59
-  %92 = load %struct.__sFILE*, %struct.__sFILE** %6, align 8
-  %93 = call i32 @fclose(%struct.__sFILE* noundef %92)
+  %92 = load %struct._IO_FILE*, %struct._IO_FILE** %6, align 8
+  %93 = call i32 @fclose(%struct._IO_FILE* noundef %92)
   store i32 0, i32* %3, align 4
   br label %94
 
@@ -612,31 +614,25 @@ define i32 @bmp_img_read(%struct._bmp_img* noundef %0, i8* noundef %1) #0 {
   ret i32 %95
 }
 
-declare i32 @fseek(%struct.__sFILE* noundef, i64 noundef, i32 noundef) #2
+declare dso_local i32 @fseek(%struct._IO_FILE* noundef, i64 noundef, i32 noundef) #2
 
-attributes #0 = { noinline nounwind optnone ssp uwtable "frame-pointer"="non-leaf" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #1 = { nounwind readnone willreturn "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #2 = { "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
-attributes #3 = { allocsize(0) "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+crc,+crypto,+dotprod,+fp-armv8,+fp16fml,+fullfp16,+lse,+neon,+ras,+rcpc,+rdm,+sha2,+v8.5a,+zcm,+zcz" }
+attributes #0 = { noinline nounwind optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { nounwind readnone willreturn "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #2 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #3 = { nounwind "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #4 = { argmemonly nofree nounwind willreturn writeonly }
 attributes #5 = { nounwind readnone willreturn }
-attributes #6 = { allocsize(0) }
+attributes #6 = { nounwind }
 
-!llvm.module.flags = !{!0, !1, !2, !3, !4, !5, !6, !7, !8}
-!llvm.ident = !{!9}
+!llvm.module.flags = !{!0, !1, !2}
+!llvm.ident = !{!3}
 
-!0 = !{i32 2, !"SDK Version", [2 x i32] [i32 14, i32 4]}
-!1 = !{i32 1, !"wchar_size", i32 4}
-!2 = !{i32 1, !"branch-target-enforcement", i32 0}
-!3 = !{i32 1, !"sign-return-address", i32 0}
-!4 = !{i32 1, !"sign-return-address-all", i32 0}
-!5 = !{i32 1, !"sign-return-address-with-bkey", i32 0}
-!6 = !{i32 7, !"PIC Level", i32 2}
-!7 = !{i32 7, !"uwtable", i32 1}
-!8 = !{i32 7, !"frame-pointer", i32 1}
-!9 = !{!"clang version 14.0.0"}
-!10 = distinct !{!10, !11}
-!11 = !{!"llvm.loop.mustprogress"}
-!12 = distinct !{!12, !11}
-!13 = distinct !{!13, !11}
-!14 = distinct !{!14, !11}
+!0 = !{i32 1, !"wchar_size", i32 4}
+!1 = !{i32 7, !"uwtable", i32 1}
+!2 = !{i32 7, !"frame-pointer", i32 2}
+!3 = !{!"clang version 14.0.0 (https://github.com/llvm/llvm-project.git 329fda39c507e8740978d10458451dcdb21563be)"}
+!4 = distinct !{!4, !5}
+!5 = !{!"llvm.loop.mustprogress"}
+!6 = distinct !{!6, !5}
+!7 = distinct !{!7, !5}
+!8 = distinct !{!8, !5}
