@@ -1,4 +1,0 @@
-klee --libc=klee --max-time=600 --max-tests=50 c.ll
-PID: 1466142
-Using monotonic steady clock with 1/1000000000s resolution
-Started: 2025-04-08 03:34:21

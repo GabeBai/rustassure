@@ -1,2 +1,0 @@
-KLEE: WARNING: undefined reference to variable: _DefaultRuneLocale
-KLEE: ERROR: Unable to load symbol(_DefaultRuneLocale) while initializing globals
