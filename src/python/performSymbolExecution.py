@@ -101,7 +101,7 @@ def libcsv_claude_3_5_sonnet():
 
 def libbmp_gpt_4o():
     print("Executing libbmp task with GPT-4o...")
-    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_gpt-4o_2025-02-11_19-42-52__complete"
+    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_gpt-4o_2025-04-09_00-45-00__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -145,7 +145,7 @@ def libbmp_claude_3_5_sonnet():
 
 def optipng_gpt_4o():
     print("Executing optipng task with GPT-4o...")
-    source_dir = "inputs-complex/optipng/archive/individual-funcs_gpt-4o_2025-04-08_23-20-14__complete"
+    source_dir = "inputs-complex/optipng/archive/individual-funcs_gpt-4o_2025-04-09_00-31-55__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -189,7 +189,7 @@ def optipng_claude_3_5_sonnet():
 
 def url_parser_gpt_4o():
     print("Executing url_parser task with GPT-4o...")
-    source_dir = "inputs-complex/url_parser.h/archive/individual-funcs_gpt-4o_2025-04-08_23-21-14__complete"
+    source_dir = "inputs-complex/url_parser.h/archive/individual-funcs_gpt-4o_2025-04-09_00-41-44__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -233,7 +233,7 @@ def url_parser_claude_3_5_sonnet():
 
 def u8c_gpt_4o():
     print("Executing u8c task with GPT-4o...")
-    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_gpt-4o_2025-02-11_19-37-59__complete"
+    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_gpt-4o_2025-04-09_00-47-30__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
