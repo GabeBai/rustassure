@@ -1,0 +1,6 @@
+KLEE: WARNING ONCE: unsupported intrinsic llvm.x86.sse2.pause
+KLEE: WARNING ONCE: unsupported intrinsic llvm.vector.reduce.add.v2i64
+KLEE: WARNING ONCE: unsupported intrinsic llvm.load.relative.i64
+KLEE: WARNING ONCE: unsupported intrinsic llvm.vector.reduce.add.v4i32
+KLEE: WARNING: undefined reference to variable: statx
+KLEE: WARNING: executable has module level assembly (ignoring)

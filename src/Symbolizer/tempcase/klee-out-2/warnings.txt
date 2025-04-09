@@ -1,0 +1,7 @@
+KLEE: WARNING ONCE: unsupported intrinsic llvm.vector.reduce.add.v2i64
+KLEE: WARNING ONCE: unsupported intrinsic llvm.x86.sse2.pause
+KLEE: WARNING: undefined reference to variable: _ZN6object3elf12ELF_NOTE_GNU17h7febab72e33ae7d8E
+KLEE: WARNING: undefined reference to function: core::fmt::num::imp::<impl core::fmt::Display for usize>::fmt
+KLEE: WARNING: undefined reference to function: rust_eh_personality
+KLEE: WARNING: undefined reference to variable: statx
+KLEE: ERROR: Unable to load symbol(_ZN6object3elf12ELF_NOTE_GNU17h7febab72e33ae7d8E) while initializing globals
