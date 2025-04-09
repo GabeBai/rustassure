@@ -145,7 +145,7 @@ def libbmp_claude_3_5_sonnet():
 
 def optipng_gpt_4o():
     print("Executing optipng task with GPT-4o...")
-    source_dir = "inputs-complex/optipng/archive/individual-funcs_gpt-4o_2025-04-09_00-31-55__complete"
+    source_dir = "inputs-complex/optipng/archive/individual-funcs_gpt-4o_2025-04-09_01-30-38__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
