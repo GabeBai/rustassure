@@ -204,19 +204,20 @@ def process_c_file(bc_file):
     base_name = os.path.basename(bc_file).replace(".i.bc", "")
 
     # 1) opt pass
+
+    # link core
+    link_core = (
+        f"llvm-link klee_ir_files/C/{base_name}_klee.ll ../scripts/libc_merged.ll "
+        f"-S -o klee_ir_files/C/{base_name}_klee.ll"
+    )
+    run_command(link_core)
+
     cmd_opt = (
         f"opt -load-pass-plugin ../build/Pass/SymbolizerPass.so "
         f"-O0 {bc_file} -S -o klee_ir_files/C/{base_name}_klee.ll"
     )
 
     run_command(cmd_opt)
-
-        # link core
-    link_core = (
-        f"llvm-link klee_ir_files/C/{base_name}_klee.ll ../scripts/libc_merged.ll "
-        f"-S -o klee_ir_files/C/{base_name}_klee.ll"
-    )
-    run_command(link_core)
 
     cmd_opt2 = (
         f"opt -S -internalize -internalize-public-api-list=main -globaldce "
