@@ -280,7 +280,34 @@ namespace {
 			"memcmp"
 		};
 		std::list<std::string> removed_list = {
-			"__lseek"
+			"core::ptr::read_unaligned",
+			"core::ptr::drop_in_place<core::option::Option<alloc::string::String>>",
+			"core::str::<impl str>::find",
+			"core::result::Result<T,E>::expect",
+			"core::slice::<impl [T]>::is_empty",
+			"core::result::Result<T,E>::ok",
+			// @gab: check this function!
+			"core::ptr::metadata::from_raw_parts_mut",
+			// interesting, actually we has this function, but cannot get result with it..see good case..
+			"alloc::slice::<impl [T]>::into_vec",
+			"core::result::Result<T,E>::unwrap_or",
+			"core::str::<impl str>::ends_with",
+			"__maskrune",
+			"core::ptr::drop_in_place<core::result::Result<u64,std::io::error::Error>>",
+			"std::io::error::repr_bitpacked::decode_repr::{{closure}}",
+			"alloc::vec::from_elem",
+			//add for 4o-mini model
+			"core::result::Result<T,E>::unwrap",//(url_parser : url_get_port)//(why?)
+			//add for calude model
+			"alloc::vec::Vec<T,A>::clear",//bmp_img_free
+
+			// must include otherwise KLEE will have memeory issue
+				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
+			// Rust empty lib function (And, they are also neccessary functions)
+				//1) "<alloc::string::String as core::clone::Clone>::clone" (urlparser : Url_get_port)
+				//"core::result::Result<T,E>::ok", need to be removed, because we don't have the #2 implementation (urlparser :Strdup)
+				//2) "<&str as alloc::ffi::c_str::CString::new::SpecNewImpl>::spec_new_impl"
+				//3) core::ffi::c_str::CStr::to_str,(opipng : app_print_cntrl keep will crash becasue of invalid memory)
 		};
 		GlobalVariable *gCallCounter;
 		std::list<std::string> special_handle_list = {
@@ -1038,6 +1065,7 @@ namespace {
 
 					bool findFreeFunction = false;
 					Function *dummy_func;
+					//todo : make the rust free function more general
 					std::string filename = M.getModuleIdentifier();
 					std::filesystem::path filepath(filename);
 					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
@@ -1130,6 +1158,46 @@ namespace {
 			}
 		}
 
+		// todo: discuss how to process these exeternal global variable
+		void convert_global_const(Module &M) {
+			std::vector<std::string> Names = {"__cp_begin", "__cp_end", "__cp_cancel", "_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hb7b9c59f381708c2E"};
+
+			for (const auto &Name : Names) {
+				GlobalVariable *GV = M.getGlobalVariable(Name);
+				if (!GV)
+					continue;
+		
+				if (GV->hasInitializer())
+					continue;
+		
+				Type *Ty = GV->getValueType();
+				Constant *Init = nullptr;
+		
+				if (Ty->isIntegerTy()) {
+					Init = ConstantInt::get(Ty, 0);
+				} else if (ArrayType *ArrTy = dyn_cast<ArrayType>(Ty)) {
+					Type *EltTy = ArrTy->getElementType();
+					if (EltTy->isIntegerTy(8)) {
+						Init = ConstantAggregateZero::get(ArrTy);
+					} else {
+						Init = ConstantAggregateZero::get(ArrTy);
+					}
+				} else if (StructType *STy = dyn_cast<StructType>(Ty)) {
+					Init = ConstantAggregateZero::get(STy);
+				} else if (Ty->isFloatTy()) {
+					Init = ConstantFP::get(Ty, 0.0);
+				} else if (Ty->isDoubleTy()) {
+					Init = ConstantFP::get(Ty, 0.0);
+				} else {
+					Init = Constant::getNullValue(Ty);
+				}
+		
+				GV->setInitializer(Init);
+				GV->setConstant(true);
+				GV->setLinkage(GlobalValue::InternalLinkage);
+			}
+		}
+
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
 			gCallCounter = new GlobalVariable(M,
 				Type::getInt32Ty(M.getContext()),
@@ -1141,6 +1209,7 @@ namespace {
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);
 			convert_function_calls(M);
+			convert_global_const(M);
 			// convert_unreachable_conditions(M);
 			//M.dump();
 			return PreservedAnalyses::none();
