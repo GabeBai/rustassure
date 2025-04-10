@@ -14,7 +14,6 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
 find_package(LLVM REQUIRED CONFIG)
-find_package(nlohmann_json 3.10 REQUIRED)
 
 message(STATUS "LLVM Version: ${LLVM_PACKAGE_VERSION}")
 message(STATUS "LLVM Include Dirs: ${LLVM_INCLUDE_DIRS}")
