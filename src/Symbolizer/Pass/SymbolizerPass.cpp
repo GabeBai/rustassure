@@ -1075,7 +1075,6 @@ namespace {
 
 					bool findFreeFunction = false;
 					Function *dummy_func;
-					//todo : make the rust free function more general
 					std::string filename = M.getModuleIdentifier();
 					std::filesystem::path filepath(filename);
 					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
@@ -1128,15 +1127,16 @@ namespace {
 								M, return_type, false, GlobalValue::PrivateLinkage,
 								Constant::getNullValue(return_type), "symbolic_ret");
 
-							// Call klee_make_symbolic
-							Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
-							assert(klee_make_symbolic && "Can't find klee_make_symbolic function!");
 
-							Builder.CreateCall(
-								klee_make_symbolic,
-								{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
-								ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
-								Builder.CreateGlobalStringPtr("symbolic_var")});
+							// Call klee_make_symbolic
+							// Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
+							// assert(klee_make_symbolic && "Can't find klee_make_symbolic function!");
+
+							// Builder.CreateCall(
+							// 	klee_make_symbolic,
+							// 	{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
+							// 	ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
+							// 	Builder.CreateGlobalStringPtr("symbolic_var")});
 
 							// Return the global variable
 							Builder.CreateRet(Builder.CreateLoad(return_type, symbolic_ret_val));
