@@ -821,12 +821,22 @@ namespace {
 								continue;
 							}
 						}
+						if (isa<PointerType>(field_type)) {
+							if (StructType *struct_type = dyn_cast<StructType>(field_type->getPointerElementType())) {
+								if (visited_structs.count(struct_type)) {
+									continue;
+								} else {
+									visited_structs.insert(struct_type);
+								}
+							}
+						}
 						if (need_cast) {
 							// field_type is address of the targetType
 							print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, field_type), label + "." + "field_" + std::to_string(i));
 						} else {
 							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
 						}
+						visited_structs.emplace(struct_type);
 					} else {
 						
 						// Create a load
