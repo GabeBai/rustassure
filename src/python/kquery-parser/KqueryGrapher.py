@@ -42,7 +42,6 @@ def extract_unique_numbers_from_string(s):
 
     numbers_before_eq = set(re.findall(r'(\d+)=', s))
 
-    # 返回按数值排序的唯一数字字符串
     return ','.join(sorted(numbers_before_eq, key=int)) if numbers_before_eq else ""
 
 class KqueryASTVisitor(KqueryVisitor):
@@ -371,8 +370,10 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         # Create and apply the custom visitor
         print(f"processing expression {i}")
         visitor = KqueryASTVisitor()
-        visitor.visit(tree)
-        print(f"finish processing expression {i}")
+        try:
+            visitor.visit(tree)
+        catch Exception as e:
+            print(f"finish processing expression {i}")
 
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
