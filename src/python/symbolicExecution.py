@@ -242,7 +242,7 @@ def process_c_file(bc_file):
         f"klee --libc=klee --max-time=7200 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
-    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", timeout=7200)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", timeout=7300)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
@@ -300,7 +300,7 @@ def process_rust_file(bc_file):
         f"klee_ir_files/Rust/{base_name}_klee.ll"
     )
 
-    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", timeout=7200)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", timeout=7300)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")
