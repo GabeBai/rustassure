@@ -1170,7 +1170,8 @@ namespace {
 
 		// todo: discuss how to process these exeternal global variable
 		void convert_global_const(Module &M) {
-			std::vector<std::string> Names = {"__cp_begin", "__cp_end", "__cp_cancel", "_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hb7b9c59f381708c2E"};
+			std::vector<std::string> Names = {"__cp_begin", "__cp_end", "__cp_cancel", "_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hb7b9c59f381708c2E", "_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h00399aec441edfe5E",
+			"_ZN3std11collections4hash3map11RandomState3new4KEYS7__getit5__KEY17h2685127cc93352fdE"};
 
 			for (const auto &Name : Names) {
 				GlobalVariable *GV = M.getGlobalVariable(Name);

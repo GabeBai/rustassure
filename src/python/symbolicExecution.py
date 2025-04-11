@@ -10,7 +10,7 @@ import logging
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-MAX_JOBS = 4
+MAX_JOBS = 16
 START_TIME = time.time()
 
 logger = logging.getLogger("my_logger")
@@ -29,23 +29,34 @@ info_handler.setFormatter(formatter)
 logger.addHandler(error_handler)
 logger.addHandler(info_handler)
 
-
-def run_command_and_log(cmd, log_file, cwd=None):
+def run_command_and_log(cmd, log_file, cwd=None, timeout=3600):
     """
     Run a shell command and write both stdout and stderr to a log file.
     """
     print(f"[INFO] Running command: {cmd}")
 
     with open(log_file, "w") as log:
-        process = subprocess.run(cmd, shell=True, cwd=cwd, stdout=log, stderr=log, text=True)
+        try:
+            process = subprocess.run(
+                cmd,
+                shell=True,
+                cwd=cwd,
+                stdout=log,
+                stderr=log,
+                text=True,
+                timeout=timeout 
+            )
+        except subprocess.TimeoutExpired:
+            print(f"[ERROR] Command timed out after {timeout} seconds: {cmd}")
+            logger.info(f"[ERROR] Command timed out after {timeout} seconds: {cmd}")
+            raise
 
     if process.returncode != 0:
-        msg = (
-            f"Command failed: {cmd}\n"
-        )
+        msg = f"Command failed: {cmd}\n"
         print(f"[ERROR] command fail: {cmd}")
         logger.info(f"[ERROR] command fail: {cmd}")
         raise subprocess.CalledProcessError(process.returncode, cmd, output=msg)
+
     print(f"[INFO] command success: {cmd}")
 
 def run_command(cmd, cwd=None):
@@ -228,10 +239,10 @@ def process_c_file(bc_file):
 
     # 2) klee. We capture the entire output.
     cmd_klee = (
-        f"klee --libc=klee --max-time=600 --max-tests=50 "
+        f"klee --libc=klee --max-time=7200 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
-    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt")
+    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", 7200)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
@@ -285,11 +296,11 @@ def process_rust_file(bc_file):
 
     # 3) klee
     cmd_klee = (
-        f"klee --libc=klee --max-time=800 --max-tests=500 "
+        f"klee --libc=klee --max-time=7200 --max-tests=500000 "
         f"klee_ir_files/Rust/{base_name}_klee.ll"
     )
 
-    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt")
+    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", 7200)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")

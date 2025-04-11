@@ -372,9 +372,11 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         visitor = KqueryASTVisitor()
         try:
             visitor.visit(tree)
-        catch Exception as e:
-            print(f"finish processing expression {i}")
+        except Exception as e:
+            print(f"error expression {expression}")
+            raise RuntimeError(f"error in expression {i}") from e
 
+        print(f"finish processing expression {i}")
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
         removed_sub = process_graph_sub(visitor.G)
