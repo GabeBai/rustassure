@@ -156,9 +156,13 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         best_r_key = None
         # find best match directory for each c input
         for r_key in rust_dict.keys():
+            if r_key == c_key:
+                best_r_key = r_key
+                found_match_input_directory = True
+                break
             if r_key.startswith(c_key):
                 best_r_key = r_key
-                break
+                found_match_input_directory = True
 
         if not found_match_input_directory:
             if c_key.endswith(')'):
