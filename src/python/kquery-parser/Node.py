@@ -1,5 +1,3 @@
-from jsonschema.benchmarks.unused_registry import instance
-
 from KqueryLexer import KqueryLexer
 from KqueryListener import KqueryListener
 from KqueryParser import KqueryParser

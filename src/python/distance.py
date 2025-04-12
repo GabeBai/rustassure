@@ -1,5 +1,3 @@
-from jupyter_server.transutils import base_dir
-
 import networkx as nx
 import os
 import subprocess
@@ -49,32 +47,15 @@ def sanitize(self, functionName):
     self.logger.debug("Sanitized function %s to %s", functionName, functionNameSanitized)
     return functionNameSanitized
 
-
 def matchNodes(node1, node2):
 
     label1 = node1.get('label')
     label2 = node2.get('label')
 
-    is_label1_numeric = label1.isdigit() if isinstance(label1, str) else False
-    is_label2_numeric = label2.isdigit() if isinstance(label2, str) else False
-
-    is_label1_bool = label1 in {"true", "false"} if isinstance(label1, str) else False
-    is_label2_bool = label2 in {"true", "false"} if isinstance(label2, str) else False
-
-    if is_label1_numeric and is_label2_numeric:
+    if label1 == label2:
         return True
-
-    if is_label1_bool and is_label2_bool:
-        return True
-
-    if (is_label1_numeric and is_label2_bool) or (is_label1_bool and is_label2_numeric):
-        if label1 in {"0" , "1"} or label2 in {"0" , "1"}:
-            return True
+    else:
         return False
-
-    return True
-
-
 
 def traverse_two_levels_rust():
     path_to_file_dict = {}
@@ -119,8 +100,7 @@ def compare_graph_optimize_edit_distance(G1, G2, max_iterations = 1):
         count += 1
         if count >= max_iterations:
             break
-    normGed = ged / max(G1.number_of_nodes() + G1.number_of_edges(), G2.number_of_nodes() + G2.number_of_edges())
-    return ged, normGed
+    return ged
 
 def load_graph_from_dot(file_path):
     try:
@@ -133,16 +113,33 @@ def load_graph_from_dot(file_path):
 
 
 
+def calculate_distance(input_files_a,
+                       input_files_b):
+    best_distance = None
+    for i, file_path_a in enumerate(input_files_a):
+        G1 = load_graph_from_dot(file_path_a)
+        num_nodes_a = len(G1.nodes)
+        current_best = 1000
+        for file_path_b in input_files_b:
+            G2 = load_graph_from_dot(file_path_b)
+            num_nodes_b = len(G2.nodes)
+
+            if num_nodes_a == num_nodes_b:
+                current_best = min(current_best, compare_graph_optimize_edit_distance(G1, G2))
+
+        if best_distance is None:
+            best_distance = current_best
+        else:
+            best_distance = max(best_distance, current_best)
+    return best_distance
+
+
 def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
     rust_base = "graph_output/Rust"
     c_base = "graph_output/C"
 
-    results_max = []
-    results_min = []
-    results_all = []
     results_best = []
     free_counts = []
-
 
     for c_key, c_dot_files in c_dict.items():
         if '/' in c_key:
@@ -154,21 +151,16 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         c_dir = os.path.join(c_base, c_key)
         c_files = sorted(glob.glob(os.path.join(c_dir, "*.dot")))
 
-        max_edit_distance = None
-        min_edit_distance = None
-        all_edit_distances = set()
-        node_num_not_match = False
 
-        found_match = False
+        found_match_input_directory = False
         best_r_key = None
-
+        # find best match directory for each c input
         for r_key in rust_dict.keys():
             if r_key.startswith(c_key):
                 best_r_key = r_key
-                found_match = True
                 break
 
-        if not found_match:
+        if not found_match_input_directory:
             if c_key.endswith(')'):
                 # case : lib_csv : csv_error
                 c_key_modified = c_key[:-1]
@@ -193,7 +185,7 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
 
             if matching_r_keys:
                 best_r_key = max(matching_r_keys, key=len)
-                found_match = True
+                found_match_input_directory = True
 
         if c_key.endswith("free_call_counts"):
             free_call_max_c = 0
@@ -215,76 +207,20 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                     free_counts.append((function_name, argument_name, str(abs(free_call_max_c - free_call_max_rust))))
                 else:
                     free_counts.append((function_name, argument_name, "rust_empty"))
-        elif found_match:
+        elif found_match_input_directory:
             print(f" c is {c_key}, rust is {best_r_key}")
 
             rust_dir = os.path.join(rust_base, best_r_key)
             rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
-            for i, c_file_path in enumerate(c_files):
-                G1 = load_graph_from_dot(c_file_path)
-                num_nodes_c = len(G1.nodes)
 
-                match_found = False
-                for rust_file_path in rust_files:
-                    G2 = load_graph_from_dot(rust_file_path)
-                    num_nodes_r = len(G2.nodes)
-
-                    if num_nodes_c == num_nodes_r:
-                        match_found = True
-
-                        distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
-                        if distance is not None and normdistance is not None:
-                            all_edit_distances.add(distance)
-                            max_edit_distance = max(max_edit_distance, distance) if max_edit_distance else distance
-                            min_edit_distance = min(min_edit_distance, distance) if min_edit_distance else distance
-                        break
-
-                if not match_found:
-                    node_num_not_match = True
-                    rust_file_path = rust_files[-1]
-                    G2 = load_graph_from_dot(rust_file_path)
-
-                    distance, normdistance = compare_graph_optimize_edit_distance(G1, G2)
-                    if distance is not None and normdistance is not None:
-                        all_edit_distances.add(distance)
-                        max_edit_distance = max(max_edit_distance, distance) if max_edit_distance is not None else distance
-                        min_edit_distance = min(min_edit_distance, distance) if min_edit_distance is not None else distance
-
-        if not found_match or max_edit_distance is None:
-            max_edit_distance_str = "rust empty"
-            min_edit_distance_str = "rust empty"
-            all_distances_str = "rust empty"
+            edit_distance = max(calculate_distance(c_files, rust_files),
+                                calculate_distance(rust_files, c_files))
+            results_best.append((function_name, argument_name, str(edit_distance)))
         else:
-            max_edit_distance_str = str(max_edit_distance)
-            min_edit_distance_str = str(min_edit_distance)
-            all_distances_str = ", ".join(map(str, sorted(all_edit_distances)))
+            results_best.append((function_name, argument_name, "Rust Empty!"))
 
-        if not c_key.endswith("free_call_counts"):
-            results_max.append((function_name, argument_name, max_edit_distance_str))
-            results_min.append((function_name, argument_name, min_edit_distance_str))
-            results_all.append((function_name, argument_name, all_distances_str))
-
-            if node_num_not_match:
-                results_best.append((function_name, argument_name, all_distances_str))
-            else:
-                results_best.append((function_name, argument_name, min_edit_distance_str))
 
     os.makedirs(output_csv_path, exist_ok=True)
-
-    with open(os.path.join(output_csv_path, 'max_edit_distance.csv'), 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["function_name", "argument_name", "max_edit_distance"])
-        writer.writerows(results_max)
-
-    with open(os.path.join(output_csv_path, 'min_edit_distance.csv'), 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["function_name", "argument_name", "min_edit_distance"])
-        writer.writerows(results_min)
-
-    with open(os.path.join(output_csv_path, 'all_edit_distances.csv'), 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["function_name", "argument_name", "all_edit_distances"])
-        writer.writerows(results_all)
 
     with open(os.path.join(output_csv_path, 'best_edit_distances.csv'), 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)

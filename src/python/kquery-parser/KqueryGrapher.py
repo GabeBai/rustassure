@@ -387,18 +387,12 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446744044584304640
-                                  (ReadLSB w64 0 ptr2)))
-          const_arr96)"""
-    kquery_expression1 = r"""(ReadLSB w64 0 str)"""
-    kquery_expression2 = r"""(Read w8 (Extract w64 0 (Add w64 18446744044584304640
-                                  (ReadLSB w64 0 ptr2)))
-          const_arr96)"""
+    kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446742474907975680
+                                  (ReadLSB w64 0 opt_buf)))
+          [7=0, 6=0, 5=0, 4=0, 3=0, 2=0, 1=0, 0=0] @ ptr2)"""
 
     expressions = [
         kquery_expression,
-        kquery_expression1,
-        kquery_expression2
     ]          
     convert_kquery_to_graph(expressions, "abc", "text", [])
 
