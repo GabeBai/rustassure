@@ -18,8 +18,9 @@ class Node:
             return "KLEE_Offset"
         elif value.startswith("const_arr"):
             return "const_arr"
-        else:
-            return value
+        elif value.startswith("ptr") or value.startswith("unnamed")
+            return "input"
+        return value
 
     def __init__(self, value, type_value, G):
         # We maintain a reference to the networkx graph in each Node
