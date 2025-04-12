@@ -1,11 +1,22 @@
 import os
 import sys
+import hashlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def manage_dot_files_by_size(dir_path, max_files=20):
+def compute_file_hash(path, hash_func='md5'):
+    h = hashlib.new(hash_func)
+    try:
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b''):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception as e:
+        print(f"Error reading {path}: {e}")
+        return None
+
+def manage_dot_files_by_hash(dir_path):
     if not os.path.isdir(dir_path):
         return f"Error: Invalid or non-existent directory specified: {dir_path}"
-
     try:
         dot_files = []
         for item in os.listdir(dir_path):
@@ -14,19 +25,18 @@ def manage_dot_files_by_size(dir_path, max_files=20):
                 if os.path.isfile(file_path):
                     dot_files.append(file_path)
 
-        if len(dot_files) > max_files:
-            dot_files_sorted = sorted(dot_files, key=lambda f: os.path.getsize(f))
+        seen_hashes = set()
+        for f_path in dot_files:
+            file_hash = compute_file_hash(f_path)
+            if file_hash is None:
+                continue  # skip unreadable file
+            if file_hash in seen_hashes:
+                os.remove(f_path)
+                print(f"Deleted duplicate (by hash): {f_path}")
+            else:
+                seen_hashes.add(file_hash)
 
-            keep_indices = set(
-                round(i * (len(dot_files_sorted) - 1) / (max_files - 1))
-                for i in range(max_files)
-            )
-            for idx, f_path in enumerate(dot_files_sorted):
-                if idx not in keep_indices:
-                    os.remove(f_path)
-                    print(f"Deleting: {f_path}")
-
-        return f"Finished processing: {dir_path} (kept up to {max_files} .dot files)"
+        return f"Finished dedup by hash: {dir_path} (kept {len(seen_hashes)} unique .dot files)"
 
     except PermissionError:
         return f"Permission denied when accessing: {dir_path}"
@@ -42,8 +52,6 @@ def main():
     else:
         base_dir = "graph_output/Rust"
 
-    max_files = 20
-
     if os.path.isdir(base_dir):
         all_dirs = []
         for root, dirs, files in os.walk(base_dir):
@@ -51,7 +59,7 @@ def main():
 
         with ThreadPoolExecutor(max_workers=5) as executor:
             future_to_dir = {
-                executor.submit(manage_dot_files_by_size, d, max_files): d
+                executor.submit(manage_dot_files_by_hash, d): d
                 for d in all_dirs
             }
             for future in as_completed(future_to_dir):

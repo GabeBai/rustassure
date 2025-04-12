@@ -61,7 +61,6 @@ class KqueryASTVisitor(KqueryVisitor):
         # print("Number")
         number = ctx.getText()
         node =  Node(number, "", self.G)
-        self.G.add_node(node, label=number)
         return node
 
     def visitDefinition(self, ctx):
@@ -75,7 +74,6 @@ class KqueryASTVisitor(KqueryVisitor):
     def visitNumber_list(self, ctx):
         # number_list: NUMBER | NUMBER ',' number_list;
         node = Node("number_list", "", self.G)
-        self.G.add_node(node)
         if ctx.getChildCount() == 1:
             node = Node(ctx.getChild(0).getText(), "", self.G)
             return node
@@ -87,25 +85,21 @@ class KqueryASTVisitor(KqueryVisitor):
 
             node.children.append(child_number)
             node.children.append(child_number_list)
-
-            self.G.add_node(node)
-            self.G.add_edge(node, child_number)
-            self.G.add_edge(node, child_number_list)
+            self.G.add_edge(node.node_id, child_number.node_id)
+            self.G.add_edge(node.node_id, child_number_list.node_id)
         return node
 
     def visitArray_initializer(self, ctx):
         # array_initializer: 'symbolic' | '[' number_list ']';
         node = Node("array_initializer", "", self.G)
-        self.G.add_node(node)
         if ctx.getChildCount() == 1:
             symbolic = ctx.getChild(0).getText()
             child = Node(symbolic, "", self.G)
-            self.G.add_node(child)
-            self.G.add_edge(node, child)
+            self.G.add_edge(node.node_id, child.node_id)
         else:
             number_list = self.visit(ctx.getChild(1))
             node.children.append(number_list)
-            self.G.add_edge(node, number_list)
+            self.G.add_edge(node.node_id, number_list.node_id)
 
         return node
 
@@ -114,7 +108,6 @@ class KqueryASTVisitor(KqueryVisitor):
         array = ctx.getChild(0).getText()
         identifier = ctx.getChild(1).getText()
         node = Node(array, identifier, self.G)
-        self.G.add_node(node)
 
         if ctx.getChildCount() == 11:
             array_initializer_index = 10
@@ -123,7 +116,7 @@ class KqueryASTVisitor(KqueryVisitor):
         array_initializer = self.visit(ctx.getChild(array_initializer_index))
         
         node.children.append(array_initializer)
-        self.G.add_edge(node, array_initializer)
+        self.G.add_edge(node.node_id, array_initializer.node_id)
 
         return node
 
@@ -140,9 +133,9 @@ class KqueryASTVisitor(KqueryVisitor):
         node.children.append(child_node1)
         node.children.append(child_node2)
 
-        self.G.add_node(node)
-        self.G.add_edge(node, child_node1)
-        self.G.add_edge(node, child_node2)
+        # self.G.add_node(node)
+        self.G.add_edge(node.node_id, child_node1.node_id)
+        self.G.add_edge(node.node_id, child_node2.node_id)
         return node
 
     def visitBitwise_expr(self, ctx):
@@ -159,9 +152,9 @@ class KqueryASTVisitor(KqueryVisitor):
         node.children.append(child_node1)
         node.children.append(child_node2)
 
-        self.G.add_node(node)
-        self.G.add_edge(node, child_node1)
-        self.G.add_edge(node, child_node2)
+        # self.G.add_node(node)
+        self.G.add_edge(node.node_id, child_node1.node_id)
+        self.G.add_edge(node.node_id, child_node2.node_id)
         return node
 
     def visitComparison_expr(self, ctx):
@@ -177,8 +170,8 @@ class KqueryASTVisitor(KqueryVisitor):
             
             node.children.append(child1)
             node.children.append(child2)
-            self.G.add_edge(node, child1)
-            self.G.add_edge(node, child2)
+            self.G.add_edge(node.node_id, child1.node_id)
+            self.G.add_edge(node.node_id, child2.node_id)
         else:
             node = Node(expr_kind, "", self.G)
 
@@ -187,8 +180,8 @@ class KqueryASTVisitor(KqueryVisitor):
             
             node.children.append(child1)
             node.children.append(child2)
-            self.G.add_edge(node, child1)
-            self.G.add_edge(node, child2)
+            self.G.add_edge(node.node_id, child1.node_id)
+            self.G.add_edge(node.node_id, child2.node_id)
         return node
 
     def visitBv_expr(self, ctx):
@@ -205,9 +198,9 @@ class KqueryASTVisitor(KqueryVisitor):
             node.children.append(child1)
             node.children.append(child2)
             if child1:
-                self.G.add_edge(node, child1)
+                self.G.add_edge(node.node_id, child1.node_id)
             if child2:
-                self.G.add_edge(node, child2)
+                self.G.add_edge(node.node_id, child2.node_id)
         else:
             node = Node(expr_kind, "", self.G)
 
@@ -216,8 +209,8 @@ class KqueryASTVisitor(KqueryVisitor):
             
             node.children.append(child1)
             node.children.append(child2)
-            self.G.add_edge(node, child1)
-            self.G.add_edge(node, child2)
+            self.G.add_edge(node.node_id, child1.node_id)
+            self.G.add_edge(node.node_id, child2.node_id)
         return node
 
 
@@ -229,10 +222,9 @@ class KqueryASTVisitor(KqueryVisitor):
         
         node = Node(expr_kind, value_type, self.G)
 
-        self.G.add_node(node)
         node.children.append(child)
 
-        self.G.add_edge(node, child)
+        self.G.add_edge(node.node_id, child.node_id)
         return node
 
     def visitRead_expr(self, ctx):
@@ -246,12 +238,11 @@ class KqueryASTVisitor(KqueryVisitor):
         
         node = Node(expr_kind, value_type, self.G)
 
-        self.G.add_node(node)
         node.children.append(child)
         node.children.append(version)
 
-        self.G.add_edge(node, child)
-        self.G.add_edge(node, version)
+        self.G.add_edge(node.node_id, child.node_id)
+        self.G.add_edge(node.node_id, version.node_id)
         return node
 
     def visitSelect_expr(self, ctx):
@@ -272,30 +263,26 @@ class KqueryASTVisitor(KqueryVisitor):
         node.children.append(child2)
         node.children.append(child3)
 
-        self.G.add_node(node)
-        self.G.add_edge(node, child1)
-        self.G.add_edge(node, child2)
-        self.G.add_edge(node, child3)
+        self.G.add_edge(node.node_id, child1.node_id)
+        self.G.add_edge(node.node_id, child2.node_id)
+        self.G.add_edge(node.node_id, child3.node_id)
 
     def visitNeg_expr(self, ctx):
         # neg_expr: '(' neg_expr_kind (type)? expr ')'
         expr_kind = ctx.getChild(1).getText()
         if ctx.getChildCount() == 5: 
-            # There is (type)
             value_type = ctx.getChild(2).getText()
             node = Node(expr_kind, value_type, self.G)
             expr = ctx.getChild(3)
             child = self.visit(expr)
             node.children.append(child)
-            self.G.add_node(node)
-            self.G.add_edge(node, child)
+            self.G.add_edge(node.node_id, child.node_id)
         else:
             node = Node(expr_kind, "", self.G)
             expr = ctx.getChild(2)
             child = self.visit(expr)
             node.children.append(child)
-            self.G.add_node(node)
-            self.G.add_edge(node, child)
+            self.G.add_edge(node.node_id, child.node_id)
         pass
 
     def visitArray_read_expr(self, ctx):
@@ -312,10 +299,8 @@ class KqueryASTVisitor(KqueryVisitor):
         node.children.append(child1)
         node.children.append(child2)
 
-        
-        self.G.add_node(node)
-        self.G.add_edge(node, child1)
-        self.G.add_edge(node, child2)
+        self.G.add_edge(node.node_id, child1.node_id)
+        self.G.add_edge(node.node_id, child2.node_id)
         return node
 
 
@@ -327,7 +312,6 @@ class KqueryASTVisitor(KqueryVisitor):
         elif len(version) > 20:
             version = "abnormal update list"
         node = Node(version, "", self.G)
-        self.G.add_node(node)
         return node
 
     def visitExpr(self, ctx):
@@ -355,6 +339,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         os.makedirs(output_dir)
 
     for i in range(len(expressions)):
+        Node.reset_node_id()
         expression = expressions[i]
     
         input_stream = InputStream(expression)
@@ -377,24 +362,24 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
             raise RuntimeError(f"error in expression {i}") from e
 
         print(f"finish processing expression {i}")
-        removed = process_graph(visitor.G)
-        removed_zext = process_graph_ZExt(visitor.G)
-        removed_sub = process_graph_sub(visitor.G)
-        removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
-        removed_zext_eq = process_root_zext_eq_only(visitor.G)
+        # removed = process_graph(visitor.G)
+        # removed_zext = process_graph_ZExt(visitor.G)
+        # removed_sub = process_graph_sub(visitor.G)
+        # removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
+        # removed_zext_eq = process_root_zext_eq_only(visitor.G)
 
-        if dedup:
-            if is_duplicate_graph(visitor.G, seen_graphs):
-                continue
+        # if dedup:
+        #     if is_duplicate_graph(visitor.G, seen_graphs):
+        #         continue
         # Save the output to the specified directory
         output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(i) + ".dot")
         current_dir = os.getcwd() 
-        if (removed):
-            logging.info(f"{current_dir}/{output_file} - removed is True")
-        if (removed_zext):
-            logging.info(f"{current_dir}/{output_file} - removed_zext is True")
-        if (removed_sub):
-            logging.info(f"{current_dir}/{output_file} - removed_sub is True")
+        # if (removed):
+        #     logging.info(f"{current_dir}/{output_file} - removed is True")
+        # if (removed_zext):
+        #     logging.info(f"{current_dir}/{output_file} - removed_zext is True")
+        # if (removed_sub):
+        #     logging.info(f"{current_dir}/{output_file} - removed_sub is True")
         write_dot(visitor.G, output_file)
 
         seen_graphs.append(visitor.G)
@@ -402,13 +387,18 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Extract w32 0 (Mul w64 (Add w64 (Mul w64 3
-                                           (SExt w64 N0:(ReadLSB w32 0 unnamed_1)))
-                                  (SExt w64 (SRem w32 N0 4)))
-                         (SExt w64 (ReadLSB w32 0 symbolic_var))))"""
+    kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446744044584304640
+                                  (ReadLSB w64 0 ptr2)))
+          const_arr96)"""
+    kquery_expression1 = r"""(ReadLSB w64 0 str)"""
+    kquery_expression2 = r"""(Read w8 (Extract w64 0 (Add w64 18446744044584304640
+                                  (ReadLSB w64 0 ptr2)))
+          const_arr96)"""
 
     expressions = [
-        kquery_expression
+        kquery_expression,
+        kquery_expression1,
+        kquery_expression2
     ]          
     convert_kquery_to_graph(expressions, "abc", "text", [])
 

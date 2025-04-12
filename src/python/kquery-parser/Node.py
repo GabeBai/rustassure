@@ -1,12 +1,28 @@
-from KqueryLexer import KqueryLexer 
+from jsonschema.benchmarks.unused_registry import instance
+
+from KqueryLexer import KqueryLexer
 from KqueryListener import KqueryListener
 from KqueryParser import KqueryParser
 from KqueryVisitor import KqueryVisitor
+import re
 
 
 class Node:
 
     NODE_ID = 0
+
+    @classmethod
+    def reset_node_id(cls):
+        cls.NODE_ID = 0
+
+    def process_value(self, value):
+        if bool(re.fullmatch(r'\d{20}', value)):
+            return "KLEE_Offset"
+        elif value.startswith("const_arr"):
+            return "const_arr"
+        else:
+            return value
+
     def __init__(self, value, type_value, G):
         # We maintain a reference to the networkx graph in each Node
         self.G = G
@@ -15,17 +31,16 @@ class Node:
         # with same value.
         Node.NODE_ID+=1
         self.node_id = Node.NODE_ID
-        self.value = value
+        self.value = self.process_value(value)
         self.type_value = type_value
         self.children = [] # List of Nodes
-            
+        attr = {}
 
-    def __str__(self):
-        desc = str(self.node_id) + f" [value = {self.value}, "
-        if len(self.type_value) > 0:
-            desc += f" type = {self.type_value}"
-        desc += "]"
-        return desc
+        if self.value:
+            attr = {'label': self.value}
+        if self.type_value:
+            attr['type'] = self.type_value
+        self.G.add_node(self.node_id, **attr)
 
     def deep_copy(self):
         # When we encounter a definition (NO, for example)
@@ -35,6 +50,5 @@ class Node:
         for child in self.children:
             copied_child = child.deep_copy()
             copied_node.children.append(copied_child)
-            self.G.add_node(copied_child)
-            self.G.add_edge(copied_node, copied_child)
+            self.G.add_edge(copied_node.node_id, copied_child.node_id)
         return copied_node
