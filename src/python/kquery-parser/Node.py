@@ -18,7 +18,7 @@ class Node:
             return "KLEE_Offset"
         elif value.startswith("const_arr"):
             return "const_arr"
-        elif value.startswith("ptr") or value.startswith("unnamed")
+        elif value.startswith("ptr") or value.startswith("unnamed"):
             return "input"
         return value
 
