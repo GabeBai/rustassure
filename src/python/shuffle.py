@@ -28,7 +28,7 @@ def move_matching_files(original_dest_dir, base_dir, i_files, except_ir = false,
             if except_ir:
                 if file.startswith(rel_path) and not file.endswith(".ll") and not file.endswith(".bc"):
                     src_file = os.path.join(base_dir, file)
-                    dest_dir = os.path.join(original_dest_dir, rel_path, file + "_" + source)
+                    dest_dir = os.path.join(original_dest_dir, rel_path, file)
                     if os.path.isdir(src_file):
                         shutil.copytree(src_file, dest_dir)
                     else:
