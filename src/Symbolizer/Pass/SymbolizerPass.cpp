@@ -411,7 +411,8 @@ namespace {
 			Type* void_ptr_type = PointerType::get(IntegerType::getInt8Ty(ctx), 0);
 			klee_make_symbolic_args.push_back(Builder.CreateBitCast(value, void_ptr_type));
 			klee_make_symbolic_args.push_back(ConstantInt::get(IntegerType::get(ctx, 64), DL.getTypeAllocSize(value->getType()->getPointerElementType())));
-			Value* arg_name = Builder.CreateGlobalString(value->getName(), "klee_sym_arg_name", 0, &M);
+			llvm::StringRef ref("input_argument");
+			Value* arg_name = Builder.CreateGlobalString(ref, "klee_sym_arg_name", 0, &M);
 			// Set the global string as non-constant (writable)
 			GlobalVariable* global_arg_name = cast<GlobalVariable>(arg_name);
 			global_arg_name->setConstant(false);
