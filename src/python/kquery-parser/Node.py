@@ -18,8 +18,8 @@ class Node:
             return "KLEE_Offset"
         elif value.startswith("const_arr"):
             return "const_arr"
-        elif value.startswith("ptr") or value.startswith("unnamed"):
-            return "input"
+        elif value.startswith("ptr") or value.startswith("input_argument"):
+            return "input_argument"
         return value
 
     def __init__(self, value, type_value, G):
