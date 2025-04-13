@@ -1,6 +1,6 @@
 import os
 import shutil
-impot sys
+import sys
 
 from sympy import false
 
