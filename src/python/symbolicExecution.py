@@ -82,31 +82,31 @@ def create_json():
     Creates input.json with the same contents as the Bash-scripted jq command.
     """
     data = {
-        "csv_set_quote": {
-            "0": "CsvParser"
+        "csv_set_quote" : {
+            "0" : "CsvParser"
         },
-        "csv_get_opts": {
-            "0": "CsvParser"
+        "csv_get_opts" : {
+            "0" : "CsvParser"
         },
-        "csv_fini": {
-            "0": "CsvParser",
-            "103": "Integer_8"
+        "csv_fini" : {
+            "0" : "CsvParser",
+            "103" : "Integer_8"
         },
-        "csv_set_space_func": {
-            "1": "function",
-            "2": "function"
+        "csv_set_space_func" : {
+            "1" : "function",
+            "2" : "function"
         },
-        "csv_increase_buffer": {
-            "103": "Integer_8"
+        "csv_increase_buffer" : {
+            "103" : "Integer_8"
         },
-        "csv_init": {
-            "103": "Integer_8"
+        "csv_init" : {
+            "103" : "Integer_8"
         },
-        "csv_free": {
-            "103": "Integer_8"
+        "csv_free" : {
+            "103" : "Integer_8"
         },
-        "url_free": {
-            "0": "UrlData"
+        "url_free" : {
+            "0" : "UrlData"
         },
         "url_get_host": {
             "0": "alloc::string::String"
@@ -131,16 +131,7 @@ def create_json():
         },
         "osys_path_chdir": {
             "2": "core::ffi::c_str::CStr",
-            "4": "core::ffi::c_str::CStr"
-        },
-        "opng_ullratio_to_factor_string": {
-            "0": "alloc::string::String"
-        },
-        "opng_ulratio_to_percent_string": {
-            "0": "alloc::string::String"
-        },
-        "opng_ullratio_to_percent_string": {
-            "0": "alloc::string::String"
+            "1": "core::ffi::c_str::CStr"
         },
         "bmp_img_read": {
             "0": "BmpImg"

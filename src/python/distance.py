@@ -133,6 +133,8 @@ def calculate_distance(input_files_a,
             best_distance = max(best_distance, current_best)
     return best_distance
 
+def all_lengths_equal(arr):
+    return all(len(s) == len(arr[0]) for s in arr)
 
 def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
     rust_base = "graph_output/Rust"
@@ -165,7 +167,9 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                 found_match_input_directory = True
 
         if not found_match_input_directory:
-            if c_key.endswith(')'):
+            if c_key.endswith("pointer"):
+                c_key_modified = c_key[:-9]
+            elif c_key.endswith(')'):
                 # case : lib_csv : csv_error
                 c_key_modified = c_key[:-1]
             else:
@@ -173,6 +177,8 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
 
             matching_r_keys = []
             for r_key in rust_dict.keys():
+                if not c_key.endswith("pointer") and r_key.endswith("pointer"):
+                    continue
                 if r_key.startswith(c_key_modified) and function_name in r_key:
                     matching_r_keys.append(r_key)
                 elif "ret_value" in c_key_modified:
@@ -188,8 +194,14 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                             matching_r_keys.append(r_key)
 
             if matching_r_keys:
-                best_r_key = max(matching_r_keys, key=len)
-                found_match_input_directory = True
+                if not all_lengths_equal(matching_r_keys):
+                    best_r_key = max(matching_r_keys, key=len)
+                    found_match_input_directory = True
+                else:
+                    for r_key in matching_r_keys:
+                        if r_key.endswith("field_0)"):
+                            best_r_key = r_key
+                            found_match_input_directory = True
 
         if c_key.endswith("free_call_counts"):
             free_call_max_c = 0

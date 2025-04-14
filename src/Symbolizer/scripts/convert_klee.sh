@@ -63,16 +63,7 @@ create_json() {
     },
     "osys_path_chdir": {
         "2": "core::ffi::c_str::CStr",
-        "4": "core::ffi::c_str::CStr"
-    },
-    "opng_ullratio_to_factor_string": {
-        "0": "alloc::string::String"
-    },
-    "opng_ulratio_to_percent_string": {
-        "0": "alloc::string::String"
-    },
-    "opng_ullratio_to_percent_string": {
-        "0": "alloc::string::String"
+        "1": "core::ffi::c_str::CStr"
     },
     "bmp_img_read": {
         "0": "BmpImg"
