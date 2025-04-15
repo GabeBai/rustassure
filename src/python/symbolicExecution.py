@@ -126,9 +126,6 @@ def create_json():
         "opng_rangeset2bitset": {
             "1": "core::ffi::c_str::CStr"
         },
-        "scan_option": {
-            "0": "core::ffi::c_str::CStr"
-        },
         "osys_path_chdir": {
             "2": "core::ffi::c_str::CStr",
             "1": "core::ffi::c_str::CStr"
