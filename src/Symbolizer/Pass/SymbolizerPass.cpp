@@ -102,6 +102,22 @@ Type* getLLVMType(LLVMContext &context, const std::string &typeStr) {
 	return PointerType::get(StructType::create(context, typeStr), 0);
 }
 
+// Function to split a string by "::"
+std::vector<std::string> splitString(const std::string& str, const std::string& delimiter) {
+	std::vector<std::string> tokens;
+	size_t start = 0;
+	size_t end = str.find(delimiter);
+
+	while (end != std::string::npos) {
+		tokens.push_back(str.substr(start, end - start));
+		start = end + delimiter.length();
+		end = str.find(delimiter, start);
+	}
+	tokens.push_back(str.substr(start));
+
+	return tokens;
+}
+
 bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 	for (auto &func : module) {
 		if (func.getName() == "main") {
@@ -146,6 +162,9 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 			}
 		}
 	}
+	std::string filename = module.getModuleIdentifier();
+	std::filesystem::path filepath(filename);
+	std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 	if (structType->getName() == "core::ffi::c_str::CStr" && fieldIndex == 0) {
 		return false;
 	}
@@ -155,6 +174,10 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 	if (structType->getName().find("BmpPixel_struct") == 0) {
 		return false;
 	}
+
+	if (structType->getName() == "UrlKeyValue" && filename_without_extension == "url_free") {
+		return true;
+	} 
 	return true;
 }
 
@@ -212,23 +235,6 @@ bool compareStrings(const std::string& filenameWithoutExt, const std::string& fu
 	}
 
 	return true;
-}
-
-
-// Function to split a string by "::"
-std::vector<std::string> splitString(const std::string& str, const std::string& delimiter) {
-	std::vector<std::string> tokens;
-	size_t start = 0;
-	size_t end = str.find(delimiter);
-
-	while (end != std::string::npos) {
-		tokens.push_back(str.substr(start, end - start));
-		start = end + delimiter.length();
-		end = str.find(delimiter, start);
-	}
-	tokens.push_back(str.substr(start));
-
-	return tokens;
 }
 
 // Function to execute rustfilt and capture the output
@@ -1095,6 +1101,10 @@ namespace {
 							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
 							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
 							Builder.SetInsertPoint(basic_block);
+							Function::arg_iterator args = dummy_func->arg_begin();
+							Value *arg_ptr = args++;	
+							Value *zero = ConstantInt::get(Type::getInt8Ty(ctx), 0);
+							Builder.CreateStore(zero, arg_ptr);
 							//do logic
 							Value *oldVal = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
 							Value *incVal = Builder.CreateAdd(oldVal, ConstantInt::get(Type::getInt32Ty(ctx), 1), "incVal");
