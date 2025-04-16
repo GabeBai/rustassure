@@ -157,14 +157,25 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         found_match_input_directory = False
         best_r_key = None
         # find best match directory for each c input
+        matching_r_keys = []
         for r_key in rust_dict.keys():
             if r_key == c_key:
                 best_r_key = r_key
                 found_match_input_directory = True
                 break
             if r_key.startswith(c_key):
-                best_r_key = r_key
+                if not c_key.endswith("pointer") and r_key.endswith("pointer"):
+                    continue
+                matching_r_keys.append(r_key)
                 found_match_input_directory = True
+
+        if matching_r_keys:
+            if not all_lengths_equal(matching_r_keys):
+                best_r_key = max(matching_r_keys, key=len)
+            else:
+                for r_key in matching_r_keys:
+                    if r_key.endswith("field_0)") or r_key.endswith("field_0"):
+                        best_r_key = r_key
 
         if not found_match_input_directory:
             if c_key.endswith("pointer"):
@@ -175,7 +186,6 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
             else:
                 c_key_modified = c_key
 
-            matching_r_keys = []
             for r_key in rust_dict.keys():
                 if not c_key.endswith("pointer") and r_key.endswith("pointer"):
                     continue
@@ -235,7 +245,6 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         else:
             results_best.append((function_name, argument_name, "Rust Empty!"))
 
-
     os.makedirs(output_csv_path, exist_ok=True)
 
     with open(os.path.join(output_csv_path, 'best_edit_distances.csv'), 'w', newline='', encoding='utf-8') as csvfile:
@@ -246,7 +255,6 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         writer = csv.writer(csvfile)
         writer.writerow(["function_name", "argument_name", "free_difference"])
         writer.writerows(free_counts)
-                        
 
 if __name__ == "__main__":
     logger = SingletonLogger()
