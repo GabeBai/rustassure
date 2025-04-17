@@ -805,6 +805,9 @@ namespace {
 					// 100 is a magic number, we use it to represent a field in the struct
 					if (!ParsedJson.empty() && ParsedJson.contains(std::to_string(i + 100))) {
 						std::string target_string = ParsedJson[std::to_string(i + 100)];
+						if (target_string == "function") {
+							continue;
+						}
 						Type *target_type = getLLVMType(ctx, target_string);
 						field_type = PointerType::get(target_type, 0);
 						need_cast = true;

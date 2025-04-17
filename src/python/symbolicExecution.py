@@ -100,7 +100,12 @@ def create_json():
             "103" : "Integer_8"
         },
         "csv_init" : {
-            "103" : "Integer_8"
+            "103" : "Integer_8",
+            "110": "function",
+            "111": "function",
+            "113": "function",
+            "114": "function",
+            "115": "function"
         },
         "csv_free" : {
             "103" : "Integer_8"
