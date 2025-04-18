@@ -430,8 +430,14 @@ namespace {
 			Builder.CreateCall(klee_make_symbolic_func, klee_make_symbolic_args);
 		}
 
+		void initialize_inner_struct(Module& M, IRBuilder<>& Builder, Value* pointer, Type* type, StringRef name) {
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, type, name, type, false, false);
+			stack_object = Builder.CreateBitCast(stack_object, pointer->getType());
+			Value* stack_load_inst = Builder.CreateLoad(stack_object->getType()->getPointerElementType(), stack_object);
+			Builder.CreateStore(stack_load_inst, pointer);
+		}
 			
-		void initialize_inner_pointer(Module& M, IRBuilder<>& Builder, Value* pointer, PointerType* ptr_type, StringRef name, std::vector<Value*>& nested_pointers) {
+		void initialize_inner_pointer(Module& M, IRBuilder<>& Builder, Value* pointer, PointerType* ptr_type, StringRef name) {
 			// If it is a pointer to a function, do nothing
 			if (isa<FunctionType>(ptr_type->getPointerElementType())) {
 				return;
@@ -459,7 +465,7 @@ namespace {
 				nested_pointers.pop_back();
 				// Is it a C pointer?
 				if (PointerType* ptr_type = dyn_cast<PointerType>(pointer->getType()->getPointerElementType())) {
-					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), nested_pointers);
+					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"));
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(pointer->getType()->getPointerElementType())) { // these are stack variables
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
@@ -479,8 +485,10 @@ namespace {
 								}
 								visited_structs.insert(struct_type);
 							}
-							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", nested_pointers);
+							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field");
 							visited_structs.emplace(struct_type);
+						} else if (StructType* struct_type = dyn_cast<StructType>(field_type)) {
+							initialize_inner_struct(M, Builder, pointer, struct_type, "field");
 						}
 					}
 				}
