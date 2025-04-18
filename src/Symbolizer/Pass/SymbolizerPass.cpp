@@ -276,6 +276,7 @@ namespace {
 
 	struct Symbolizer : PassInfoMixin<Symbolizer> {
 		json ParsedJson;
+		Function *malloc_function;
 		std::map<int, std::string> argumentsMap;
 		std::unordered_set<StructType*> visited_structs;
 		std::list<std::string> keep_list = {
@@ -1098,7 +1099,15 @@ namespace {
 					std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 					if (Function *called_func = call_inst->getCalledFunction()) {
 						std::string function_name = exec_rustfilt(called_func->getName().str());
-						if (function_name == "__rust_dealloc") {
+						if (function_name == "__rust_alloc") {
+                            findFreeFunction = true;
+							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
+							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
+							Builder.SetInsertPoint(basic_block);
+							Function::arg_iterator args = dummy_func->arg_begin();
+							Value *return_value = Builder.CreateCall(malloc_function, args);
+                            Builder.CreateRet(return_value);
+						} else if (function_name == "__rust_dealloc") {
 							findFreeFunction = true;
 							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
 							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
@@ -1238,6 +1247,9 @@ namespace {
 				GlobalValue::ExternalLinkage,
 				ConstantInt::get(Type::getInt32Ty(M.getContext()), 0),
 				"free_function_call_count");
+			FunctionType *func_type = FunctionType::get(PointerType::get(Type::getInt8Ty(M.getContext()), 0), IntegerType::get(M.getContext(), 64), 0);
+			Function *func = Function::Create(func_type, Function::ExternalLinkage, "malloc", M);
+			malloc_function = func;
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);
