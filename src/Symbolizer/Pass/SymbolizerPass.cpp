@@ -286,57 +286,10 @@ namespace {
 			"strlen",
 			"memcmp"
 		};
-		std::list<std::string> removed_list = {
-			"core::ptr::read_unaligned",
-			"core::ptr::drop_in_place<core::option::Option<alloc::string::String>>",
-			"core::str::<impl str>::find",
-			"core::result::Result<T,E>::expect",
-			"core::slice::<impl [T]>::is_empty",
-			"core::result::Result<T,E>::ok",
-			// @gab: check this function!
-			"core::ptr::metadata::from_raw_parts_mut",
-			// interesting, actually we has this function, but cannot get result with it..see good case..
-			"alloc::slice::<impl [T]>::into_vec",
-			"core::result::Result<T,E>::unwrap_or",
-			"core::str::<impl str>::ends_with",
-			"__maskrune",
-			"core::ptr::drop_in_place<core::result::Result<u64,std::io::error::Error>>",
-			"std::io::error::repr_bitpacked::decode_repr::{{closure}}",
-			"alloc::vec::from_elem",
-			//add for 4o-mini model
-			"core::result::Result<T,E>::unwrap",//(url_parser : url_get_port)//(why?)
-			//add for calude model
-			"alloc::vec::Vec<T,A>::clear",//bmp_img_free
-
-			// must include otherwise KLEE will have memeory issue
-				//1) "<str as alloc::string::ToString>::to_string", (eg : urlparser : Url_get_port)
-			// Rust empty lib function (And, they are also neccessary functions)
-				//1) "<alloc::string::String as core::clone::Clone>::clone" (urlparser : Url_get_port)
-				//"core::result::Result<T,E>::ok", need to be removed, because we don't have the #2 implementation (urlparser :Strdup)
-				//2) "<&str as alloc::ffi::c_str::CString::new::SpecNewImpl>::spec_new_impl"
-				//3) core::ffi::c_str::CStr::to_str,(opipng : app_print_cntrl keep will crash becasue of invalid memory)
+		std::list<std::string> skip_symbolized_struct = {
+			"alloc::string::String",
 		};
 		GlobalVariable *gCallCounter;
-		std::list<std::string> special_handle_list = {
-			"isalnum",
-			"isalpha",
-			"isblank",
-			"isdigit",
-			"isgraph",
-			"ishexnumber",
-			"isideogram",
-			"islower",
-			"isnumber",
-			"isphonogram",
-			"isprint",
-			"ispunct",
-			"isrune",
-			"isspace",
-			"isspecial",
-			"isupper",
-			"isxdigit",
-			"opng_ulratio_to_factor_string",
-		};
 
 		void create_function(Module& M, Type* return_type, Function* function) {
 			LLVMContext& ctx = M.getContext();
@@ -357,42 +310,6 @@ namespace {
 		}
 
 		void remove_unneeded_functions(Module& M) {
-			// In the case of Rust, it adds a bunch of functions that we don't care about
-			// We will only consider the function that has the same name as the file.
-			// Note: we have separated out each function in its own file so this isn't a problem
-
-			// std::unordered_set<Function*> remove_functions;
-			// std::string filename = M.getModuleIdentifier();
-			// std::filesystem::path filepath(filename);
-			// std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-			// for (Function& F: M.functions()) {
-			// 	if (!F.hasName()) {
-			// 		remove_functions.insert(&F);
-			// 		//F.eraseFromParent();
-			// 		continue;
-			// 	}
-			// 	std::string demangled_name = exec_rustfilt(F.getName().str());
-			
-			// 	auto it = std::find(removed_list.begin(), removed_list.end(), demangled_name);
-			// 	if (it != removed_list.end()) {
-			// 		remove_functions.insert(&F);
-			// 		outs() << "removed function: " << demangled_name << "\n";
-			// 	}
-				
-			// 	std::string filename = M.getModuleIdentifier();
-			// 	std::filesystem::path filepath(filename);
-			// 	std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-			// 	if (filename_without_extension == "bmp_img_read") {
-			// 		// TODO : remove this logic
-			// 		if (demangled_name == "alloc") {
-			// 			remove_functions.insert(&F);
-			// 		}
-			// 	}
-
-			// }
-			// for (Function* F: remove_functions) {
-			// 	F->deleteBody();
-			// }
 			Function* main_function = M.getFunction("main");
 			if (main_function) {
 				main_function->eraseFromParent();
@@ -400,6 +317,21 @@ namespace {
 		}
 
 		void mark_symbolic(Module& M, Value* value, IRBuilder<>& Builder) {
+			std::string struct_name = "";
+			if (PointerType *pointer_type = dyn_cast<PointerType>(value->getType())) {
+				if (PointerType *inner_pointer_type = dyn_cast<PointerType>(pointer_type->getPointerElementType())) {
+					if (StructType *struct_type = dyn_cast<StructType>(inner_pointer_type->getPointerElementType())) {
+						struct_name = struct_type->getName().str();
+					}
+				} else if (StructType *struct_type = dyn_cast<StructType>(pointer_type->getPointerElementType())) {
+					struct_name = struct_type->getName().str();
+				}
+			}
+			auto it = std::find(skip_symbolized_struct.begin(), skip_symbolized_struct.end(), struct_name);
+			if (it != skip_symbolized_struct.end()) {
+				return;
+			}
+
 			LLVMContext& ctx = M.getContext();
 			const DataLayout& DL = M.getDataLayout();
 
@@ -433,7 +365,9 @@ namespace {
 
 		void initialize_inner_struct(Module& M, IRBuilder<>& Builder, Value* pointer, Type* type, StringRef name) {
 			Value* stack_object = create_object_and_mark_symbolic(M, Builder, type, name, type, false, false);
-			stack_object = Builder.CreateBitCast(stack_object, pointer->getType());
+			if (pointer->getType() != stack_object->getType()) {
+				stack_object = Builder.CreateBitCast(stack_object, pointer->getType());
+			}
 			Value* stack_load_inst = Builder.CreateLoad(stack_object->getType()->getPointerElementType(), stack_object);
 			Builder.CreateStore(stack_load_inst, pointer);
 		}
@@ -488,8 +422,13 @@ namespace {
 							}
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field");
 							visited_structs.emplace(struct_type);
-						} else if (StructType* struct_type = dyn_cast<StructType>(field_type)) {
-							initialize_inner_struct(M, Builder, pointer, struct_type, "field");
+						} else if (StructType* inner_struct_type = dyn_cast<StructType>(field_type)) {
+							Value* gep = Builder.CreateStructGEP(
+								struct_type, 
+								pointer, 
+								i,
+							"gep");
+							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field");
 						}
 					}
 				}
@@ -914,7 +853,7 @@ namespace {
 				Builder.SetInsertPoint(loopBlock);
 
 				Type *elementType = arg_value->getType()->getPointerElementType();
-				for (int i = 0; i < 1; ++i) {
+				for (int i = 0; i < 4; ++i) {
 					// Create the GEP for the current index
 					Value *index = Builder.getInt32(i);
 					Value *ptr = Builder.CreateGEP(elementType, arg_value, index, "gep" + std::to_string(i));
@@ -1101,7 +1040,7 @@ namespace {
 						std::string function_name = exec_rustfilt(called_func->getName().str());
 						if (function_name == "__rust_alloc") {
                             findFreeFunction = true;
-							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
+							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_rust_alloc" + std::to_string(count++), M);
 							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
 							Builder.SetInsertPoint(basic_block);
 							Function::arg_iterator args = dummy_func->arg_begin();
@@ -1146,12 +1085,8 @@ namespace {
 						std::string filename = M.getModuleIdentifier();
 						std::filesystem::path filepath(filename);
 						std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-						auto it = std::find(special_handle_list.begin(), special_handle_list.end(), filename_without_extension);
 						if (return_type->isVoidTy()) {
 							Builder.CreateRetVoid();
-						} else if (it != special_handle_list.end() && return_type->isIntegerTy(32)) {
-							Value *retVal = ConstantInt::get(return_type, 1);
-							Builder.CreateRet(retVal);
 						} else {
 							// Create a global variable for the return value
 							GlobalVariable *symbolic_ret_val = new GlobalVariable(
