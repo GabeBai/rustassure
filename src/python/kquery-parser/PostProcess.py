@@ -14,31 +14,26 @@ def dot_str_to_nx_graph(dot_str: str) -> nx.DiGraph:
     G = nx.DiGraph(nx.nx_pydot.from_pydot(pydot_graph))
     return G
 
-def is_extract_node(node_label: Node) -> bool:
-    return node_label.value == "Extract"
-    # return "value = Extract" in node_label
+def is_extract_node(node_id, G):
+    return G.nodes[node_id].get('label') == "Extract"
 
-def is_empty_type_extract_node(node_label: Node) -> bool:
-    return node_label.value == "Extract" and node_label.type_value == ""
+def is_empty_type_extract_node(node_id: Node, G) -> bool:
+    return G.nodes[node_id].get('label') == "Extract" and G.nodes[node_id].get('type') == ""
 
-def is_zext_node(node_label: Node) -> bool:
-    return node_label.value == "ZExt" or node_label.value == "SExt"
-    # return "value = ZExt" in node_label
+def is_zext_node(node_id: Node, G) -> bool:
+    return G.nodes[node_id].get('label') == "ZExt" or G.nodes[node_id].get('label') == "SExt"
 
-def is_add_node(node_label: Node) -> bool:
-    return node_label.value == "Add"
+def is_add_node(node_id: Node, G) -> bool:
+    return G.nodes[node_id].get('label') == "Add"
 
-def is_readlsb_w64(node_label: Node) -> bool:
-    return node_label.value == "ReadLSB" and node_label.type_value == "w64"
-    # return ("value = ReadLSB" in node_label) and ("type = w64" in node_label)
+def is_readlsb_w64(node_id: Node, G) -> bool:
+    return G.nodes[node_id].get('label') == "ReadLSB" and G.nodes[node_id].get('type') == "w64"
 
-def is_extract_w32(node_label: Node) -> bool:
-    return node_label.value == "Extract" and node_label.type_value == "w32"
-    # return ("value = Extract" in node_label) and ("type = w32" in node_label)
+def is_extract_w32(node_id: Node, G) -> bool:
+    return G.nodes[node_id].get('label') == "Extract" and G.nodes[node_id].get('type') == "w32"
 
-def is_type_w64(node_label: Node) -> bool:
-    return node_label.type_value == "w64"
-    # return "type = w64" in node_label
+def is_type_w64(node_id: Node, G) -> bool:
+    return G.nodes[node_id].get('type') == "w64"
 
 def remove_subtree(G: nx.DiGraph, root: Node):
     if root not in G:
@@ -65,7 +60,7 @@ def subtree_contains_zext(G: nx.DiGraph, root: Node) -> bool:
         if cur in visited:
             continue
         visited.add(cur)
-        if is_zext_node(cur):
+        if is_zext_node(cur, G):
             return True
         for child in G.successors(cur):
             stack.append(child)
@@ -103,14 +98,14 @@ def find_subtree_with_two_zext_branches(G: nx.DiGraph, root: Node) -> bool:
 
 def process_graph_sub(G: nx.DiGraph):
     for extract_node in list(G.nodes()):
-        if not is_extract_node(extract_node):
+        if not is_extract_node(extract_node, G):
             continue
 
         extract_children = list(G.successors(extract_node))
         if len(extract_children) < 2:
             continue
 
-        add_candidates = [c for c in extract_children if is_add_node(c)]
+        add_candidates = [c for c in extract_children if is_add_node(c, G)]
         if len(add_candidates) != 1:
             continue
         add_node = add_candidates[0]
@@ -118,7 +113,7 @@ def process_graph_sub(G: nx.DiGraph):
         to_delete_subtree = [c for c in extract_children if c != add_node]
 
         add_children = list(G.successors(add_node))
-        sext_candidates = [c for c in add_children if is_zext_node(c)]
+        sext_candidates = [c for c in add_children if is_zext_node(c, G)]
         if len(sext_candidates) != 1:
             continue
         sext_node = sext_candidates[0]
@@ -139,7 +134,7 @@ def process_graph_sub(G: nx.DiGraph):
 
 
 def process_graph_ZExt(G: nx.DiGraph):
-    extract_nodes = [n for n in G.nodes() if is_extract_node(n)]
+    extract_nodes = [n for n in G.nodes() if is_extract_node(n, G)]
     if not extract_nodes:
         return False
     extract_node = extract_nodes[0]
@@ -154,14 +149,14 @@ def process_graph_ZExt(G: nx.DiGraph):
     if extract_node in G:
         G.remove_node(extract_node)
     
-    zext_nodes = [n for n in G.nodes() if is_zext_node(n)]
+    zext_nodes = [n for n in G.nodes() if is_zext_node(n, G)]
     for z in zext_nodes:
         remove_node_keep_children(G, z)
     return True
 
 def process_root_zext_eq_only(G: nx.DiGraph) -> bool:
     for node in list(G.nodes()):
-        if G.in_degree(node) == 0 and is_zext_node(node):
+        if G.in_degree(node) == 0 and is_zext_node(node, G):
             children = list(G.successors(node))
             if len(children) == 1:
                 eq_node = children[0]
@@ -175,7 +170,7 @@ def process_extract_with_single_node_subtree(G: nx.DiGraph) -> bool:
     changed = False
 
     for node in list(G.nodes()):
-        if is_empty_type_extract_node(node):
+        if is_empty_type_extract_node(node, G):
             children = list(G.successors(node))
             if len(children) == 2:
                 child_a, child_b = children
@@ -203,11 +198,11 @@ def process_graph(G: nx.DiGraph):
         if G.in_degree(node) == 0:
             continue
         node_label = node 
-        if not is_readlsb_w64(node_label):
+        if not is_readlsb_w64(node_label, G):
             continue
         
         children = list(G.successors(node))
-        e32_nodes = [c for c in children if is_extract_w32(c)]
+        e32_nodes = [c for c in children if is_extract_w32(c, G)]
         if len(e32_nodes) == 0:
             continue
         
@@ -216,7 +211,7 @@ def process_graph(G: nx.DiGraph):
         e32_children = list(G.successors(e32_node))
         w64_child = None
         for cc in e32_children:
-            if is_type_w64(cc):
+            if is_type_w64(cc, G):
                 w64_child = cc
                 break
         if not w64_child:
@@ -240,125 +235,3 @@ def process_graph(G: nx.DiGraph):
 
         break
     return removed
-
-def test2():
-    dot_str = r"""
-    strict digraph {
-    "44 [value = 0, ]";
-    "45 [value = 18446744047000223744, ]";
-    "47 [value = 0, ]";
-    "48 [value = 8, ]";
-    "49 [value = 0, ]";
-    "51 [value = ReadLSB,  type = w32]";
-    "50 [value = unnamed, ]";
-    "52 [value = SExt,  type = w64]";
-    "53 [value = Mul,  type = w64]";
-    "46 [value = Extract,  type = w32]";
-    "55 [value = ReadLSB,  type = w64]";
-    "54 [value = const_arr1, ]";
-    "56 [value = Add,  type = w64]";
-    "43 [value = Extract,  type = w32]";
-    "58 [value = Read,  type = w8]";
-    "57 [value = const_arr2, ]";
-    "51 [value = ReadLSB,  type = w32]" -> "49 [value = 0, ]";
-    "51 [value = ReadLSB,  type = w32]" -> "50 [value = unnamed, ]";
-    "52 [value = SExt,  type = w64]" -> "51 [value = ReadLSB,  type = w32]";
-    "53 [value = Mul,  type = w64]" -> "48 [value = 8, ]";
-    "53 [value = Mul,  type = w64]" -> "52 [value = SExt,  type = w64]";
-    "46 [value = Extract,  type = w32]" -> "47 [value = 0, ]";
-    "46 [value = Extract,  type = w32]" -> "53 [value = Mul,  type = w64]";
-    "55 [value = ReadLSB,  type = w64]" -> "46 [value = Extract,  type = w32]";
-    "55 [value = ReadLSB,  type = w64]" -> "54 [value = const_arr1, ]";
-    "56 [value = Add,  type = w64]" -> "45 [value = 18446744047000223744, ]";
-    "56 [value = Add,  type = w64]" -> "55 [value = ReadLSB,  type = w64]";
-    "43 [value = Extract,  type = w32]" -> "44 [value = 0, ]";
-    "43 [value = Extract,  type = w32]" -> "56 [value = Add,  type = w64]";
-    "58 [value = Read,  type = w8]" -> "43 [value = Extract,  type = w32]";
-    "58 [value = Read,  type = w8]" -> "57 [value = const_arr2, ]";
-    }
-    """
-    G = dot_str_to_nx_graph(dot_str)
-
-    output_file = os.path.join("/Users/gab/repo/Rust/rustify-validator/src/Symbolizer", "output_graph_1.dot")
-    write_dot(G, output_file)
-
-    # Convert to the PNG automatically
-    png_cmd = "dot -Tpng " + output_file + " -o " + output_file+".png"
-    result = subprocess.getoutput(png_cmd)
-    
-
-    
-    process_graph(G)
-    
-    output_file1 = os.path.join("/Users/gab/repo/Rust/rustify-validator/src/Symbolizer", "output_graph_2.dot")
-    write_dot(G, output_file1)
-
-    # Convert to the PNG automatically
-    png_cmd = "dot -Tpng " + output_file1 + " -o " + output_file1+".png"
-    result = subprocess.getoutput(png_cmd)
-
-def test1():
-    dot_str = r"""
-    strict digraph {
-    "5 [value = 0, ]";
-    "6 [value = 0, ]";
-    "8 [value = ReadLSB,  type = w16]";
-    "7 [value = unnamed, ]";
-    "9 [value = ZExt,  type = w32]";
-    "10 [value = 8, ]";
-    "11 [value = AShr,  type = w32]";
-    "12 [value = 255, ]";
-    "13 [value = And,  type = w32]";
-    "16 [value = 0, ]";
-    "15 [value = ReadLSB,  type = w16]";
-    "17 [value = unnamed, ]";
-    "14 [value = ZExt,  type = w32]";
-    "18 [value = 255, ]";
-    "19 [value = And,  type = w32]";
-    "20 [value = 8, ]";
-    "21 [value = Shl,  type = w32]";
-    "22 [value = Or,  type = w32]";
-    "4 [value = Extract,  type = w16]";
-    "8 [value = ReadLSB,  type = w16]" -> "6 [value = 0, ]";
-    "8 [value = ReadLSB,  type = w16]" -> "7 [value = unnamed, ]";
-    "9 [value = ZExt,  type = w32]" -> "8 [value = ReadLSB,  type = w16]";
-    "11 [value = AShr,  type = w32]" -> "9 [value = ZExt,  type = w32]";
-    "11 [value = AShr,  type = w32]" -> "10 [value = 8, ]";
-    "13 [value = And,  type = w32]" -> "11 [value = AShr,  type = w32]";
-    "13 [value = And,  type = w32]" -> "12 [value = 255, ]";
-    "15 [value = ReadLSB,  type = w16]" -> "16 [value = 0, ]";
-    "15 [value = ReadLSB,  type = w16]" -> "17 [value = unnamed, ]";
-    "14 [value = ZExt,  type = w32]" -> "15 [value = ReadLSB,  type = w16]";
-    "19 [value = And,  type = w32]" -> "14 [value = ZExt,  type = w32]";
-    "19 [value = And,  type = w32]" -> "18 [value = 255, ]";
-    "21 [value = Shl,  type = w32]" -> "19 [value = And,  type = w32]";
-    "21 [value = Shl,  type = w32]" -> "20 [value = 8, ]";
-    "22 [value = Or,  type = w32]" -> "13 [value = And,  type = w32]";
-    "22 [value = Or,  type = w32]" -> "21 [value = Shl,  type = w32]";
-    "4 [value = Extract,  type = w16]" -> "5 [value = 0, ]";
-    "4 [value = Extract,  type = w16]" -> "22 [value = Or,  type = w32]";
-    }
-    """
-
-    G = dot_str_to_nx_graph(dot_str)
-
-    output_file = os.path.join("/Users/gab/repo/Rust/rustify-validator/src/Symbolizer", "output_graph_1.dot")
-    write_dot(G, output_file)
-
-    # Convert to the PNG automatically
-    png_cmd = "dot -Tpng " + output_file + " -o " + output_file+".png"
-    result = subprocess.getoutput(png_cmd)
-
-    process_graph_ZExt(G)
-
-    output_file1 = os.path.join("/Users/gab/repo/Rust/rustify-validator/src/Symbolizer", "output_graph_2.dot")
-    write_dot(G, output_file1)
-
-    # Convert to the PNG automatically
-    png_cmd = "dot -Tpng " + output_file1 + " -o " + output_file1+".png"
-    result = subprocess.getoutput(png_cmd)
-
-
-if __name__ == "__main__":
-    test1()
-    test2()

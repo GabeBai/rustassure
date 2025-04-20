@@ -362,18 +362,17 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
             raise RuntimeError(f"error in expression {i}") from e
 
         print(f"finish processing expression {i}")
-        # removed = process_graph(visitor.G)
-        # removed_zext = process_graph_ZExt(visitor.G)
-        # removed_sub = process_graph_sub(visitor.G)
-        # removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
-        # removed_zext_eq = process_root_zext_eq_only(visitor.G)
+        removed = process_graph(visitor.G)
+        removed_zext = process_graph_ZExt(visitor.G)
+        removed_sub = process_graph_sub(visitor.G)
+        removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
+        removed_zext_eq = process_root_zext_eq_only(visitor.G)
 
         # if dedup:
         #     if is_duplicate_graph(visitor.G, seen_graphs):
         #         continue
         # Save the output to the specified directory
         output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(i) + ".dot")
-        current_dir = os.getcwd() 
         # if (removed):
         #     logging.info(f"{current_dir}/{output_file} - removed is True")
         # if (removed_zext):
@@ -382,7 +381,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         #     logging.info(f"{current_dir}/{output_file} - removed_sub is True")
         write_dot(visitor.G, output_file)
 
-        seen_graphs.append(visitor.G)
+        # seen_graphs.append(visitor.G)
 
 
 
