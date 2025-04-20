@@ -128,6 +128,9 @@ def create_json():
         "url_get_scheme": {
             "0": "alloc::string::String"
         },
+        "url_get_query_value": {
+            "106": "UrlKeyValue"
+        },
         "opng_rangeset2bitset": {
             "1": "core::ffi::c_str::CStr"
         },
@@ -271,6 +274,12 @@ def process_rust_file(bc_file):
         f"-S -o klee_ir_files/Rust/{base_name}.ll"
     )
     run_command(link_core)
+
+    # link alloc
+    link_alloc = (
+        f"llvm-link klee_ir_files/Rust/{base_name}.ll ../scripts/alloc_demangle.ll "
+        f"-S -o klee_ir_files/Rust/{base_name}.ll"
+    )
 
     # symbolize
     cmd_opt1 = (
