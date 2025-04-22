@@ -10,7 +10,7 @@ import logging
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-MAX_JOBS = 16
+MAX_JOBS = 10
 START_TIME = time.time()
 
 logger = logging.getLogger("my_logger")
@@ -134,10 +134,6 @@ def create_json():
         "opng_rangeset2bitset": {
             "1": "core::ffi::c_str::CStr"
         },
-        "osys_path_chdir": {
-            "2": "core::ffi::c_str::CStr",
-            "1": "core::ffi::c_str::CStr"
-        },
         "bmp_img_read": {
             "0": "BmpImg"
         },
@@ -238,7 +234,7 @@ def process_c_file(bc_file):
         f"klee --libc=klee --max-time=7200 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
-    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", timeout=8000)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", timeout=9000)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
@@ -302,7 +298,7 @@ def process_rust_file(bc_file):
         f"klee_ir_files/Rust/{base_name}_klee.ll"
     )
 
-    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", timeout=8000)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", timeout=9000)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")
