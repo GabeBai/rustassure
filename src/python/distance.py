@@ -7,6 +7,59 @@ import glob
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+field_map = {
+    "osys_rename" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value-2" : "arg_value_4"
+    },
+    "check_rangeset_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4"
+    },
+    "check_obj_option" : {
+        "arg_value_1" : "arg_value_2"
+    },
+    "check_power2_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4",
+        "arg_value_3" : "arg_value_5",
+    },
+    "opng_strcasecmp" : {
+        "arg_value_1" : "arg_value_2",
+    },
+    "opng_sprint_uratio_impl" : {
+        "arg_value_2" : "arg_value_1",
+        "arg_value_3" : "arg_value_2",
+        "arg_value_4" : "arg_value_3",
+    },
+    "check_num_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_3",
+    },
+    "opng_init_iteration" : {
+        "arg_value_3" : "ret_value",
+    },
+    "opng_print_image_info" : {
+        "arg_value_0" : "arg_value_1",
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_3",
+        "arg_value_3" : "arg_value_4"
+    },
+    "app_printf" : {
+        "arg_value_0" : "arg_value_1",
+        "arg_value_0_pointer" : "arg_value_1_pointer"
+    },
+    "err_option_arg" : {
+        "arg_value_1" : "arg_value_2"
+    },
+    "scan_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_1_pointer" : "arg_value_2_pointer",
+        "arg_value_2" : "arg_value_3",
+        "*(arg_value_3)" : "*(arg_value_4)",
+        "*(arg_value_3)_pointer" : "*(arg_value_4)_pointer"
+    }
+}
 
 class SingletonLogger:
     _instance = None
@@ -150,6 +203,13 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
             function_name = c_key
             argument_name = ""
 
+        mapped_c_key = c_key
+        if function_name in field_map:
+            field_name_map = field_map[function_name]
+            if argument_name in field_name_map:
+                new_argument_name_suffix = field_name_map[argument_name]
+                mapped_c_key = f"{function_name}/{new_argument_name_suffix}"
+
         c_dir = os.path.join(c_base, c_key)
         c_files = sorted(glob.glob(os.path.join(c_dir, "*.dot")))
 
@@ -159,12 +219,12 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
         # find best match directory for each c input
         matching_r_keys = []
         for r_key in rust_dict.keys():
-            if r_key == c_key:
+            if r_key == mapped_c_key:
                 best_r_key = r_key
                 found_match_input_directory = True
                 break
-            if r_key.startswith(c_key):
-                if not c_key.endswith("pointer") and r_key.endswith("pointer"):
+            if r_key.startswith(mapped_c_key):
+                if not mapped_c_key.endswith("pointer") and r_key.endswith("pointer"):
                     continue
                 matching_r_keys.append(r_key)
                 found_match_input_directory = True
@@ -178,16 +238,16 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
                         best_r_key = r_key
 
         if not found_match_input_directory:
-            if c_key.endswith("pointer"):
-                c_key_modified = c_key[:-9]
-            elif c_key.endswith(')'):
+            if mapped_c_key.endswith("pointer"):
+                c_key_modified = mapped_c_key[:-9]
+            elif mapped_c_key.endswith(')'):
                 # case : lib_csv : csv_error
-                c_key_modified = c_key[:-1]
+                c_key_modified = mapped_c_key[:-1]
             else:
-                c_key_modified = c_key
+                c_key_modified = mapped_c_key
 
             for r_key in rust_dict.keys():
-                if not c_key.endswith("pointer") and r_key.endswith("pointer"):
+                if not mapped_c_key.endswith("pointer") and r_key.endswith("pointer"):
                     continue
                 if r_key.startswith(c_key_modified) and function_name in r_key:
                     matching_r_keys.append(r_key)
