@@ -267,6 +267,8 @@ class KqueryASTVisitor(KqueryVisitor):
         self.G.add_edge(node.node_id, child2.node_id)
         self.G.add_edge(node.node_id, child3.node_id)
 
+        return node
+
     def visitNeg_expr(self, ctx):
         # neg_expr: '(' neg_expr_kind (type)? expr ')'
         expr_kind = ctx.getChild(1).getText()
