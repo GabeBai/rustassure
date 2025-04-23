@@ -18,7 +18,7 @@ def is_extract_node(node_id, G):
     return G.nodes[node_id].get('label') == "Extract"
 
 def is_empty_type_extract_node(node_id: Node, G) -> bool:
-    return G.nodes[node_id].get('label') == "Extract" and G.nodes[node_id].get('type') == ""
+    return G.nodes[node_id].get('label') == "Extract" and (not G.nodes[node_id].get('type'))
 
 def is_zext_node(node_id: Node, G) -> bool:
     return G.nodes[node_id].get('label') == "ZExt" or G.nodes[node_id].get('label') == "SExt"
@@ -188,6 +188,7 @@ def process_extract_with_single_node_subtree(G: nx.DiGraph) -> bool:
                     remove_subtree(G, single_subtree)
                     rewire_parent_to_child(G, node, keep_child)
                     changed = True
+                    break
 
     return changed
 
