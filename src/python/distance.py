@@ -12,6 +12,9 @@ field_map = {
         "arg_value_1" : "arg_value_2",
         "arg_value-2" : "arg_value_4"
     },
+    "opng_rangeset_string_to_bitset" : {
+        "arg_value_1" : "arg_value_2"
+    },
     "check_rangeset_option" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_4"
@@ -58,6 +61,10 @@ field_map = {
         "arg_value_2" : "arg_value_3",
         "*(arg_value_3)" : "*(arg_value_4)",
         "*(arg_value_3)_pointer" : "*(arg_value_4)_pointer"
+    },
+    "osys_path_chext" : {
+        "arg_value_3" : "arg_value_4",
+        "arg_value_3_pointer" : "arg_value_4_pointer"
     }
 }
 
