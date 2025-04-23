@@ -18,4 +18,6 @@ for item in os.listdir(current_dir):
 
 open(os.path.join(current_dir, 'c.c'), 'w').close()
 open(os.path.join(current_dir, 'r.rs'), 'w').close()
+open(os.path.join(current_dir, 'test.txt'), 'w').close()
+open(os.path.join(current_dir, 'r.ll'), 'w').close()
 
