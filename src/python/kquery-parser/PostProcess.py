@@ -160,7 +160,7 @@ def process_root_zext_eq_only(G: nx.DiGraph) -> bool:
             children = list(G.successors(node))
             if len(children) == 1:
                 eq_node = children[0]
-                if eq_node.value == "Eq":
+                if G.nodes[eq_node].get('label') == "Eq":
                     remove_node_keep_children(G, node)
                     return True
     return False
