@@ -280,11 +280,7 @@ namespace {
 		std::map<int, std::string> argumentsMap;
 		std::unordered_set<StructType*> visited_structs;
 		std::list<std::string> keep_list = {
-			"strcpy",
-			"__strcpy_chk",
 			"malloc",
-			"strlen",
-			"memcmp"
 		};
 		std::list<std::string> skip_symbolized_struct = {
 			"alloc::string::String",
