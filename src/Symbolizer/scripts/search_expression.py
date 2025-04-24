@@ -5,7 +5,7 @@ def extract_expression(filename: str, keyword: str, target_index: int):
     with open(filename, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-    full_keyword = f"SYM VALUE: {keyword}"
+    pattern = re.compile(rf"\bSYM VALUE: {re.escape(keyword)}(?=\s|:|$)")
 
     results = []
     current = []
@@ -13,7 +13,7 @@ def extract_expression(filename: str, keyword: str, target_index: int):
     paren_count = 0
 
     for line in lines:
-        if full_keyword in line:
+        if pattern.search(line):
             current = [line]
             capturing = True
             paren_count = line.count('(') - line.count(')')

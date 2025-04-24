@@ -175,7 +175,7 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 		return false;
 	}
 
-	if (structType->getName() == "UrlKeyValue" && filename_without_extension == "url_free") {
+	if (structType->getName() == "url_key_value" && filename_without_extension == "url_free") {
 		return true;
 	} 
 	return true;
@@ -1060,10 +1060,6 @@ namespace {
 							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
 							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
 							Builder.SetInsertPoint(basic_block);
-							Function::arg_iterator args = dummy_func->arg_begin();
-							Value *arg_ptr = args++;	
-							Value *zero = ConstantInt::get(Type::getInt8Ty(ctx), 0);
-							Builder.CreateStore(zero, arg_ptr);
 							//do logic
 							Value *oldVal = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
 							Value *incVal = Builder.CreateAdd(oldVal, ConstantInt::get(Type::getInt32Ty(ctx), 1), "incVal");

@@ -65,6 +65,10 @@ field_map = {
     "osys_path_chext" : {
         "arg_value_3" : "arg_value_4",
         "arg_value_3_pointer" : "arg_value_4_pointer"
+    },
+    "parse_args" : {
+        "*(arg_value_1)" : "*(arg_value_0)",
+        "*(arg_value_1)_pointer" : "*(arg_value_0)_pointer"
     }
 }
 

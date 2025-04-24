@@ -122,9 +122,6 @@ def create_json():
         "url_get_port": {
             "0": "alloc::string::String"
         },
-        "url_get_protocol": {
-            "0": "alloc::string::String"
-        },
         "url_get_scheme": {
             "0": "alloc::string::String"
         },
