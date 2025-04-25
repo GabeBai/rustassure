@@ -49,7 +49,7 @@ def run_command_and_log(cmd, log_file, cwd=None, timeout=3600):
         except subprocess.TimeoutExpired:
             print(f"[ERROR] Command timed out after {timeout} seconds: {cmd}")
             logger.info(f"[ERROR] Command timed out after {timeout} seconds: {cmd}")
-            raise
+            return
 
     if process.returncode != 0:
         msg = f"Command failed: {cmd}\n"
@@ -228,10 +228,10 @@ def process_c_file(bc_file):
 
     # 2) klee. We capture the entire output.
     cmd_klee = (
-        f"klee --libc=klee --max-time=7200 --max-tests=5000000 "
+        f"klee --libc=klee --max-time=10800 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
-    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", timeout=9000)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", timeout=11000)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
@@ -291,11 +291,11 @@ def process_rust_file(bc_file):
 
     # 3) klee
     cmd_klee = (
-        f"klee --libc=klee --max-time=7200 --max-tests=500000 "
+        f"klee --libc=klee --max-time=10800 --max-tests=500000 "
         f"klee_ir_files/Rust/{base_name}_klee.ll"
     )
 
-    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", timeout=9000)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", timeout=11000)
 
     # Extract SYM VALUE block
     parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")

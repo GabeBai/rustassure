@@ -35,6 +35,9 @@ field_map = {
         "arg_value_3" : "arg_value_2",
         "arg_value_4" : "arg_value_3",
     },
+    "opng_strtail" : {
+        "arg_value_1" : "arg_value_2",
+    },
     "check_num_option" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_3",
@@ -65,6 +68,9 @@ field_map = {
     "osys_path_chext" : {
         "arg_value_3" : "arg_value_4",
         "arg_value_3_pointer" : "arg_value_4_pointer"
+    },
+    "osys_path_chdir" : {
+        "arg_value_3" : "arg_value_4",
     },
     "parse_args" : {
         "*(arg_value_1)" : "*(arg_value_0)",
