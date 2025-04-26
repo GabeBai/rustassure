@@ -311,7 +311,7 @@ class KqueryASTVisitor(KqueryVisitor):
         version = ctx.getText()
         if not extract_unique_numbers_from_string(version) == "":
             version = "update list" + extract_unique_numbers_from_string(version)
-        elif len(version) > 20:
+        elif len(version) > 20 and not "input_argument" in version:
             version = "abnormal update list"
         node = Node(version, "", self.G)
         return node
@@ -388,9 +388,8 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446742474907975680
-                                  (ReadLSB w64 0 opt_buf)))
-          [7=0, 6=0, 5=0, 4=0, 3=0, 2=0, 1=0, 0=0] @ ptr2)"""
+    kquery_expression = r"""(Add w64 5
+          (ReadLSB w64 0 input_argument_0_pointer))"""
 
     expressions = [
         kquery_expression,
