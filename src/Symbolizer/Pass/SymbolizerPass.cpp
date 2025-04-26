@@ -312,7 +312,7 @@ namespace {
 			}
 		}
 
-		void mark_symbolic(Module& M, Value* value, IRBuilder<>& Builder) {
+		void mark_symbolic(Module& M, Type *type, Value* value, IRBuilder<>& Builder, std::string &argument_name, Type *rootType) {
 			std::string struct_name = "";
 			if (PointerType *pointer_type = dyn_cast<PointerType>(value->getType())) {
 				if (PointerType *inner_pointer_type = dyn_cast<PointerType>(pointer_type->getPointerElementType())) {
@@ -321,6 +321,11 @@ namespace {
 					}
 				} else if (StructType *struct_type = dyn_cast<StructType>(pointer_type->getPointerElementType())) {
 					struct_name = struct_type->getName().str();
+				}
+			}
+			if (isa<PointerType>(type)) {
+				if (!(isa<PointerType>(rootType) && isa<PointerType>(rootType->getPointerElementType()))) {
+					argument_name = argument_name + "_pointer";
 				}
 			}
 			auto it = std::find(skip_symbolized_struct.begin(), skip_symbolized_struct.end(), struct_name);
@@ -346,7 +351,7 @@ namespace {
 			Type* void_ptr_type = PointerType::get(IntegerType::getInt8Ty(ctx), 0);
 			klee_make_symbolic_args.push_back(Builder.CreateBitCast(value, void_ptr_type));
 			klee_make_symbolic_args.push_back(ConstantInt::get(IntegerType::get(ctx, 64), DL.getTypeAllocSize(value->getType()->getPointerElementType())));
-			llvm::StringRef ref("input_argument");
+			llvm::StringRef ref(argument_name);
 			Value* arg_name = Builder.CreateGlobalString(ref, "klee_sym_arg_name", 0, &M);
 			// Set the global string as non-constant (writable)
 			GlobalVariable* global_arg_name = cast<GlobalVariable>(arg_name);
@@ -359,8 +364,14 @@ namespace {
 			Builder.CreateCall(klee_make_symbolic_func, klee_make_symbolic_args);
 		}
 
-		void initialize_inner_struct(Module& M, IRBuilder<>& Builder, Value* pointer, Type* type, StringRef name) {
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, type, name, type, false, false);
+		void initialize_inner_struct(Module& M,
+			IRBuilder<>& Builder,
+			Value* pointer,
+			Type* type,
+			StringRef name,
+			std::string &argument_name,
+			Type *rootType) {
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, type, name, type, false, false, argument_name, rootType);
 			if (pointer->getType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType());
 			}
@@ -368,13 +379,13 @@ namespace {
 			Builder.CreateStore(stack_load_inst, pointer);
 		}
 			
-		void initialize_inner_pointer(Module& M, IRBuilder<>& Builder, Value* pointer, PointerType* ptr_type, StringRef name) {
+		void initialize_inner_pointer(Module& M, IRBuilder<>& Builder, Value* pointer, PointerType* ptr_type, StringRef name, std::string &argument_name, Type *rootType) {
 			// If it is a pointer to a function, do nothing
 			if (isa<FunctionType>(ptr_type->getPointerElementType())) {
 				return;
 			}
 			// If it is, then allocate something and store it
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type, false, false);
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type, false, false, argument_name, rootType);
 			// Store it to the pointer
 			if (pointer->getType()->getPointerElementType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType()->getPointerElementType());
@@ -382,7 +393,11 @@ namespace {
 			Builder.CreateStore(stack_object, pointer);
 		}
 
-		void initialize_inner_objects(Module& M, IRBuilder<>& Builder, Value* stack_var) {
+		void initialize_inner_objects(Module& M,
+			IRBuilder<>& Builder,
+			Value* stack_var,
+			std::string &argument_name,
+			Type *rootType) {
 			LLVMContext& ctx = M.getContext();
 
 			// We should keep following nested pointers and allocating them and marking them as symbolic
@@ -396,7 +411,7 @@ namespace {
 				nested_pointers.pop_back();
 				// Is it a C pointer?
 				if (PointerType* ptr_type = dyn_cast<PointerType>(pointer->getType()->getPointerElementType())) {
-					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"));
+					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), argument_name, rootType);
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(pointer->getType()->getPointerElementType())) { // these are stack variables
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
@@ -416,7 +431,8 @@ namespace {
 								}
 								visited_structs.insert(struct_type);
 							}
-							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field");
+							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
+							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, rootType);
 							visited_structs.emplace(struct_type);
 						} else if (StructType* inner_struct_type = dyn_cast<StructType>(field_type)) {
 							Value* gep = Builder.CreateStructGEP(
@@ -424,14 +440,22 @@ namespace {
 								pointer, 
 								i,
 							"gep");
-							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field");
+							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
+							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field", update_argument_name, rootType);
 						}
 					}
 				}
 			}
 		}
 
-		Value* create_object_and_mark_symbolic(Module& M, IRBuilder<>& Builder, Type* type, StringRef name, Type* originType, bool needCast, bool needIgnore){
+		Value* create_object_and_mark_symbolic(Module& M,
+			IRBuilder<>& Builder,
+			Type* type, StringRef name,
+			Type* originType,
+			bool needCast,
+			bool needIgnore,
+			std::string &argument_name,
+			Type* rootType){
 			LLVMContext& ctx = M.getContext();
 			// special handling for i8* which could be strings
 			bool cast_to_integer = false;
@@ -465,17 +489,18 @@ namespace {
 				}
 				stack_arg = Builder.CreateAlloca(type, 0, name);
 				// Any inner objects, should also be initialized
-				initialize_inner_objects(M, Builder, stack_arg);
+				initialize_inner_objects(M, Builder, stack_arg, argument_name, rootType);
 				// Only mark the non-pointers symbolic
 				// For structs, only mark the non-pointer fields symbolic
-				if (isa<PointerType>(type) && isa<PointerType>(type->getPointerElementType())) {
+				if (isa<PointerType>(type) && isa<PointerType>(type->getPointerElementType()) ||
+					isa<PointerType>(type) && isa<StructType>(type->getPointerElementType())) {
 					needIgnore = true;
 				}
 				if (!needIgnore) {
 					// type is the type passed to the CreateAlloca
 					// For structs too, we can mark the whole struct
 					// as symbolic
-					mark_symbolic(M, stack_arg, Builder);
+					mark_symbolic(M, type, stack_arg, Builder, argument_name, rootType);
 				}
 				if (needCast) {
 					return Builder.CreateBitCast(stack_arg, originType);
@@ -567,10 +592,14 @@ namespace {
 			for (Argument& arg: target_function->args()) {
 				// If it's a C pointer type, then we must create a stack object (AllocaInst) of the base type, mark it symbolic, and pass it directly to the function
 				// If it's a scalar, then we must create a stack object, load it and pass it to the function
+				unsigned pos = arg.getArgNo();
+				std::string argument_name;
 				if (arg.hasAttribute(Attribute::StructRet)) {
 					argumentsMap[arg.getArgNo()] = "Ret";
+					argument_name = "return_value";
+				} else {
+					argument_name = "input_argument_" + std::to_string(pos);
 				}
-				
 				Value* stackArg = nullptr;
 				unsigned argIndex = arg.getArgNo();
 				bool needReplace = false;
@@ -600,7 +629,15 @@ namespace {
 					create_function(M, functionType->getReturnType(), function);
 					actual_args.push_back(function);
 				} else {
-					stackArg = create_object_and_mark_symbolic(M, Builder,targetType, arg.getName(), originalType, needReplace, needIgnore);
+					stackArg = create_object_and_mark_symbolic(M,
+						Builder,
+						targetType,
+						arg.getName(),
+						originalType,
+						needReplace,
+						needIgnore,
+						argument_name,
+						targetType);
 					LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
 					actual_args.push_back(stack_load_inst);
 				}
