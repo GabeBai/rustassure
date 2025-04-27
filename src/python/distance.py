@@ -201,6 +201,9 @@ def calculate_distance(input_files_a,
             best_distance = current_best
         else:
             best_distance = max(best_distance, current_best)
+        if current_best = 1000:
+            print(f"{file_path_a} cannot find a comparable graph, stop comparing this argument")
+            break
     return best_distance
 
 def all_lengths_equal(arr):

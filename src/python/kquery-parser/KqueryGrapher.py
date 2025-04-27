@@ -340,19 +340,21 @@ class KqueryASTVisitor(KqueryVisitor):
             if ctx.getChild(i).getText() == ",":
                 i += 1
                 continue
+            sub_node = Node("update_list_sub_node", "", self.G)
             lhs_expr_child = ctx.getChild(i)
+            self.G.add_edge(update_node.node_id, sub_node.node_id)
             rhs_expr_child = ctx.getChild(i + 2)
             # print("LHS: " + lhs_expr_child.getText())
             # print("RHS: " + rhs_expr_child.getText())
             if isinstance(lhs_expr_child, KqueryParser.ExprContext):
                 lhs_expr_node = self.visit(lhs_expr_child)
                 rhs_expr_node = self.visit(rhs_expr_child)
-                update_node.children.append(lhs_expr_node)
-                update_node.children.append(rhs_expr_node)
+                sub_node.children.append(lhs_expr_node)
+                sub_node.children.append(rhs_expr_node)
 
                 # Add edges
-                self.G.add_edge(update_node.node_id, lhs_expr_node.node_id)
-                self.G.add_edge(update_node.node_id, rhs_expr_node.node_id)
+                self.G.add_edge(sub_node.node_id, lhs_expr_node.node_id)
+                self.G.add_edge(sub_node.node_id, rhs_expr_node.node_id)
             i += 3
         return update_node
            
