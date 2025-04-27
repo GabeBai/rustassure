@@ -306,15 +306,85 @@ class KqueryASTVisitor(KqueryVisitor):
         return node
 
 
-    def visitVersion(self, ctx):
-        # We don't parse version any deeper. TODO?
-        version = ctx.getText()
-        if not extract_unique_numbers_from_string(version) == "":
-            version = "update list" + extract_unique_numbers_from_string(version)
-        elif len(version) > 20 and not "input_argument" in version:
-            version = "abnormal update list"
-        node = Node(version, "", self.G)
+    def visitArray_read_expr(self, ctx):
+        # array_read_expr : '(' array_read_expr_kind type expr version ')'
+        expr_kind = ctx.getChild(1).getText()
+        value_type = ctx.getChild(2).getText()
+        expr = ctx.getChild(3)
+        version = ctx.getChild(4)
+
+        child1 = self.visit(expr)
+        child2 = self.visit(version) 
+
+        node = Node(expr_kind, value_type, self.G)
+        node.children.append(child1)
+        node.children.append(child2)
+
+        self.G.add_edge(node.node_id, child1.node_id)
+        self.G.add_edge(node.node_id, child2.node_id)
         return node
+
+
+    def visitUpdate_list(self, ctx):
+        """
+        update_list : expr '=' expr (',' expr '=' expr)*;
+        The expr = expr on the left most is the most recent one.
+        We will retain this convention.
+        """
+        update_node = Node("update_list", "", self.G)
+        # print("Update list: " + ctx.getText())
+
+        i = 0
+        while i < ctx.getChildCount():
+            # If it is a comma, skip it
+            if ctx.getChild(i).getText() == ",":
+                i += 1
+                continue
+            lhs_expr_child = ctx.getChild(i)
+            rhs_expr_child = ctx.getChild(i + 2)
+            # print("LHS: " + lhs_expr_child.getText())
+            # print("RHS: " + rhs_expr_child.getText())
+            if isinstance(lhs_expr_child, KqueryParser.ExprContext):
+                lhs_expr_node = self.visit(lhs_expr_child)
+                rhs_expr_node = self.visit(rhs_expr_child)
+                update_node.children.append(lhs_expr_node)
+                update_node.children.append(rhs_expr_node)
+
+                # Add edges
+                self.G.add_edge(update_node.node_id, lhs_expr_node.node_id)
+                self.G.add_edge(update_node.node_id, rhs_expr_node.node_id)
+            i += 3
+        return update_node
+           
+
+    def visitVersion(self, ctx):
+        """
+update_list : expr '=' expr (',' expr '=' expr)*;
+version: '[' (update_list)? ']' '@' version
+       | IDENTIFIER (':' expr)?
+       ;
+        """
+        version_name = ctx.getText()
+        version_node = None
+        if version_name.startswith("input_argument"):
+            version_node = Node(version_name, "", self.G)
+        else:
+            version_node = Node("version", "", self.G)
+        for i in range(ctx.getChildCount()):
+            child = ctx.getChild(i)
+            if isinstance(child, KqueryParser.Update_listContext):
+                update_list_node = self.visit(child)
+                version_node.children.append(update_list_node)
+                self.G.add_edge(version_node.node_id, update_list_node.node_id)
+            if isinstance(child, KqueryParser.IdentifierContext):
+                identifier_node = self.visit(child)
+                version_node.children.append(identifier_node)
+                self.G.add_edge(version_node.node_id, identifier_node.node_id)
+            if isinstance(child, KqueryParser.ExprContext):
+                expr_node = self.visit(child)
+                version_node.children.append(expr_node)
+                self.G.add_edge(version_node.node_id, expr_node.node_id)
+        return version_node
 
     def visitExpr(self, ctx):
         # print("Visit expr: " + ctx.getText())
@@ -352,7 +422,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         parser = KqueryParser(token_stream)
         
         tree = parser.prog()
-        # print(tree.toStringTree(recog=parser))
+        print(tree.toStringTree(recog=parser))
 
         # Create and apply the custom visitor
         print(f"processing expression {i}")
@@ -388,8 +458,11 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
 
 
 if __name__ == "__main__":
-    kquery_expression = r"""(Add w64 5
-          (ReadLSB w64 0 input_argument_0_pointer))"""
+    kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446613489242865665
+                                  N0:(ReadLSB w64 0 input_argument_1)))
+          [(Extract w32 0 (Add w64 18446613489242865664 N0))=(Read w8 (Extract w32 0 (Add w64 18446613534340022272
+                                                                                              (ReadLSB w64 0 input_argument_4)))
+                                                                      input_argument_4)] @ input_argument_2)"""
 
     expressions = [
         kquery_expression,
