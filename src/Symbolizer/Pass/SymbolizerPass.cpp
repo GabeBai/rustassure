@@ -324,9 +324,10 @@ namespace {
 				}
 			}
 			if (isa<PointerType>(type)) {
-				if (!(isa<PointerType>(rootType) && isa<PointerType>(rootType->getPointerElementType()))) {
-					argument_name = argument_name + "_pointer";
-				}
+				// if (!(isa<PointerType>(rootType) && isa<PointerType>(rootType->getPointerElementType()))) {
+				// 	argument_name = argument_name + "_pointer";
+				// }
+				argument_name = argument_name + "_pointer";
 			}
 			auto it = std::find(skip_symbolized_struct.begin(), skip_symbolized_struct.end(), struct_name);
 			if (it != skip_symbolized_struct.end()) {
