@@ -280,7 +280,11 @@ namespace {
 		std::map<int, std::string> argumentsMap;
 		std::unordered_set<StructType*> visited_structs;
 		std::list<std::string> keep_list = {
+			"strcpy",
+			"__strcpy_chk",
 			"malloc",
+			"strlen",
+			"memcmp"
 		};
 		std::list<std::string> skip_symbolized_struct = {
 			"alloc::string::String",
@@ -493,8 +497,7 @@ namespace {
 				initialize_inner_objects(M, Builder, stack_arg, argument_name, rootType);
 				// Only mark the non-pointers symbolic
 				// For structs, only mark the non-pointer fields symbolic
-				if (isa<PointerType>(type) && isa<PointerType>(type->getPointerElementType()) ||
-					isa<PointerType>(type) && isa<StructType>(type->getPointerElementType())) {
+				if (isa<PointerType>(type)) {
 					needIgnore = true;
 				}
 				if (!needIgnore) {
@@ -590,6 +593,7 @@ namespace {
 
 			std::vector<Value*> actual_args;
 			// Now create a stack object of each of the argument type
+			bool has_struct_ret = false;
 			for (Argument& arg: target_function->args()) {
 				// If it's a C pointer type, then we must create a stack object (AllocaInst) of the base type, mark it symbolic, and pass it directly to the function
 				// If it's a scalar, then we must create a stack object, load it and pass it to the function
@@ -598,8 +602,13 @@ namespace {
 				if (arg.hasAttribute(Attribute::StructRet)) {
 					argumentsMap[arg.getArgNo()] = "Ret";
 					argument_name = "return_value";
+					has_struct_ret = true;
 				} else {
-					argument_name = "input_argument_" + std::to_string(pos);
+					if (has_struct_ret) {
+						argument_name = "input_argument_" + std::to_string(pos - 1);
+					} else {
+						argument_name = "input_argument_" + std::to_string(pos);
+					}
 				}
 				Value* stackArg = nullptr;
 				unsigned argIndex = arg.getArgNo();
@@ -870,10 +879,10 @@ namespace {
 				}
 			} else if (arg_value->getType()->isPointerTy()) {
 				//print pointer
-				std::vector<Value*> args_vec_pointer;
-				args_vec_pointer.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + "_pointer" + " : "));
-				args_vec_pointer.push_back(arg_value);
-				Builder.CreateCall(klee_print_expr_function, args_vec_pointer);
+				// std::vector<Value*> args_vec_pointer;
+				// args_vec_pointer.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + "_pointer" + " : "));
+				// args_vec_pointer.push_back(arg_value);
+				// Builder.CreateCall(klee_print_expr_function, args_vec_pointer);
 
 				Value *isNotNull = Builder.CreateICmpNE(arg_value, Constant::getNullValue(arg_value->getType()), "is_not_null");
 
@@ -887,7 +896,7 @@ namespace {
 				Builder.SetInsertPoint(loopBlock);
 
 				Type *elementType = arg_value->getType()->getPointerElementType();
-				for (int i = 0; i < 4; ++i) {
+				for (int i = 0; i < 1; ++i) {
 					// Create the GEP for the current index
 					Value *index = Builder.getInt32(i);
 					Value *ptr = Builder.CreateGEP(elementType, arg_value, index, "gep" + std::to_string(i));
