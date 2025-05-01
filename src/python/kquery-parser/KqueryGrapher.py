@@ -424,7 +424,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         parser = KqueryParser(token_stream)
         
         tree = parser.prog()
-        print(tree.toStringTree(recog=parser))
+        # print(tree.toStringTree(recog=parser))
 
         # Create and apply the custom visitor
         print(f"processing expression {i}")

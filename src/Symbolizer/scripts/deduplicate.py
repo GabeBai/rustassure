@@ -1,76 +1,58 @@
+#!/usr/bin/env python3
+"""
+Use fdupes to deduplicate .dot files under a given directory structure,
+keeping only the first occurrence of each duplicate.
+Runs in single-threaded mode and logs progress and full fdupes output to deduplicate_process.txt.
+"""
 import os
 import sys
-import hashlib
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import subprocess
 
-def compute_file_hash(path, hash_func='md5'):
-    h = hashlib.new(hash_func)
-    try:
-        with open(path, 'rb') as f:
-            for chunk in iter(lambda: f.read(4096), b''):
-                h.update(chunk)
-        return h.hexdigest()
-    except Exception as e:
-        print(f"Error reading {path}: {e}")
-        return None
 
-def manage_dot_files_by_hash(dir_path):
-    if not os.path.isdir(dir_path):
-        return f"Error: Invalid or non-existent directory specified: {dir_path}"
-    try:
-        dot_files = []
-        for item in os.listdir(dir_path):
-            if item.endswith(".dot"):
-                file_path = os.path.join(dir_path, item)
-                if os.path.isfile(file_path):
-                    dot_files.append(file_path)
+def manage_dot_files_by_hash(dir_path: str) -> str:
+    """
+    Runs fdupes on `dir_path`, deleting duplicates and keeping only the first file in each group.
+    Logs when starting and writes all fdupes stdout/stderr into LOG_FILE.
+    """
+    header = f"[INFO] Starting fdupes on: {dir_path}\n"
+    print(header.strip())
+    cmd = [
+        "fdupes",      # find duplicates (default MD5 signature)
+        "-d",          # delete duplicates
+        "-N",          # no prompt, keep first file of each group
+        dir_path        # target directory
+    ]
+    proc = subprocess.run(cmd, text=True)
 
-        seen_hashes = set()
-        for f_path in dot_files:
-            file_hash = compute_file_hash(f_path)
-            if file_hash is None:
-                continue  # skip unreadable file
-            if file_hash in seen_hashes:
-                os.remove(f_path)
-                print(f"Deleted duplicate (by hash): {f_path}")
-            else:
-                seen_hashes.add(file_hash)
+    if proc.returncode == 0:
+        return f"Dedup complete: {dir_path}"
+    else:
+        return f"[ERROR] fdupes on {dir_path}: return code {proc.returncode}"
 
-        return f"Finished dedup by hash: {dir_path} (kept {len(seen_hashes)} unique .dot files)"
-
-    except PermissionError:
-        return f"Permission denied when accessing: {dir_path}"
-    except FileNotFoundError:
-        return f"Directory not found (possibly deleted): {dir_path}"
-    except Exception as e:
-        return f"Exception occurred in {dir_path}: {e}"
 
 def main():
-    directory_name = sys.argv[1]
-    if directory_name == 'C':
-        base_dir = "graph_output/C"
-    else:
-        base_dir = "graph_output/Rust"
+    if len(sys.argv) != 2 or sys.argv[1] not in ('C', 'R'):
+        print("Usage: dedupe.py [C|R]")
+        sys.exit(1)
 
-    if os.path.isdir(base_dir):
-        all_dirs = []
-        for root, dirs, files in os.walk(base_dir):
-            all_dirs.append(root)
+    base_dir = "graph_output/C" if sys.argv[1] == 'C' else "graph_output/Rust"
+    if not os.path.isdir(base_dir):
+        print(f"[ERROR] Directory does not exist: {base_dir}")
+        sys.exit(1)
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_dir = {
-                executor.submit(manage_dot_files_by_hash, d): d
-                for d in all_dirs
-            }
-            for future in as_completed(future_to_dir):
-                directory = future_to_dir[future]
-                try:
-                    result = future.result()
-                    print(result)
-                except Exception as exc:
-                    print(f"{directory} generated an exception: {exc}")
-    else:
-        print(f"Directory does not exist: {base_dir}")
+    # collect all subdirectories to process
+    all_dirs = [root for root, _, _ in os.walk(base_dir)]
+    total = len(all_dirs)
+    print(f"[INFO] Found {total} directories to process (single-threaded).")
+
+    # single-threaded execution
+    for idx, d in enumerate(all_dirs, start=1):
+        try:
+            result = manage_dot_files_by_hash(d)
+            print(f"[{idx}/{total}] {result}")
+        except Exception as e:
+            print(f"[{idx}/{total}] [ERROR] {d} exception: {e}")
+
 
 if __name__ == "__main__":
     main()

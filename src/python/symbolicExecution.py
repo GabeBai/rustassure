@@ -10,7 +10,7 @@ import logging
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-MAX_JOBS = 10
+MAX_JOBS = 12
 START_TIME = time.time()
 
 logger = logging.getLogger("my_logger")
@@ -228,13 +228,13 @@ def process_c_file(bc_file):
 
     # 2) klee. We capture the entire output.
     cmd_klee = (
-        f"klee --libc=klee --max-time=10800 --write-kqueries --max-tests=5000000 "
+        f"klee --libc=klee --max-time=10800 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
-    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_original_log.txt", timeout=11000)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_klee_log.txt", timeout=11000)
 
-    # Extract SYM VALUE block
-    parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
+    # # Extract SYM VALUE block
+    # parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
 
     # 3) Run KqueryConverter (into graph_output/C)
     graph_output_dir = "graph_output/C"
@@ -291,14 +291,14 @@ def process_rust_file(bc_file):
 
     # 3) klee
     cmd_klee = (
-        f"klee --libc=klee --max-time=10800 --write-kqueries --max-tests=500000 "
+        f"klee --libc=klee --max-time=10800 --max-tests=500000 "
         f"klee_ir_files/Rust/{base_name}_klee.ll"
     )
 
-    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_original_log.txt", timeout=11000)
+    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_klee_log.txt", timeout=11000)
 
     # Extract SYM VALUE block
-    parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")
+    # parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")
 
     # 4) Run KqueryConverter
     graph_output_dir = "graph_output/Rust"
@@ -342,7 +342,7 @@ def main():
             except Exception as e:
                 logger.error(f"C symbolic {f} failed", exc_info=True)
 
-
+    
     # Deduplicate + convertGraph for C
     try:
         run_command("python3 ../scripts/deduplicate.py C")
@@ -353,6 +353,7 @@ def main():
         run_command("python3 ../scripts/convertGraph.py C")
     except Exception as e:
         logger.error("convertGraph C outputs error: %s", e, exc_info=True)
+
 
     # Create JSON (replacing the 'jq' step)
     create_json()
@@ -385,6 +386,7 @@ def main():
         run_command("python3 ../scripts/convertGraph.py Rust")
     except Exception as e:
         logger.error("convertGraph rust error: %s", e, exc_info=True)
+
 
     # Run distance.py
     try:
