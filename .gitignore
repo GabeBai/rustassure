@@ -10,6 +10,7 @@ src/SVF
 src/klee
 src/Symbolizer/build/
 src/Symbolizer/edit_distance/
+src/Symbolizer/archive/
 src/Symbolizer/graph_output/
 src/Symbolizer/input.json
 src/Symbolizer/klee_ir_files/
