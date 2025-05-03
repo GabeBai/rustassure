@@ -228,7 +228,7 @@ def process_c_file(bc_file):
 
     # 2) klee. We capture the entire output.
     cmd_klee = (
-        f"klee --libc=klee --max-time=10800 --max-tests=5000000 "
+        f"klee --libc=klee --write-no-tests=true --max-time=10800 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
     run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_klee_log.txt", timeout=11000)
@@ -291,7 +291,7 @@ def process_rust_file(bc_file):
 
     # 3) klee
     cmd_klee = (
-        f"klee --libc=klee --max-time=10800 --max-tests=500000 "
+        f"klee --libc=klee --write-no-tests=true --max-time=10800 --max-tests=500000 "
         f"klee_ir_files/Rust/{base_name}_klee.ll"
     )
 
