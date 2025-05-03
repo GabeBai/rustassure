@@ -10,7 +10,7 @@ import logging
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-MAX_JOBS = 12
+MAX_JOBS = 10
 START_TIME = time.time()
 
 logger = logging.getLogger("my_logger")

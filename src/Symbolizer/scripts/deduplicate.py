@@ -31,7 +31,7 @@ def manage_dot_files_by_hash(dir_path: str) -> str:
 
 
 def main():
-    if len(sys.argv) != 2 or sys.argv[1] not in ('C', 'R'):
+    if len(sys.argv) != 2 or sys.argv[1] not in ('C', 'Rust'):
         print("Usage: dedupe.py [C|R]")
         sys.exit(1)
 
