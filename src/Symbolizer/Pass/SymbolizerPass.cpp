@@ -174,7 +174,6 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 	if (structType->getName().find("BmpPixel_struct") == 0) {
 		return false;
 	}
-
 	if (structType->getName() == "url_key_value" && filename_without_extension == "url_free") {
 		return true;
 	} 
@@ -438,7 +437,7 @@ namespace {
 							}
 							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, rootType);
-							visited_structs.emplace(struct_type);
+							visited_structs.erase(struct_type);
 						} else if (StructType* inner_struct_type = dyn_cast<StructType>(field_type)) {
 							Value* gep = Builder.CreateStructGEP(
 								struct_type, 
@@ -823,7 +822,7 @@ namespace {
 							}
 						}
 						if (isa<PointerType>(field_type)) {
-							if (StructType *struct_type = dyn_cast<StructType>(field_type->getPointerElementType())) {
+							if (StructType *inner_struct_type = dyn_cast<StructType>(field_type->getPointerElementType())) {
 								if (visited_structs.count(struct_type)) {
 									continue;
 								} else {
@@ -837,7 +836,7 @@ namespace {
 						} else {
 							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
 						}
-						visited_structs.emplace(struct_type);
+						visited_structs.erase(struct_type);
 					} else {
 						
 						// Create a load
