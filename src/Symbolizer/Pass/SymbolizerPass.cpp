@@ -429,15 +429,20 @@ namespace {
 									pointer, 
 									i,
 								"gep");
+							bool visited_struct_flag = false;
 							if (StructType *inner_struct_type = dyn_cast<StructType>(field_ptr_type->getPointerElementType())) {
 								if (visited_structs.count(struct_type)) {
 									return;
+								} else {
+									visited_structs.insert(struct_type);
+									visited_struct_flag = true;
 								}
-								visited_structs.insert(struct_type);
 							}
 							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, rootType);
-							visited_structs.erase(struct_type);
+							if (visited_struct_flag) {
+								visited_structs.erase(struct_type);
+							}
 						} else if (StructType* inner_struct_type = dyn_cast<StructType>(field_type)) {
 							Value* gep = Builder.CreateStructGEP(
 								struct_type, 
@@ -822,12 +827,14 @@ namespace {
 								continue;
 							}
 						}
+						bool visited_struct_flag = false;
 						if (isa<PointerType>(field_type)) {
 							if (StructType *inner_struct_type = dyn_cast<StructType>(field_type->getPointerElementType())) {
 								if (visited_structs.count(struct_type)) {
 									continue;
 								} else {
 									visited_structs.insert(struct_type);
+									visited_struct_flag = true;
 								}
 							}
 						}
@@ -837,7 +844,9 @@ namespace {
 						} else {
 							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
 						}
-						visited_structs.erase(struct_type);
+						if (visited_struct_flag) {
+							visited_structs.erase(struct_type);
+						}
 					} else {
 						
 						// Create a load
