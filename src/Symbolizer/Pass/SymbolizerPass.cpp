@@ -700,9 +700,10 @@ namespace {
 				if (needReplace) {
 					target_value = Builder.CreateBitCast(arg_value, targetType);
 				}
-
-
-				print_nested_klee_exprs(M, Builder, target_value, prefix + std::to_string(index));
+				if (!target_function->getArg(i)->hasAttribute(Attribute::StructRet)) {
+					prefix = prefix + std::to_string(index);
+				}
+				print_nested_klee_exprs(M, Builder, target_value, prefix);
 			}
 
 			// The return value
