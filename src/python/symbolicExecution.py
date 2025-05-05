@@ -119,10 +119,25 @@ def create_json():
         "url_get_path": {
             "0": "alloc::string::String"
         },
+        "url_get_scheme": {
+            "0": "alloc::string::String"
+        },
+        "url_get_userinfo": {
+            "0": "alloc::string::String"
+        },
         "url_get_port": {
             "0": "alloc::string::String"
         },
         "url_get_scheme": {
+            "0": "alloc::string::String"
+        },
+        "url_get_hostname": {
+            "0": "alloc::string::String"
+        },
+        "url_get_pathname": {
+            "0": "alloc::string::String"
+        },
+        "url_get_fragment": {
             "0": "alloc::string::String"
         },
         "url_get_query_value": {
@@ -231,7 +246,11 @@ def process_c_file(bc_file):
         f"klee --libc=klee --write-no-tests=true --max-time=10800 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
-    run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_klee_log.txt", timeout=11000)
+
+    try:
+        run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_klee_log.txt", timeout=11000)
+    except Exception as e:
+        logger.info(f"[ERROR] klee fail: {base_name}")
 
     # # Extract SYM VALUE block
     # parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
@@ -294,8 +313,10 @@ def process_rust_file(bc_file):
         f"klee --libc=klee --write-no-tests=true --max-time=10800 --max-tests=500000 "
         f"klee_ir_files/Rust/{base_name}_klee.ll"
     )
-
-    run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_klee_log.txt", timeout=11000)
+    try:
+        run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_klee_log.txt", timeout=11000)
+    except Exception as e:
+        logger.info(f"[ERROR] klee fail: {base_name}")
 
     # Extract SYM VALUE block
     # parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")

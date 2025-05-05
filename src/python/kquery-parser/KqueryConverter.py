@@ -66,7 +66,8 @@ def extract_values(processed_lines):
             expression = match.group(2).strip()  
             if key not in sym_dict:
                 sym_dict[key] = []
-            sym_dict[key].append(expression)
+            if expression not in sym_dict[key]:
+                sym_dict[key].append(expression)
 
     return sym_dict
     

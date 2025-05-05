@@ -8,6 +8,7 @@ from networkx.drawing.nx_pydot import write_dot
 import os
 import re
 import sys
+sys.setrecursionlimit(5000)
 import subprocess
 from PostProcess import process_graph
 from PostProcess import process_graph_ZExt
