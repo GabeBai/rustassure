@@ -141,20 +141,35 @@ class KqueryASTVisitor(KqueryVisitor):
     def visitBitwise_expr(self, ctx):
         # bitwise_expr: '(' bitwise_expr_kind (type)? expr expr ')';
         expr_kind = ctx.getChild(1).getText()
-        value_type = ctx.getChild(2).getText()
-        expr1 = ctx.getChild(3)
-        expr2 = ctx.getChild(4)
+        if ctx.getChildCount() == 6:
+            value_type = ctx.getChild(2).getText()
+            expr1 = ctx.getChild(3)
+            expr2 = ctx.getChild(4)
 
-        child_node1 = self.visit(expr1)
-        child_node2 = self.visit(expr2)
-        
-        node = Node(expr_kind, value_type, self.G)
-        node.children.append(child_node1)
-        node.children.append(child_node2)
+            child_node1 = self.visit(expr1)
+            child_node2 = self.visit(expr2)
 
-        # self.G.add_node(node)
-        self.G.add_edge(node.node_id, child_node1.node_id)
-        self.G.add_edge(node.node_id, child_node2.node_id)
+            node = Node(expr_kind, value_type, self.G)
+            node.children.append(child_node1)
+            node.children.append(child_node2)
+
+            # self.G.add_node(node)
+            self.G.add_edge(node.node_id, child_node1.node_id)
+            self.G.add_edge(node.node_id, child_node2.node_id)
+        elif ctx.getChildCount() == 5:
+            expr1 = ctx.getChild(2)
+            expr2 = ctx.getChild(3)
+
+            child_node1 = self.visit(expr1)
+            child_node2 = self.visit(expr2)
+
+            node = Node(expr_kind, "", self.G)
+            node.children.append(child_node1)
+            node.children.append(child_node2)
+
+            # self.G.add_node(node)
+            self.G.add_edge(node.node_id, child_node1.node_id)
+            self.G.add_edge(node.node_id, child_node2.node_id)
         return node
 
     def visitComparison_expr(self, ctx):
