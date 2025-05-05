@@ -30,18 +30,18 @@ def move_matching_files(original_dest_dir, base_dir, i_files, except_ir = false,
                     src_file = os.path.join(base_dir, file)
                     dest_dir = os.path.join(original_dest_dir, rel_path, file)
                     if os.path.isdir(src_file):
-                        shutil.copytree(src_file, dest_dir)
+                        shutil.move(src_file, dest_dir)
                     else:
-                        shutil.copy2(src_file, dest_dir)
+                        shutil.move(src_file, dest_dir)
                     print(f"{src_file} to {dest_dir} finish")
             else:
                 if file.startswith(rel_path):
                     src_file = os.path.join(base_dir, file)
                     dest_dir = os.path.join(original_dest_dir, rel_path, file + "_" + source)
                     if os.path.isdir(src_file):
-                        shutil.copytree(src_file, dest_dir)
+                        shutil.move(src_file, dest_dir)
                     else:
-                        shutil.copy2(src_file, dest_dir)
+                        shutil.move(src_file, dest_dir)
                     print(f"{src_file} to {dest_dir} finish")
 
 def shuffle(directory):
