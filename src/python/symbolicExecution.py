@@ -10,7 +10,7 @@ import logging
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-MAX_JOBS = 10
+MAX_JOBS = 8
 START_TIME = time.time()
 
 logger = logging.getLogger("my_logger")
@@ -243,12 +243,12 @@ def process_c_file(bc_file):
 
     # 2) klee. We capture the entire output.
     cmd_klee = (
-        f"klee --libc=klee --write-no-tests=true --max-time=10800 --max-tests=5000000 "
+        f"klee --libc=klee --write-no-tests=true --max-time=7200 --max-tests=5000000 "
         f"klee_ir_files/C/{base_name}_klee.ll"
     )
 
     try:
-        run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_klee_log.txt", timeout=11000)
+        run_command_and_log(cmd_klee, f"klee_symbol_log/C/{base_name}_klee_log.txt", timeout=7800)
     except Exception as e:
         logger.info(f"[ERROR] klee fail: {base_name}")
 
