@@ -418,6 +418,9 @@ namespace {
 					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), argument_name, rootType);
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(pointer->getType()->getPointerElementType())) { // these are stack variables
+					if (struct_type->getName() == "struct._IO_FILE") {
+						return;
+					}
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
 						Type* field_type = struct_type->getElementType(i);
 						// If it is a pointer, then we try to initialize it and make it work
@@ -503,6 +506,11 @@ namespace {
 				// For structs, only mark the non-pointer fields symbolic
 				if (isa<PointerType>(type)) {
 					needIgnore = true;
+				}
+				if (StructType* struct_type = dyn_cast<StructType>(type)) {
+					if (struct_type->getName() == "struct._IO_FILE") {
+						needIgnore = true;
+					}
 				}
 				if (!needIgnore) {
 					// type is the type passed to the CreateAlloca
@@ -663,6 +671,14 @@ namespace {
 			// Then we dump the symbolic values
 			for (int i = 0; i < actual_args.size(); i++) {
 				Value* arg_value = actual_args[i];
+				Type *arg_type = arg_value->getType();
+				if (PointerType *pointerType = dyn_cast<PointerType>(arg_type)) {
+					if (StructType* structType = dyn_cast<StructType>(pointerType->getPointerElementType())) {
+						if (structType->getName() == "struct._IO_FILE") {
+							continue;
+						}
+					}
+				}
 				if (llvm::isa<llvm::Function>(arg_value)) {
 					continue;
 				}
