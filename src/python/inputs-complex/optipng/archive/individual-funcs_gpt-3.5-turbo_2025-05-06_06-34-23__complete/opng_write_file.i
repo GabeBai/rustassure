@@ -8,6 +8,10 @@ struct _IO_FILE;
 struct _IO_marker;
 struct _IO_codecvt;
 struct _IO_wide_data;
+typedef struct
+{
+  unsigned long int __val[(1024 / (8 * sizeof (unsigned long int)))];
+} __sigset_t;
 struct timespec
 {
   __time_t tv_sec;
@@ -92,7 +96,17 @@ extern void ( png_set_user_limits) (png_structrp png_ptr, png_uint_32 user_width
 typedef long osys_foffset_t;
 typedef unsigned long osys_fsize_t;
 struct internal_state;
+typedef long int __jmp_buf[8];
+struct __jmp_buf_tag
+  {
+    __jmp_buf __jmpbuf;
+    int __mask_was_saved;
+    __sigset_t __saved_mask;
+  };
 typedef struct __jmp_buf_tag jmp_buf[1];
+extern int _setjmp (struct __jmp_buf_tag __env[1]) __attribute__ ((__nothrow__));
+extern void longjmp (struct __jmp_buf_tag __env[1], int __val)
+     __attribute__ ((__nothrow__)) __attribute__ ((__noreturn__));
 struct exception_context { jmp_buf *penv; int caught; volatile struct { const char * etmp; } v; };
 struct exception_context the_exception_context[1];
  const int filter_table[5 + 1] =

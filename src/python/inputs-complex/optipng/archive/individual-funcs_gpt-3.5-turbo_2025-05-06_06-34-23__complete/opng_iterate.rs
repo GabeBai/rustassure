@@ -1,9 +1,9 @@
-use std::os::raw::{c_char, c_int, c_long, c_uint, c_ulong};
+use std::os::raw::{c_char, c_int, c_long, c_ulong};
 
-type opng_bitset_t = c_uint;
+type opng_bitset_t = u32;
 
-const OPNG_BITSET_ELT_MIN: c_int = 0;
-const OPNG_BITSET_ELT_MAX: c_int = (std::mem::size_of::<opng_bitset_t>() as c_int * 8) - 1;
+const OPNG_BITSET_ELT_MIN: i32 = 0;
+const OPNG_BITSET_ELT_MAX: i32 = (std::mem::size_of::<opng_bitset_t>() as i32 * 8) - 1;
 
 #[repr(C)]
 struct timespec {
@@ -13,7 +13,7 @@ struct timespec {
 
 #[repr(C)]
 struct fd_set {
-    __fds_bits: [c_long; 128],
+    __fds_bits: [c_ulong; 128],
 }
 
 #[repr(C)]
@@ -57,7 +57,7 @@ type osys_fsize_t = c_ulong;
 
 #[repr(C)]
 struct opng_process_struct {
-    status: c_uint,
+    status: u32,
     num_iterations: c_int,
     in_datastream_offset: osys_foffset_t,
     in_file_size: osys_fsize_t,
@@ -79,7 +79,7 @@ struct opng_process_struct {
     best_filter: c_int,
 }
 
-static idat_size_max: png_uint_32 = 0x7fffffff;
+const idat_size_max: png_uint_32 = 0x7fffffff;
 
 static mut options: opng_options = opng_options {
     backup: 0,
@@ -118,7 +118,7 @@ unsafe fn usr_print_cntrl(cntrl_code: c_int) {
     // Implementation for usr_print_cntrl
 }
 
-unsafe fn usr_progress(num: c_ulong, denom: c_ulong) {
+unsafe fn usr_progress(num: u32, denom: u32) {
     // Implementation for usr_progress
 }
 
@@ -126,7 +126,7 @@ unsafe fn usr_panic(msg: *const c_char) {
     // Implementation for usr_panic
 }
 
-unsafe fn opng_bitset_find_first(set: opng_bitset_t) -> c_int {
+unsafe fn opng_bitset_find_first(set: opng_bitset_t) -> i32 {
     // Implementation for opng_bitset_find_first
     0
 }
@@ -145,8 +145,8 @@ unsafe fn opng_iterate() {
     let mut mem_level: c_int;
     let mut strategy: c_int;
     let mut filter: c_int;
-    let mut counter: c_int = 0;
-    let mut line_reused: c_int = 0;
+    let mut counter: c_int;
+    let mut line_reused: c_int;
 
     if process.num_iterations <= 0 {
         usr_panic("Iterations not initialized");
@@ -170,15 +170,15 @@ unsafe fn opng_iterate() {
     process.best_mem_level = -1;
     process.best_strategy = -1;
     process.best_filter = -1;
-
     usr_printf("\nTrying:\n");
+    line_reused = 0;
+    counter = 0;
 
     for filter in 0..=5 {
         if filter_set & (1 << filter) != 0 {
             for strategy in 0..=3 {
                 if strategy_set & (1 << strategy) != 0 {
                     saved_compr_level_set = compr_level_set;
-
                     if strategy == 2 {
                         compr_level_set = 0;
                         compr_level_set |= 1 << 1;
@@ -186,16 +186,14 @@ unsafe fn opng_iterate() {
                         compr_level_set = 0;
                         compr_level_set |= 1 << 9;
                     }
-
                     for compr_level in (1..=9).rev() {
                         if compr_level_set & (1 << compr_level) != 0 {
                             for mem_level in (1..=9).rev() {
                                 if mem_level_set & (1 << mem_level) != 0 {
                                     usr_printf("  zc = %d  zm = %d  zs = %d  f = %d", compr_level, mem_level, strategy, filter);
-                                    usr_progress(counter as c_ulong, process.num_iterations as c_ulong);
+                                    usr_progress(counter as u32, process.num_iterations as u32);
                                     counter += 1;
                                     opng_write_file(std::ptr::null_mut(), compr_level, mem_level, strategy, filter);
-
                                     if process.out_idat_size > idat_size_max {
                                         if options.verbose != 0 {
                                             usr_printf("\t\tIDAT too big\n");
@@ -206,32 +204,26 @@ unsafe fn opng_iterate() {
                                         }
                                         continue;
                                     }
-
                                     usr_printf("\t\tIDAT size = %lu\n", process.out_idat_size);
                                     line_reused = 0;
-
                                     if process.best_idat_size < process.out_idat_size {
                                         continue;
                                     }
-
                                     if process.best_idat_size == process.out_idat_size && process.best_strategy >= 2 {
                                         continue;
                                     }
-
                                     process.best_compr_level = compr_level;
                                     process.best_mem_level = mem_level;
                                     process.best_strategy = strategy;
                                     process.best_filter = filter;
                                     process.best_idat_size = process.out_idat_size;
-
-                                    if options.full == 0 {
+                                    if !options.full {
                                         process.max_idat_size = process.out_idat_size;
                                     }
                                 }
                             }
                         }
                     }
-
                     compr_level_set = saved_compr_level_set;
                 }
             }
@@ -246,5 +238,5 @@ unsafe fn opng_iterate() {
         usr_panic("Inconsistent iteration counter");
     }
 
-    usr_progress(counter as c_ulong, process.num_iterations as c_ulong);
+    usr_progress(counter as u32, process.num_iterations as u32);
 }

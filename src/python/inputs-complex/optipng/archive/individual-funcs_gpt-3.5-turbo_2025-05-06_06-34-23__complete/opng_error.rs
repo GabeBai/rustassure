@@ -13,7 +13,7 @@ type __fd_mask = c_long;
 
 #[repr(C)]
 struct fd_set {
-    __fds_bits: [__fd_mask; 128],
+    __fds_bits: [__fd_mask; 16],
 }
 
 union pthread_attr_t {
@@ -32,14 +32,26 @@ type png_bytep = *mut png_byte;
 type png_const_charp = *const c_char;
 
 struct png_struct;
+
 type png_structp = *mut png_struct;
 
 type osys_foffset_t = c_long;
 type osys_fsize_t = c_ulong;
 
-struct internal_state;
+type __jmp_buf = [c_long; 8];
 
-type jmp_buf = [c_long; 8];
+#[repr(C)]
+struct __jmp_buf_tag {
+    __jmpbuf: __jmp_buf,
+    __mask_was_saved: c_int,
+    __saved_mask: __sigset_t,
+}
+
+type jmp_buf = [__jmp_buf_tag; 1];
+
+extern "C" {
+    fn longjmp(env: *const __jmp_buf_tag, val: c_int) -> !;
+}
 
 struct exception_context {
     penv: *mut jmp_buf,
@@ -51,13 +63,11 @@ struct ExceptionContextV {
     etmp: *const c_char,
 }
 
-static mut THE_EXCEPTION_CONTEXT: exception_context = exception_context {
+static mut the_exception_context: [exception_context; 1] = [exception_context {
     penv: std::ptr::null_mut(),
     caught: 0,
-    v: ExceptionContextV {
-        etmp: std::ptr::null(),
-    },
-};
+    v: ExceptionContextV { etmp: std::ptr::null() },
+}];
 
 const INPUT_IS_PNG_FILE: u32 = 0x0001;
 const INPUT_HAS_PNG_DATASTREAM: u32 = 0x0002;
@@ -74,7 +84,7 @@ const OUTPUT_HAS_ERRORS: u32 = 0x4000;
 
 struct opng_process_struct {
     status: u32,
-    num_iterations: c_int,
+    num_iterations: i32,
     in_datastream_offset: osys_foffset_t,
     in_file_size: osys_fsize_t,
     out_file_size: osys_fsize_t,
@@ -89,13 +99,13 @@ struct opng_process_struct {
     mem_level_set: opng_bitset_t,
     strategy_set: opng_bitset_t,
     filter_set: opng_bitset_t,
-    best_compr_level: c_int,
-    best_mem_level: c_int,
-    best_strategy: c_int,
-    best_filter: c_int,
+    best_compr_level: i32,
+    best_mem_level: i32,
+    best_strategy: i32,
+    best_filter: i32,
 }
 
-static mut PROCESS: opng_process_struct = opng_process_struct {
+static mut process: opng_process_struct = opng_process_struct {
     status: 0,
     num_iterations: 0,
     in_datastream_offset: 0,
@@ -118,18 +128,16 @@ static mut PROCESS: opng_process_struct = opng_process_struct {
     best_filter: 0,
 };
 
-static mut READ_PTR: png_structp = std::ptr::null_mut();
+static mut read_ptr: png_structp = std::ptr::null_mut();
 
-unsafe fn opng_error(png_ptr: png_structp, msg: png_const_charp) {
-    if png_ptr == READ_PTR {
-        PROCESS.status |= INPUT_HAS_ERRORS | OUTPUT_NEEDS_NEW_IDAT;
+fn opng_error(png_ptr: png_structp, msg: png_const_charp) {
+    unsafe {
+        if png_ptr == read_ptr {
+            process.status |= INPUT_HAS_ERRORS | OUTPUT_NEEDS_NEW_IDAT;
+        }
+        loop {
+            longjmp((*the_exception_context.as_mut_ptr()).penv, 1);
+            (*the_exception_context.as_mut_ptr()).v.etmp = msg;
+        }
     }
-    loop {
-        longjmp((*THE_EXCEPTION_CONTEXT.penv).as_mut_ptr(), 1);
-        THE_EXCEPTION_CONTEXT.v.etmp = msg;
-    }
-}
-
-fn main() {
-    // Your main function logic here
 }

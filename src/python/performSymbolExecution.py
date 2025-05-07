@@ -68,7 +68,7 @@ def libcsv_gpt_4o():
 
 def libcsv_gpt_3_5_turbo():
     print("Executing libcsv task with GPT-3.5-turbo...")
-    source_dir = "inputs-complex/libcsv/archive/individual-funcs_gpt-3.5-turbo_2025-02-21_16-38-16__complete"
+    source_dir = "inputs-complex/libcsv/archive/individual-funcs_gpt-3.5-turbo_2025-05-06_07-24-11__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -90,7 +90,7 @@ def libcsv_gpt_4o_mini():
 
 def libcsv_claude_3_5_sonnet():
     print("Executing libcsv task with Claude 3.5 Sonnet...")
-    source_dir = "inputs-complex/libcsv/archive/iindividual-funcs_claude-3-5-sonnet-20240620_2025-02-24_18-08-16__complete"
+    source_dir = "inputs-complex/libcsv/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-02-24_18-08-16__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -112,7 +112,7 @@ def libbmp_gpt_4o():
 
 def libbmp_gpt_3_5_turbo():
     print("Executing libbmp task with GPT-3.5-turbo...")
-    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_gpt-3.5-turbo_2025-02-26_00-39-44__complete"
+    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_gpt-3.5-turbo_2025-05-06_07-40-12__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -156,7 +156,7 @@ def optipng_gpt_4o():
 
 def optipng_gpt_3_5_turbo():
     print("Executing optipng task with GPT-3.5-turbo...")
-    source_dir = "inputs-complex/optipng/src/optipng/archive/individual-funcs_gpt-3.5-turbo_2025-02-21_17-01-52__complete"
+    source_dir = "inputs-complex/optipng/archive/individual-funcs_gpt-3.5-turbo_2025-05-06_06-34-23__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -200,7 +200,7 @@ def url_parser_gpt_4o():
 
 def url_parser_gpt_3_5_turbo():
     print("Executing url_parser task with GPT-3.5-turbo...")
-    source_dir = "inputs-complex/url_parser.h/archive/individual-funcs_gpt-3.5-turbo_2025-02-21_18-09-46__complete"
+    source_dir = "inputs-complex/url_parser.h/archive/individual-funcs_gpt-3.5-turbo_2025-05-06_07-11-56__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -244,7 +244,7 @@ def u8c_gpt_4o():
 
 def u8c_gpt_3_5_turbo():
     print("Executing u8c task with GPT-3.5-turbo...")
-    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_gpt-3.5-turbo_2025-02-21_17-39-47__complete"
+    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_gpt-3.5-turbo_2025-05-06_07-38-45__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -318,7 +318,7 @@ if __name__ == "__main__":
         process_output(directory, "custom", "custom")
     else:
         codebases = ["libcsv", "libbmp", "optipng", "url_parser", "u8c"]
-        models = ["gpt-4o", "gpt-3.5-turbo", "gpt-4o-mini", "claude-3-5-sonnet"]
+        models = ["gpt-4o", "gpt-3_5-turbo", "gpt-4o-mini", "claude-3-5-sonnet"]
         selected_codebase = select_option(codebases, "Select a Codebase:")
         selected_model = select_option(models, "Select a GPT Model:")
         execute_task(selected_codebase, selected_model)

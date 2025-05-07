@@ -10,3 +10,12 @@ fn opng_is_apng_chunk(chunk_type: &[u8]) -> bool {
     }
     false
 }
+
+fn main() {
+    let chunk_type = [0x61, 0x63, 0x54, 0x4c]; // Example chunk type
+    if opng_is_apng_chunk(&chunk_type) {
+        println!("Chunk is APNG");
+    } else {
+        println!("Chunk is not APNG");
+    }
+}

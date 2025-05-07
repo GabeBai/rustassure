@@ -1,25 +1,25 @@
-use std::os::raw::{c_ulong, c_int};
+use std::os::raw::{c_char, c_ulong};
 
 type osys_fsize_t = c_ulong;
 
-static INPUT_IS_PNG_FILE: c_int = 0x0001;
-static INPUT_HAS_PNG_DATASTREAM: c_int = 0x0002;
-static INPUT_HAS_PNG_SIGNATURE: c_int = 0x0004;
-static INPUT_HAS_DIGITAL_SIGNATURE: c_int = 0x0008;
-static INPUT_HAS_MULTIPLE_IMAGES: c_int = 0x0010;
-static INPUT_HAS_APNG: c_int = 0x0020;
-static INPUT_HAS_STRIPPED_DATA: c_int = 0x0040;
-static INPUT_HAS_JUNK: c_int = 0x0080;
-static INPUT_HAS_ERRORS: c_int = 0x0100;
-static OUTPUT_NEEDS_NEW_FILE: c_int = 0x1000;
-static OUTPUT_NEEDS_NEW_IDAT: c_int = 0x2000;
-static OUTPUT_HAS_ERRORS: c_int = 0x4000;
+const INPUT_IS_PNG_FILE: u32 = 0x0001;
+const INPUT_HAS_PNG_DATASTREAM: u32 = 0x0002;
+const INPUT_HAS_PNG_SIGNATURE: u32 = 0x0004;
+const INPUT_HAS_DIGITAL_SIGNATURE: u32 = 0x0008;
+const INPUT_HAS_MULTIPLE_IMAGES: u32 = 0x0010;
+const INPUT_HAS_APNG: u32 = 0x0020;
+const INPUT_HAS_STRIPPED_DATA: u32 = 0x0040;
+const INPUT_HAS_JUNK: u32 = 0x0080;
+const INPUT_HAS_ERRORS: u32 = 0x0100;
+const OUTPUT_NEEDS_NEW_FILE: u32 = 0x1000;
+const OUTPUT_NEEDS_NEW_IDAT: u32 = 0x2000;
+const OUTPUT_HAS_ERRORS: u32 = 0x4000;
 
-fn usr_printf(fmt: &str) {
-    println!("{}", fmt);
+fn usr_printf(fmt: *const c_char, ...) {
+    // Implementation of usr_printf goes here
 }
 
-fn opng_print_fsize_difference(init_size: osys_fsize_t, final_size: osys_fsize_t, show_ratio: bool) {
+fn opng_print_fsize_difference(init_size: osys_fsize_t, final_size: osys_fsize_t, show_ratio: i32) {
     let mut difference: osys_fsize_t;
     let mut sign: i32;
 
@@ -32,30 +32,20 @@ fn opng_print_fsize_difference(init_size: osys_fsize_t, final_size: osys_fsize_t
     }
 
     if difference == 0 {
-        usr_printf("no change");
+        usr_printf("no change\0".as_ptr());
         return;
     }
 
     if difference == 1 {
-        usr_printf("1 byte");
+        usr_printf("1 byte\0".as_ptr());
     } else {
-        usr_printf(&format!("{} bytes", difference));
+        usr_printf(format!("{} bytes\0", difference).as_ptr());
     }
 
-    if show_ratio && init_size > 0 {
-        usr_printf(" = ");
-        // Assuming opng_print_fsize_ratio is another function that you have defined
-        // You can implement it similarly in Rust
+    if show_ratio != 0 && init_size > 0 {
+        usr_printf(" = \0".as_ptr());
         // opng_print_fsize_ratio(difference, init_size);
     }
 
-    usr_printf(if sign == 0 { " increase" } else { " decrease" });
-}
-
-fn main() {
-    let init_size: osys_fsize_t = 100;
-    let final_size: osys_fsize_t = 150;
-    let show_ratio: bool = true;
-
-    opng_print_fsize_difference(init_size, final_size, show_ratio);
+    usr_printf(if sign == 0 { " increase\0".as_ptr() } else { " decrease\0".as_ptr() });
 }

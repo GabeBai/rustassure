@@ -1,4 +1,4 @@
-use std::os::raw::{c_char, c_int, c_long, c_ulong};
+use std::os::raw::{c_long, c_ulong, c_char, c_uint};
 
 type __time_t = c_long;
 type __syscall_slong_t = c_long;
@@ -21,33 +21,41 @@ union pthread_attr_t {
     __align: c_long,
 }
 
-type opng_bitset_t = u32;
+type opng_bitset_t = c_uint;
 
-const OPNG_BITSET_ELT_MIN: u32 = 0;
-const OPNG_BITSET_ELT_MAX: u32 = (std::mem::size_of::<opng_bitset_t>() as u32 * 8) - 1;
+const OPNG_BITSET_ELT_MIN: opng_bitset_t = 0;
+const OPNG_BITSET_ELT_MAX: opng_bitset_t = (std::mem::size_of::<opng_bitset_t>() * 8 - 1) as opng_bitset_t;
 
 type png_byte = u8;
-type png_uint_32 = u32;
+type png_uint_32 = c_uint;
 type png_bytep = *mut png_byte;
 type png_const_charp = *const c_char;
 
 struct png_struct;
+
 type png_structp = *mut png_struct;
 
 type osys_foffset_t = c_long;
 type osys_fsize_t = c_ulong;
 
-struct internal_state;
+type __jmp_buf = [c_long; 8];
 
-type jmp_buf = [c_long; 8];
+#[repr(C)]
+struct __jmp_buf_tag {
+    __jmpbuf: __jmp_buf,
+    __mask_was_saved: c_int,
+    __saved_mask: __sigset_t,
+}
+
+type jmp_buf = [__jmp_buf_tag; 1];
 
 struct exception_context {
     penv: *mut jmp_buf,
     caught: c_int,
-    v: volatile_struct,
+    v: ExceptionContextV,
 }
 
-struct volatile_struct {
+struct ExceptionContextV {
     etmp: *const c_char,
 }
 
@@ -66,7 +74,7 @@ const OUTPUT_HAS_ERRORS: u32 = 0x4000;
 
 struct opng_process_struct {
     status: u32,
-    num_iterations: c_int,
+    num_iterations: i32,
     in_datastream_offset: osys_foffset_t,
     in_file_size: osys_fsize_t,
     out_file_size: osys_fsize_t,
@@ -81,10 +89,10 @@ struct opng_process_struct {
     mem_level_set: opng_bitset_t,
     strategy_set: opng_bitset_t,
     filter_set: opng_bitset_t,
-    best_compr_level: c_int,
-    best_mem_level: c_int,
-    best_strategy: c_int,
-    best_filter: c_int,
+    best_compr_level: i32,
+    best_mem_level: i32,
+    best_strategy: i32,
+    best_filter: i32,
 }
 
 static mut process: opng_process_struct = opng_process_struct {
@@ -112,17 +120,15 @@ static mut process: opng_process_struct = opng_process_struct {
 
 static mut read_ptr: png_structp = std::ptr::null_mut();
 
-unsafe fn opng_warning(png_ptr: png_structp, msg: png_const_charp) {
-    if png_ptr == read_ptr {
-        process.status |= INPUT_HAS_ERRORS | OUTPUT_NEEDS_NEW_IDAT;
+fn opng_warning(png_ptr: png_structp, msg: png_const_charp) {
+    unsafe {
+        if png_ptr == read_ptr {
+            process.status |= INPUT_HAS_ERRORS | OUTPUT_NEEDS_NEW_IDAT;
+        }
     }
     opng_print_warning(msg);
 }
 
 fn opng_print_warning(msg: png_const_charp) {
     // Implement your warning printing logic here
-}
-
-fn main() {
-    // Your main function logic here
 }

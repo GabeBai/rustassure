@@ -11,6 +11,10 @@ struct _IO_wide_data;
 extern size_t fread (void *__restrict __ptr, size_t __size,
        size_t __n, FILE *__restrict __stream)
   __attribute__ ((__nonnull__ (4)));
+typedef struct
+{
+  unsigned long int __val[(1024 / (8 * sizeof (unsigned long int)))];
+} __sigset_t;
 struct timespec
 {
   __time_t tv_sec;
@@ -60,6 +64,13 @@ osys_ftello(FILE *stream);
 png_bytepp pngx_malloc_rows
    (png_structp png_ptr, png_infop info_ptr, int filler);
 struct internal_state;
+typedef long int __jmp_buf[8];
+struct __jmp_buf_tag
+  {
+    __jmp_buf __jmpbuf;
+    int __mask_was_saved;
+    __sigset_t __saved_mask;
+  };
 typedef struct __jmp_buf_tag jmp_buf[1];
 struct exception_context { jmp_buf *penv; int caught; volatile struct { const char * etmp; } v; };
 enum

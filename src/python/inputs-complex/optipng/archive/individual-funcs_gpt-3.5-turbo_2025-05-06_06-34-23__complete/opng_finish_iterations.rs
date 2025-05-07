@@ -2,51 +2,45 @@ use std::os::raw::{c_char, c_int, c_long, c_ulong};
 
 type __time_t = c_long;
 type __syscall_slong_t = c_long;
-
+type __sigset_t = [c_ulong; 128];
 #[repr(C)]
 struct timespec {
     tv_sec: __time_t,
     tv_nsec: __syscall_slong_t,
 }
-
 type __fd_mask = c_long;
-
 #[repr(C)]
 struct fd_set {
     __fds_bits: [__fd_mask; 128],
 }
-
 union pthread_attr_t {
     __size: [c_char; 56],
     __align: c_long,
 }
-
 type opng_bitset_t = c_uint;
-
 const OPNG_BITSET_ELT_MIN: opng_bitset_t = 0;
 const OPNG_BITSET_ELT_MAX: opng_bitset_t = (std::mem::size_of::<opng_bitset_t>() * 8 - 1) as opng_bitset_t;
-
 type png_byte = u8;
 type png_uint_32 = u32;
 type png_bytep = *mut png_byte;
 type png_const_charp = *const c_char;
-
-struct png_struct;
+type png_struct = *mut internal_state;
 type png_structp = *mut png_struct;
-
 type osys_foffset_t = c_long;
 type osys_fsize_t = c_ulong;
-
-struct internal_state;
-
-type jmp_buf = [c_long; 8];
-
+type __jmp_buf = [c_long; 8];
+#[repr(C)]
+struct __jmp_buf_tag {
+    __jmpbuf: __jmp_buf,
+    __mask_was_saved: c_int,
+    __saved_mask: __sigset_t,
+}
+type jmp_buf = [__jmp_buf_tag; 1];
 struct exception_context {
     penv: *mut jmp_buf,
     caught: c_int,
     v: volatile,
 }
-
 const INPUT_IS_PNG_FILE: u32 = 0x0001;
 const INPUT_HAS_PNG_DATASTREAM: u32 = 0x0002;
 const INPUT_HAS_PNG_SIGNATURE: u32 = 0x0004;
@@ -59,7 +53,6 @@ const INPUT_HAS_ERRORS: u32 = 0x0100;
 const OUTPUT_NEEDS_NEW_FILE: u32 = 0x1000;
 const OUTPUT_NEEDS_NEW_IDAT: u32 = 0x2000;
 const OUTPUT_HAS_ERRORS: u32 = 0x4000;
-
 struct opng_process_struct {
     status: u32,
     num_iterations: c_int,
@@ -82,7 +75,6 @@ struct opng_process_struct {
     best_strategy: c_int,
     best_filter: c_int,
 }
-
 static mut process: opng_process_struct = opng_process_struct {
     status: 0,
     num_iterations: 0,
@@ -105,11 +97,9 @@ static mut process: opng_process_struct = opng_process_struct {
     best_strategy: 0,
     best_filter: 0,
 };
-
 const idat_size_max: png_uint_32 = 0x7fffffff;
-const idat_size_max_string: &'static str = "2GB";
-
-static mut usr_printf: Option<extern "C" fn(*const c_char, ...) -> ()> = None;
+const idat_size_max_string: &str = "2GB";
+static mut usr_printf: Option<unsafe extern "C" fn(*const c_char, ...) -> ()> = None;
 
 unsafe fn opng_finish_iterations() {
     if process.best_idat_size + process.out_plte_trns_size < process.in_idat_size + process.in_plte_trns_size {
@@ -118,16 +108,13 @@ unsafe fn opng_finish_iterations() {
     if process.status & OUTPUT_NEEDS_NEW_IDAT != 0 {
         if process.best_idat_size <= idat_size_max {
             usr_printf.unwrap()("\nSelecting parameters:\n\0".as_ptr() as *const c_char);
-            usr_printf.unwrap()("  zc = %d  zm = %d  zs = %d  f = %d\0".as_ptr() as *const c_char,
-                                process.best_compr_level, process.best_mem_level,
-                                process.best_strategy, process.best_filter);
+            usr_printf.unwrap()("  zc = %d  zm = %d  zs = %d  f = %d\0".as_ptr() as *const c_char, process.best_compr_level, process.best_mem_level, process.best_strategy, process.best_filter);
             if process.best_idat_size > 0 {
                 usr_printf.unwrap()("\t\tIDAT size = %lu\0".as_ptr() as *const c_char, process.best_idat_size);
             }
             usr_printf.unwrap()("\n\0".as_ptr() as *const c_char);
         } else {
-            usr_printf.unwrap()("  zc = *  zm = *  zs = *  f = *\t\tIDAT size > %s\0".as_ptr() as *const c_char,
-                                idat_size_max_string);
+            usr_printf.unwrap()("  zc = *  zm = *  zs = *  f = *\t\tIDAT size > %s\0".as_ptr() as *const c_char, idat_size_max_string);
         }
     }
 }

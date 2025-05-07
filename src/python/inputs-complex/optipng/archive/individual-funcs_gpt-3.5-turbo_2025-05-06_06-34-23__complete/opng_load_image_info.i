@@ -7,6 +7,10 @@ struct _IO_FILE;
 struct _IO_marker;
 struct _IO_codecvt;
 struct _IO_wide_data;
+typedef struct
+{
+  unsigned long int __val[(1024 / (8 * sizeof (unsigned long int)))];
+} __sigset_t;
 struct timespec
 {
   __time_t tv_sec;
@@ -88,6 +92,13 @@ extern png_uint_32 ( png_get_sBIT) (png_const_structrp png_ptr, png_inforp info_
 extern png_uint_32 ( png_get_tRNS) (png_const_structrp png_ptr, png_inforp info_ptr, png_bytep *trans_alpha, int *num_trans, png_color_16p *trans_color);
 extern int ( png_get_unknown_chunks) (png_const_structrp png_ptr, png_inforp info_ptr, png_unknown_chunkpp entries);
 struct internal_state;
+typedef long int __jmp_buf[8];
+struct __jmp_buf_tag
+  {
+    __jmp_buf __jmpbuf;
+    int __mask_was_saved;
+    __sigset_t __saved_mask;
+  };
 typedef struct __jmp_buf_tag jmp_buf[1];
 struct exception_context { jmp_buf *penv; int caught; volatile struct { const char * etmp; } v; };
 enum

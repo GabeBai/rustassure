@@ -5,31 +5,6 @@ type opng_bitset_t = u32;
 const OPNG_BITSET_ELT_MIN: i32 = 0;
 const OPNG_BITSET_ELT_MAX: i32 = (std::mem::size_of::<opng_bitset_t>() as i32 * 8) - 1;
 
-struct timespec {
-    tv_sec: i64,
-    tv_nsec: i64,
-}
-
-struct fd_set {
-    __fds_bits: [__fd_mask; 1024 / (8 * std::mem::size_of::<__fd_mask>())],
-}
-
-union pthread_attr_t {
-    __size: [u8; 56],
-    __align: i64,
-}
-
-#[no_mangle]
-pub extern "C" fn memset(s: *mut std::ffi::c_void, c: i32, n: usize) -> *mut std::ffi::c_void {
-    unsafe {
-        let s_ptr = s as *mut u8;
-        for i in 0..n {
-            *s_ptr.offset(i as isize) = c as u8;
-        }
-    }
-    s
-}
-
 struct opng_options {
     backup: i32,
     clobber: i32,
@@ -41,9 +16,9 @@ struct opng_options {
     quiet: i32,
     simulate: i32,
     verbose: i32,
-    out_name: *const std::os::raw::c_char,
-    dir_name: *const std::os::raw::c_char,
-    log_name: *const std::os::raw::c_char,
+    out_name: Option<String>,
+    dir_name: Option<String>,
+    log_name: Option<String>,
     interlace: i32,
     nb: i32,
     nc: i32,
@@ -60,17 +35,30 @@ struct opng_options {
 }
 
 struct opng_ui {
-    printf_fn: Option<extern "C" fn(*const std::os::raw::c_char, ...)>,
-    print_cntrl_fn: Option<extern "C" fn(i32)>,
-    progress_fn: Option<extern "C" fn(u64, u64)>,
-    panic_fn: Option<extern "C" fn(*const std::os::raw::c_char)>,
+    printf_fn: Option<fn(&str)>,
+    print_cntrl_fn: Option<fn(i32)>,
+    progress_fn: Option<fn(u64, u64)>,
+    panic_fn: Option<fn(&str)>,
 }
 
-static mut usr_printf: Option<extern "C" fn(*const std::os::raw::c_char, ...)> = None;
-static mut usr_print_cntrl: Option<extern "C" fn(i32)> = None;
-static mut usr_progress: Option<extern "C" fn(u64, u64)> = None;
-static mut usr_panic: Option<extern "C" fn(*const std::os::raw::c_char)> = None;
+struct opng_engine_struct {
+    started: i32,
+}
 
+struct opng_summary_struct {
+    file_count: u32,
+    err_count: u32,
+    fix_count: u32,
+    snip_count: u32,
+}
+
+static mut engine: opng_engine_struct = opng_engine_struct { started: 0 };
+static mut summary: opng_summary_struct = opng_summary_struct {
+    file_count: 0,
+    err_count: 0,
+    fix_count: 0,
+    snip_count: 0,
+};
 static mut options: opng_options = opng_options {
     backup: 0,
     clobber: 0,
@@ -82,9 +70,9 @@ static mut options: opng_options = opng_options {
     quiet: 0,
     simulate: 0,
     verbose: 0,
-    out_name: std::ptr::null(),
-    dir_name: std::ptr::null(),
-    log_name: std::ptr::null(),
+    out_name: None,
+    dir_name: None,
+    log_name: None,
     interlace: 0,
     nb: 0,
     nc: 0,
@@ -100,52 +88,33 @@ static mut options: opng_options = opng_options {
     strip_all: 0,
 };
 
-static mut summary: opng_summary_struct = opng_summary_struct {
-    file_count: 0,
-    err_count: 0,
-    fix_count: 0,
-    snip_count: 0,
-};
+static mut usr_printf: Option<fn(&str)> = None;
+static mut usr_print_cntrl: Option<fn(i32)> = None;
+static mut usr_progress: Option<fn(u64, u64)> = None;
+static mut usr_panic: Option<fn(&str)> = None;
 
-struct opng_engine_struct {
-    started: i32,
-}
+unsafe fn opng_initialize(init_options: &opng_options, init_ui: &opng_ui) -> i32 {
+    usr_printf = init_ui.printf_fn;
+    usr_print_cntrl = init_ui.print_cntrl_fn;
+    usr_progress = init_ui.progress_fn;
+    usr_panic = init_ui.panic_fn;
 
-static mut engine: opng_engine_struct = opng_engine_struct { started: 0 };
-
-#[repr(C)]
-struct opng_summary_struct {
-    file_count: u32,
-    err_count: u32,
-    fix_count: u32,
-    snip_count: u32,
-}
-
-#[no_mangle]
-pub extern "C" fn opng_initialize(init_options: *const opng_options, init_ui: *const opng_ui) -> i32 {
-    unsafe {
-        usr_printf = (*init_ui).printf_fn;
-        usr_print_cntrl = (*init_ui).print_cntrl_fn;
-        usr_progress = (*init_ui).progress_fn;
-        usr_panic = (*init_ui).panic_fn;
-
-        if usr_printf.is_none() || usr_print_cntrl.is_none() || usr_progress.is_none() || usr_panic.is_none() {
-            return -1;
-        }
-
-        options = *init_options;
-
-        if options.optim_level == 0 {
-            options.nb = 1;
-            options.nc = 1;
-            options.np = 1;
-            options.nz = 1;
-        }
-
-        memset(&mut summary as *mut opng_summary_struct as *mut std::ffi::c_void, 0, mem::size_of::<opng_summary_struct>());
-
-        engine.started = 1;
-
-        return 0;
+    if usr_printf.is_none() || usr_print_cntrl.is_none() || usr_progress.is_none() || usr_panic.is_none() {
+        return -1;
     }
+
+    options = *init_options;
+
+    if options.optim_level == 0 {
+        options.nb = 1;
+        options.nc = 1;
+        options.np = 1;
+        options.nz = 1;
+    }
+
+    mem::zeroed(&mut summary);
+
+    engine.started = 1;
+
+    0
 }

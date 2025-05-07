@@ -1,63 +1,78 @@
-use std::os::raw::{c_long, c_ulong};
+use std::os::raw::{c_long, c_ulong, c_char, c_uint};
+
+type __time_t = c_long;
+type __syscall_slong_t = c_long;
 
 #[repr(C)]
-pub struct timespec {
-    pub tv_sec: c_long,
-    pub tv_nsec: c_long,
+struct timespec {
+    tv_sec: __time_t,
+    tv_nsec: __syscall_slong_t,
 }
 
-#[repr(C)]
-pub struct fd_set {
-    __fds_bits: [c_long; 128],
-}
+type __fd_mask = c_long;
 
 #[repr(C)]
-pub union pthread_attr_t {
-    __size: [u8; 56],
+struct fd_set {
+    __fds_bits: [__fd_mask; 128],
+}
+
+union pthread_attr_t {
+    __size: [c_char; 56],
     __align: c_long,
 }
 
-pub type opng_bitset_t = u32;
+type opng_bitset_t = c_uint;
 
-pub const OPNG_BITSET_ELT_MIN: u32 = 0;
-pub const OPNG_BITSET_ELT_MAX: u32 = (std::mem::size_of::<opng_bitset_t>() * 8 - 1) as u32;
+const OPNG_BITSET_ELT_MIN: opng_bitset_t = 0;
+const OPNG_BITSET_ELT_MAX: opng_bitset_t = (std::mem::size_of::<opng_bitset_t>() * 8 - 1) as opng_bitset_t;
 
-pub type png_byte = u8;
-pub type png_uint_32 = u32;
-pub type png_bytep = *mut png_byte;
-pub type png_const_charp = *const std::os::raw::c_char;
+type png_byte = u8;
+type png_uint_32 = c_uint;
+type png_bytep = *mut png_byte;
+type png_const_charp = *const c_char;
 
-pub struct png_struct;
+struct png_struct;
 
-pub type png_structp = *mut png_struct;
+type png_structp = *mut png_struct;
 
-pub type osys_foffset_t = c_long;
-pub type osys_fsize_t = c_ulong;
+type osys_foffset_t = c_long;
+type osys_fsize_t = c_ulong;
 
-pub struct internal_state;
+type __jmp_buf = [c_long; 8];
 
-pub type jmp_buf = [c_long; 8];
-
-pub struct exception_context {
-    penv: *mut jmp_buf,
-    caught: c_int,
-    v: volatile,
+#[repr(C)]
+struct __jmp_buf_tag {
+    __jmpbuf: __jmp_buf,
+    __mask_was_saved: c_int,
+    __saved_mask: __sigset_t,
 }
 
-pub const INPUT_IS_PNG_FILE: u32 = 0x0001;
-pub const INPUT_HAS_PNG_DATASTREAM: u32 = 0x0002;
-pub const INPUT_HAS_PNG_SIGNATURE: u32 = 0x0004;
-pub const INPUT_HAS_DIGITAL_SIGNATURE: u32 = 0x0008;
-pub const INPUT_HAS_MULTIPLE_IMAGES: u32 = 0x0010;
-pub const INPUT_HAS_APNG: u32 = 0x0020;
-pub const INPUT_HAS_STRIPPED_DATA: u32 = 0x0040;
-pub const INPUT_HAS_JUNK: u32 = 0x0080;
-pub const INPUT_HAS_ERRORS: u32 = 0x0100;
-pub const OUTPUT_NEEDS_NEW_FILE: u32 = 0x1000;
-pub const OUTPUT_NEEDS_NEW_IDAT: u32 = 0x2000;
-pub const OUTPUT_HAS_ERRORS: u32 = 0x4000;
+type jmp_buf = [__jmp_buf_tag; 1];
 
-pub struct opng_process_struct {
+struct exception_context {
+    penv: *mut jmp_buf,
+    caught: c_int,
+    v: ExceptionContextV,
+}
+
+struct ExceptionContextV {
+    etmp: *const c_char,
+}
+
+const INPUT_IS_PNG_FILE: u32 = 0x0001;
+const INPUT_HAS_PNG_DATASTREAM: u32 = 0x0002;
+const INPUT_HAS_PNG_SIGNATURE: u32 = 0x0004;
+const INPUT_HAS_DIGITAL_SIGNATURE: u32 = 0x0008;
+const INPUT_HAS_MULTIPLE_IMAGES: u32 = 0x0010;
+const INPUT_HAS_APNG: u32 = 0x0020;
+const INPUT_HAS_STRIPPED_DATA: u32 = 0x0040;
+const INPUT_HAS_JUNK: u32 = 0x0080;
+const INPUT_HAS_ERRORS: u32 = 0x0100;
+const OUTPUT_NEEDS_NEW_FILE: u32 = 0x1000;
+const OUTPUT_NEEDS_NEW_IDAT: u32 = 0x2000;
+const OUTPUT_HAS_ERRORS: u32 = 0x4000;
+
+struct opng_process_struct {
     status: u32,
     num_iterations: c_int,
     in_datastream_offset: osys_foffset_t,

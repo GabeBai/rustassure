@@ -10,6 +10,10 @@ struct _IO_codecvt;
 struct _IO_wide_data;
 extern size_t fwrite (const void *__restrict __ptr, size_t __size,
         size_t __n, FILE *__restrict __s) __attribute__ ((__nonnull__ (4)));
+typedef struct
+{
+  unsigned long int __val[(1024 / (8 * sizeof (unsigned long int)))];
+} __sigset_t;
 struct timespec
 {
   __time_t tv_sec;
@@ -58,7 +62,16 @@ typedef unsigned long uLong;
    typedef Byte Bytef;
 struct internal_state;
 extern uLong crc32 (uLong crc, const Bytef *buf, uInt len);
+typedef long int __jmp_buf[8];
+struct __jmp_buf_tag
+  {
+    __jmp_buf __jmpbuf;
+    int __mask_was_saved;
+    __sigset_t __saved_mask;
+  };
 typedef struct __jmp_buf_tag jmp_buf[1];
+extern void longjmp (struct __jmp_buf_tag __env[1], int __val)
+     __attribute__ ((__nothrow__)) __attribute__ ((__noreturn__));
 struct exception_context { jmp_buf *penv; int caught; volatile struct { const char * etmp; } v; };
 struct exception_context the_exception_context[1];
 enum

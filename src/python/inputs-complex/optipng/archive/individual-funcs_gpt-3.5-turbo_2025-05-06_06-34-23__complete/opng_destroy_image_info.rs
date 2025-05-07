@@ -1,12 +1,6 @@
 use std::ptr;
 
 #[repr(C)]
-struct timespec {
-    tv_sec: i64,
-    tv_nsec: i64,
-}
-
-#[repr(C)]
 struct png_color {
     red: u8,
     green: u8,
@@ -32,15 +26,14 @@ struct png_color_8 {
 }
 
 #[repr(C)]
-struct png_unknown_chunk_t {
+struct png_unknown_chunk {
     name: [u8; 5],
     data: *mut u8,
     size: usize,
     location: u8,
 }
 
-#[repr(C)]
-struct opng_image_struct {
+struct OpngImage {
     width: u32,
     height: u32,
     bit_depth: i32,
@@ -60,11 +53,11 @@ struct opng_image_struct {
     num_trans: i32,
     trans_color_ptr: *mut png_color_16,
     trans_color: png_color_16,
-    unknowns: *mut png_unknown_chunk_t,
+    unknowns: *mut png_unknown_chunk,
     num_unknowns: i32,
 }
 
-static mut IMAGE: opng_image_struct = opng_image_struct {
+static mut IMAGE: OpngImage = OpngImage {
     width: 0,
     height: 0,
     bit_depth: 0,
@@ -129,5 +122,45 @@ unsafe fn opng_destroy_image_info() {
         opng_free((*IMAGE.unknowns.offset(j as isize)).data);
     }
     opng_free(IMAGE.unknowns as *mut u8);
-    std::ptr::write_bytes(&mut IMAGE, 0, 1);
+    std::ptr::write_volatile(&mut IMAGE, OpngImage {
+        width: 0,
+        height: 0,
+        bit_depth: 0,
+        color_type: 0,
+        compression_type: 0,
+        filter_type: 0,
+        interlace_type: 0,
+        row_pointers: ptr::null_mut(),
+        palette: ptr::null_mut(),
+        num_palette: 0,
+        background_ptr: ptr::null_mut(),
+        background: png_color_16 {
+            index: 0,
+            red: 0,
+            green: 0,
+            blue: 0,
+            gray: 0,
+        },
+        hist: ptr::null_mut(),
+        sig_bit_ptr: ptr::null_mut(),
+        sig_bit: png_color_8 {
+            red: 0,
+            green: 0,
+            blue: 0,
+            gray: 0,
+            alpha: 0,
+        },
+        trans_alpha: ptr::null_mut(),
+        num_trans: 0,
+        trans_color_ptr: ptr::null_mut(),
+        trans_color: png_color_16 {
+            index: 0,
+            red: 0,
+            green: 0,
+            blue: 0,
+            gray: 0,
+        },
+        unknowns: ptr::null_mut(),
+        num_unknowns: 0,
+    });
 }
