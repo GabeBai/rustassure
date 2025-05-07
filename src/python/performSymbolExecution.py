@@ -25,7 +25,7 @@ convert_klee_4omini = "../scripts/convert_klee_4omini.sh"
 
 def start_process(source_path, model : Model):
     subprocess.run(["bash", divide_script_path], cwd=source_path, text=True)
-    subprocess.run(["python3", "../../python/symbolicExecution.py"], cwd=source_path, text=True)
+    subprocess.run(["python3", "../../python/symbolicExecution.py", str(model.value)], cwd=source_path, text=True)
     # if model == Model.claude:
     #     subprocess.run(["bash", convert_klee_claude], cwd=source_path, text=True)
     # elif model == Model.gpt_4o:

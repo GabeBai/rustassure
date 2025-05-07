@@ -77,7 +77,8 @@ def run_command(cmd, cwd=None):
         raise subprocess.CalledProcessError(process.returncode, cmd, output=msg)
     print(f"[INFO] command success: {cmd}")
 
-def create_json():
+
+def create_json_4():
     """
     Creates input.json with the same contents as the Bash-scripted jq command.
     """
@@ -332,6 +333,9 @@ def process_rust_file(bc_file):
     print(f"[INFO] Rust file processed successfully: {bc_file}")
 
 def main():
+
+    model = sys.argv[1]
+
     # Clean up old logs if present
     if os.path.exists("compare_graph_output_log.log"):
         os.remove("compare_graph_output_log.log")
@@ -377,7 +381,18 @@ def main():
 
 
     # Create JSON (replacing the 'jq' step)
-    create_json()
+    if model == "1":
+        create_json_4()
+        print("claude")
+    elif model == "2":
+        create_json_4()
+        print("gpt4o")
+    elif model == "3":
+        create_json_4()
+        print("gpt3.5")
+    elif model == "4":
+        print("gpt4mini")
+        create_json_4()
 
     # 3) Emitting LLVM bitcode for Rust
     try:
@@ -411,7 +426,7 @@ def main():
 
     # Run distance.py
     try:
-        run_command("python3 ../../python/distance.py")
+        run_command(f"python3 ../../python/distance.py {model}")
     except Exception as e:
         logger.error("distance error: %s", e, exc_info=True)
 
