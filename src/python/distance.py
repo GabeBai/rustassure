@@ -10,15 +10,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 field_map = {}
 
-field_map_gpt_3_5 = {
+field_map_gpt_4o_mini = {
     "osys_rename" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4"
-    },
-    "opng_rangeset_string_to_bitset" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "check_rangeset_option" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_4"
     },
@@ -30,10 +23,8 @@ field_map_gpt_3_5 = {
         "arg_value_2" : "arg_value_4",
         "arg_value_3" : "arg_value_5",
     },
-    "opng_sprint_uratio_impl" : {
-        "arg_value_2" : "arg_value_1",
-        "arg_value_3" : "arg_value_2",
-        "arg_value_4" : "arg_value_3",
+    "opng_strcasecmp" : {
+        "arg_value_1" : "arg_value_2",
     },
     "check_num_option" : {
         "arg_value_1" : "arg_value_2",
@@ -41,7 +32,50 @@ field_map_gpt_3_5 = {
         "arg_value_3" : "arg_value_5"
     },
     "opng_init_iteration" : {
-        "arg_value_3" : "ret_value",
+        "arg_value_3" : "arg_value_4",
+    },
+    "opng_print_image_info" : {
+        "arg_value_0" : "arg_value_1",
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_3",
+        "arg_value_3" : "arg_value_4"
+    },
+    "app_printf" : {
+        "arg_value_0" : "arg_value_1",
+    },
+    "err_option_arg" : {
+        "arg_value_1" : "arg_value_2"
+    },
+    "scan_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4",
+        "*(arg_value_3)" : "*(arg_value_5)",
+    },
+    "osys_path_chext" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_3",
+        "arg_value_3" : "arg_value_5"
+    },
+    "osys_path_chdir" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_3",
+        "arg_value_3" : "arg_value_4"
+    }
+}
+
+field_map_gpt_3_5 = {
+    "check_obj_option" : {
+        "arg_value_1" : "arg_value_2"
+    },
+    "check_power2_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4",
+        "arg_value_3" : "arg_value_5",
+    },
+    "check_num_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4",
+        "arg_value_3" : "arg_value_5"
     },
     "opng_print_image_info" : {
         "arg_value_0" : "arg_value_1",
@@ -58,28 +92,18 @@ field_map_gpt_3_5 = {
     },
     "scan_option" : {
         "arg_value_1" : "arg_value_2",
-        "arg_value_1_pointer" : "arg_value_2_pointer",
         "arg_value_2" : "arg_value_3",
         "*(arg_value_3)" : "*(arg_value_4)",
-        "*(arg_value_3)_pointer" : "*(arg_value_4)_pointer"
     },
     "osys_path_chext" : {
         "arg_value_3" : "arg_value_4",
-        "arg_value_3_pointer" : "arg_value_4_pointer"
     },
-    "osys_path_chdir" : {
-        "arg_value_3" : "arg_value_4",
-    },
-    "parse_args" : {
-        "*(arg_value_1)" : "*(arg_value_0)",
-        "*(arg_value_1)_pointer" : "*(arg_value_0)_pointer"
-    }
 }
 
 field_map_gpt_4o = {
     "osys_rename" : {
         "arg_value_1" : "arg_value_2",
-        "arg_value-2" : "arg_value_4"
+        "arg_value_2" : "arg_value_4"
     },
     "opng_rangeset_string_to_bitset" : {
         "arg_value_1" : "arg_value_2"
@@ -130,10 +154,8 @@ field_map_gpt_4o = {
     },
     "scan_option" : {
         "arg_value_1" : "arg_value_2",
-        "arg_value_1_pointer" : "arg_value_2_pointer",
         "arg_value_2" : "arg_value_3",
-        "*(arg_value_3)" : "*(arg_value_4)",
-        "*(arg_value_3)_pointer" : "*(arg_value_4)_pointer"
+        "*(arg_value_3)" : "*(arg_value_4)"
     },
     "osys_path_chext" : {
         "arg_value_3" : "arg_value_4",

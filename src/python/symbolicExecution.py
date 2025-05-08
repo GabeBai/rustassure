@@ -77,6 +77,129 @@ def run_command(cmd, cwd=None):
         raise subprocess.CalledProcessError(process.returncode, cmd, output=msg)
     print(f"[INFO] command success: {cmd}")
 
+def create_json_4_mini():
+    """
+    Creates input.json with the same contents as the Bash-scripted jq command.
+    """
+    data = {
+        "csv_fini" : {
+            "103" : "Integer_8"
+        },
+        "csv_set_space_func" : {
+            "1" : "function",
+            "2" : "function"
+        },
+        "csv_increase_buffer" : {
+            "103" : "Integer_8"
+        },
+        "csv_init" : {
+            "103" : "Integer_8",
+            "110": "function",
+            "111": "function",
+            "113": "function",
+            "114": "function",
+            "115": "function"
+        },
+        "csv_free" : {
+            "0" : "CsvParser",
+            "103" : "Integer_8"
+        },
+        "url_free" : {
+            "0" : "UrlData"
+        },
+        "url_get_host": {
+            "0": "alloc::string::String"
+        },
+        "url_get_path": {
+            "0": "alloc::string::String"
+        },
+        "url_get_scheme": {
+            "0": "alloc::string::String"
+        },
+        "url_get_userinfo": {
+            "0": "alloc::string::String"
+        },
+        "url_get_port": {
+            "0": "alloc::string::String"
+        },
+        "url_get_scheme": {
+            "0": "alloc::string::String"
+        },
+        "url_get_hostname": {
+            "0": "alloc::string::String"
+        },
+        "url_get_pathname": {
+            "0": "alloc::string::String"
+        },
+        "url_get_fragment": {
+            "0": "alloc::string::String"
+        },
+        "url_get_query_value": {
+            "106": "UrlKeyValue"
+        },
+        "scan_option": {
+            "0": "core::ffi::c_str::CStr"
+        },
+        "bmp_img_read": {
+            "0": "BmpImg"
+        },
+        "bmp_img_write": {
+            "0": "BmpImg"
+        }
+    }
+
+    with open("input.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+def create_json_3_5():
+    """
+    Creates input.json with the same contents as the Bash-scripted jq command.
+    """
+    data = {
+        "csv_set_quote" : {
+            "0" : "CsvParser"
+        },
+        "csv_get_opts" : {
+            "0" : "CsvParser"
+        },
+        "csv_fini" : {
+            "0" : "CsvParser",
+            "103" : "Integer_8"
+        },
+        "csv_set_space_func" : {
+            "1" : "function",
+            "2" : "function"
+        },
+        "csv_increase_buffer" : {
+            "103" : "Integer_8"
+        },
+        "csv_init" : {
+            "103" : "Integer_8",
+            "110": "function",
+            "111": "function",
+            "113": "function",
+            "114": "function",
+            "115": "function"
+        },
+        "csv_free" : {
+            "103" : "Integer_8"
+        },
+        "url_get_port": {
+            "0": "alloc::string::String"
+        },
+        "check_obj_option": {
+            "2": "core::ffi::c_str::CStr"
+        },
+        "bmp_img_read": {
+            "0": "BmpImg"
+        },
+        "bmp_img_write": {
+            "0": "BmpImg"
+        }
+    }
+
+    with open("input.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 
 def create_json_4():
     """
@@ -388,11 +511,11 @@ def main():
         create_json_4()
         print("gpt4o")
     elif model == "3":
-        create_json_4()
+        create_json_3_5()
         print("gpt3.5")
     elif model == "4":
         print("gpt4mini")
-        create_json_4()
+        create_json_4_mini()
 
     # 3) Emitting LLVM bitcode for Rust
     try:
