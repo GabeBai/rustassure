@@ -21,7 +21,7 @@ field_map_gpt_4o_mini = {
     "check_power2_option" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5",
+        "arg_value_3" : "arg_value_5"
     },
     "opng_strcasecmp" : {
         "arg_value_1" : "arg_value_2",
@@ -49,7 +49,7 @@ field_map_gpt_4o_mini = {
     "scan_option" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_4",
-        "*(arg_value_3)" : "*(arg_value_5)",
+        "*(arg_value_3)" : "*(arg_value_5)"
     },
     "osys_path_chext" : {
         "arg_value_1" : "arg_value_2",
@@ -167,6 +167,33 @@ field_map_gpt_4o = {
     "parse_args" : {
         "*(arg_value_1)" : "*(arg_value_0)",
         "*(arg_value_1)_pointer" : "*(arg_value_0)_pointer"
+    }
+}
+
+field_map_claude = {
+    "osys_rename" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4"
+    },
+    "check_rangeset_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4"
+    },
+    "check_power2_option" : {
+        "arg_value_1" : "arg_value_2",
+        "arg_value_2" : "arg_value_4",
+        "arg_value_3" : "arg_value_5",
+    },
+    "opng_strcasecmp" : {
+        "arg_value_1" : "arg_value_2",
+    },
+    "opng_sprint_uratio_impl" : {
+        "arg_value_2" : "arg_value_1",
+        "arg_value_3" : "arg_value_2",
+        "arg_value_4" : "arg_value_3",
+    },
+    "app_printf" : {
+        "arg_value_0" : "arg_value_1",
     }
 }
 
@@ -433,11 +460,11 @@ if __name__ == "__main__":
     result_Rust = traverse_two_levels_rust()
     gptmodel = sys.argv[1]
     if gptmodel == "1":
-        field_map = field_map_gpt_4o
+        field_map = field_map_claude
     elif gptmodel == "2":
         field_map = field_map_gpt_4o
     elif gptmodel == "3":
         field_map = field_map_gpt_3_5
     elif gptmodel == "4":
-        field_map = field_map_gpt_4o
+        field_map = field_map_gpt_4o_mini
     compare_and_export_csv(result_C, result_Rust, "edit_distance")

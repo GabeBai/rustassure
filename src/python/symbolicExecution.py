@@ -281,7 +281,6 @@ def create_json_4():
     with open("input.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
-
 def create_json_claude():
     """
     Creates input.json with the same contents as the Bash-scripted jq command.
@@ -307,42 +306,6 @@ def create_json_claude():
             "113": "function",
             "114": "function",
             "115": "function"
-        },
-        "url_free" : {
-            "0" : "UrlData"
-        },
-        "url_get_host": {
-            "0": "alloc::string::String"
-        },
-        "url_get_path": {
-            "0": "alloc::string::String"
-        },
-        "url_get_scheme": {
-            "0": "alloc::string::String"
-        },
-        "url_get_userinfo": {
-            "0": "alloc::string::String"
-        },
-        "url_get_port": {
-            "0": "alloc::string::String"
-        },
-        "url_get_scheme": {
-            "0": "alloc::string::String"
-        },
-        "url_get_hostname": {
-            "0": "alloc::string::String"
-        },
-        "url_get_pathname": {
-            "0": "alloc::string::String"
-        },
-        "url_get_fragment": {
-            "0": "alloc::string::String"
-        },
-        "url_get_query_value": {
-            "106": "UrlKeyValue"
-        },
-        "opng_rangeset2bitset": {
-            "1": "core::ffi::c_str::CStr"
         },
         "bmp_img_read": {
             "0": "BmpImg"
@@ -579,7 +542,7 @@ def main():
 
     # Create JSON (replacing the 'jq' step)
     if model == "1":
-        create_json_4()
+        create_json_claude()
         print("claude")
     elif model == "2":
         create_json_4()

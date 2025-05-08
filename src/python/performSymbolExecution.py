@@ -112,7 +112,7 @@ def libbmp_gpt_4o():
 
 def libbmp_gpt_3_5_turbo():
     print("Executing libbmp task with GPT-3.5-turbo...")
-    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_gpt-3.5-turbo_2025-05-07_11-56-06__complete"
+    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-05-07_23-13-55__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -178,7 +178,7 @@ def optipng_gpt_4o_mini():
 
 def optipng_claude_3_5_sonnet():
     print("Executing optipng task with Claude 3.5 Sonnet...")
-    source_dir = "inputs-complex/optipng/src/optipng/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-02-24_16-14-45__complete"
+    source_dir = "inputs-complex/optipng/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-05-07_21-48-14__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -222,7 +222,7 @@ def url_parser_gpt_4o_mini():
 
 def url_parser_claude_3_5_sonnet():
     print("Executing url_parser task with Claude 3.5 Sonnet...")
-    source_dir = "inputs-complex/url_parser.h/archive/individual-funcs_gpt-3.5-turbo_2025-05-07_11-55-19__complete"
+    source_dir = "inputs-complex/url_parser.h/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-05-07_22-45-21__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -244,7 +244,7 @@ def u8c_gpt_4o():
 
 def u8c_gpt_3_5_turbo():
     print("Executing u8c task with GPT-3.5-turbo...")
-    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_gpt-3.5-turbo_2025-05-07_11-56-36__complete"
+    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-05-07_23-07-03__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
