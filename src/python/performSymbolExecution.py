@@ -90,7 +90,7 @@ def libcsv_gpt_4o_mini():
 
 def libcsv_claude_3_5_sonnet():
     print("Executing libcsv task with Claude 3.5 Sonnet...")
-    source_dir = "inputs-complex/libcsv/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-02-24_18-08-16__complete"
+    source_dir = "inputs-complex/libcsv/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-05-07_20-04-34__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"

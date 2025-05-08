@@ -281,6 +281,80 @@ def create_json_4():
     with open("input.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
+
+def create_json_claude():
+    """
+    Creates input.json with the same contents as the Bash-scripted jq command.
+    """
+    data = {
+        "csv_set_quote" : {
+            "0" : "CsvParser"
+        },
+        "csv_get_opts" : {
+            "0" : "CsvParser"
+        },
+        "csv_set_space_func" : {
+            "0" : "CsvParser",
+            "1" : "function",
+            "2" : "function"
+        },
+        "csv_increase_buffer" : {
+            "103" : "Integer_8"
+        },
+        "csv_init" : {
+            "110": "function",
+            "111": "function",
+            "113": "function",
+            "114": "function",
+            "115": "function"
+        },
+        "url_free" : {
+            "0" : "UrlData"
+        },
+        "url_get_host": {
+            "0": "alloc::string::String"
+        },
+        "url_get_path": {
+            "0": "alloc::string::String"
+        },
+        "url_get_scheme": {
+            "0": "alloc::string::String"
+        },
+        "url_get_userinfo": {
+            "0": "alloc::string::String"
+        },
+        "url_get_port": {
+            "0": "alloc::string::String"
+        },
+        "url_get_scheme": {
+            "0": "alloc::string::String"
+        },
+        "url_get_hostname": {
+            "0": "alloc::string::String"
+        },
+        "url_get_pathname": {
+            "0": "alloc::string::String"
+        },
+        "url_get_fragment": {
+            "0": "alloc::string::String"
+        },
+        "url_get_query_value": {
+            "106": "UrlKeyValue"
+        },
+        "opng_rangeset2bitset": {
+            "1": "core::ffi::c_str::CStr"
+        },
+        "bmp_img_read": {
+            "0": "BmpImg"
+        },
+        "bmp_img_write": {
+            "0": "BmpImg"
+        }
+    }
+
+    with open("input.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
 def prepare_directory(dir_path):
     """
     Replicates the logic of clearing or creating directories
