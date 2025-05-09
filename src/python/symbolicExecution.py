@@ -85,6 +85,9 @@ def create_json_4_mini():
         "csv_fini" : {
             "103" : "Integer_8"
         },
+        "csv_get_opts" : {
+            "0" : "CsvParser" 
+        },
         "csv_set_space_func" : {
             "1" : "function",
             "2" : "function"
@@ -99,6 +102,9 @@ def create_json_4_mini():
             "113": "function",
             "114": "function",
             "115": "function"
+        },
+        "csv_get_buffer_size": {
+            "0" : "CsvParser"
         },
         "csv_free" : {
             "0" : "CsvParser",
@@ -156,12 +162,6 @@ def create_json_3_5():
     Creates input.json with the same contents as the Bash-scripted jq command.
     """
     data = {
-        "csv_set_quote" : {
-            "0" : "CsvParser"
-        },
-        "csv_get_opts" : {
-            "0" : "CsvParser"
-        },
         "csv_fini" : {
             "0" : "CsvParser",
             "103" : "Integer_8"

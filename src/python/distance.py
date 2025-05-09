@@ -64,6 +64,9 @@ field_map_gpt_4o_mini = {
 }
 
 field_map_gpt_3_5 = {
+    "fill" : {
+        "arg_value_2" : "arg_value_3"
+    },
     "check_obj_option" : {
         "arg_value_1" : "arg_value_2"
     },
@@ -98,6 +101,11 @@ field_map_gpt_3_5 = {
     "osys_path_chext" : {
         "arg_value_3" : "arg_value_4",
     },
+    "opng_sprint_uratio_impl" : {
+        "arg_value_2" : "arg_value_1",
+        "arg_value_3" : "arg_value_2",
+        "arg_value_4" : "arg_value_3",
+    }
 }
 
 field_map_gpt_4o = {
@@ -186,11 +194,6 @@ field_map_claude = {
     },
     "opng_strcasecmp" : {
         "arg_value_1" : "arg_value_2",
-    },
-    "opng_sprint_uratio_impl" : {
-        "arg_value_2" : "arg_value_1",
-        "arg_value_3" : "arg_value_2",
-        "arg_value_4" : "arg_value_3",
     },
     "app_printf" : {
         "arg_value_0" : "arg_value_1",
