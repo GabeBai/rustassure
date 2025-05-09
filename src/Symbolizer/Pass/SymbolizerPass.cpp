@@ -119,6 +119,12 @@ std::vector<std::string> splitString(const std::string& str, const std::string& 
 }
 
 bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
+	std::string filename = module.getModuleIdentifier();
+	std::filesystem::path filepath(filename);
+	std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+	if (structType->getName() == "struct.url_key_value" && filename_without_extension == "url_free") {
+		return true;
+	}
 	for (auto &func : module) {
 		if (func.getName() == "main") {
 			continue;
@@ -162,9 +168,6 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 			}
 		}
 	}
-	std::string filename = module.getModuleIdentifier();
-	std::filesystem::path filepath(filename);
-	std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 	if (structType->getName() == "core::ffi::c_str::CStr" && fieldIndex == 0) {
 		return false;
 	}
@@ -174,9 +177,6 @@ bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
 	if (structType->getName().find("BmpPixel_struct") == 0) {
 		return false;
 	}
-	if (structType->getName() == "url_key_value" && filename_without_extension == "url_free") {
-		return true;
-	} 
 	return true;
 }
 
