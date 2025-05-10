@@ -5,6 +5,7 @@ import logging
 import csv
 import glob
 import sys
+from functools import partial
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -258,15 +259,105 @@ def sanitize(self, functionName):
     self.logger.debug("Sanitized function %s to %s", functionName, functionNameSanitized)
     return functionNameSanitized
 
-def matchNodes(node1, node2):
-
+def matchNodes(node1, node2, function_name, c_is_target):
     label1 = node1.get('label')
     label2 = node2.get('label')
 
     if label1 == label2:
         return True
     else:
+        if label1 in ["0", "false"] and label2 in ["0", "false"]:
+            return True
+        if label1 in ["1", "true"] and label2 in ["1", "true"]:
+            return True
+        if label1 in ["ReadLSB", "Read"] and label2 in ["ReadLSB", "Read"]:
+            return True
+        if label1 in ["AShr", "LShr"] and label2 in ["AShr", "LShr"]:
+            return True
+        if function_name.startswith("csv_strerror"):
+            if label1 in ["8", "16"] and label2 in ["8", "16"]:
+                return True
+        if function_name.startswith("csv"):
+            return special_handle_csv(c_is_target, label1, label2)
+        if function_name in field_map:
+            return special_handle_map(c_is_target, function_name, label1, label2)
         return False
+
+def special_handle_map(c_is_target, function_name, label1, label2):
+    target_field_map = field_map[function_name]
+    if not (label1.startswith("input_argument") and label2.startswith("input_argument")):
+        return False
+
+    if c_is_target:
+        if label1 in target_field_map:
+            current_field = target_field_map[label1]
+            if label2 == current_field:
+                return True
+            else:
+                return False
+    else:
+        if label2 in target_field_map:
+            current_field = target_field_map[label2]
+            if label1 == current_field:
+                return True
+            else:
+                return False
+
+    label1_changed = "arg_value_" + label1[-1]
+    label2_changed = "arg_value_" + label2[-1]
+    if c_is_target:
+        if label1_changed in target_field_map:
+            current_field = target_field_map[label1_changed]
+            if label2_changed == current_field:
+                return True
+            else:
+                return False
+    else:
+        if label2_changed in target_field_map:
+            current_field = target_field_map[label2_changed]
+            if label1_changed == current_field:
+                return True
+            else:
+                return False
+    return False
+
+def special_handle_csv(c_is_target, label1, label2):
+    memory_offset_map = {
+        "24" : "40",
+        "32" : "48",
+        "40" : "46",
+        "44" : "60",
+        "45" : "61",
+        "46" : "62",
+        "64" : [95, 63]
+    }
+    if c_is_target:
+        if label1 in memory_offset_map:
+            map_offset = memory_offset_map[label1]
+            if isinstance(map_offset, str):
+                if label2 == map_offset:
+                    return True
+                else:
+                    return False
+            else:
+                if label2 in memory_offset_map:
+                    return True
+                else:
+                    return False
+    else:
+        if label2 in memory_offset_map:
+            map_offset = memory_offset_map[label2]
+            if isinstance(map_offset, str):
+                if label1 == map_offset:
+                    return True
+                else:
+                    return False
+            else:
+                if label1 in memory_offset_map:
+                    return True
+                else:
+                    return False
+    return False
 
 def traverse_two_levels_rust():
     path_to_file_dict = {}
@@ -295,13 +386,14 @@ def traverse_two_levels_c():
 
     return path_to_file_dict
 
-def compare_graph_optimize_edit_distance(G1, G2, max_iterations = 1):
+def compare_graph_optimize_edit_distance(G1, G2, function_name, c_is_target, max_iterations = 1):
     logger = SingletonLogger()
     logger.info("Graph1: number of nodes: %f, edges: %f", len(G1), len(G1.edges()))
     logger.info("Graph2: number of nodes: %f, edges: %f", len(G2), len(G2.edges()))
     print("Graph1: number of nodes:", len(G1), ", edges:", len(G1.edges()))
     print("Graph2: number of nodes:", len(G2), ", edges:", len(G2.edges()))
-    ged_generator = nx.optimize_graph_edit_distance(G1, G2, node_match=matchNodes)  #
+    matcher = partial(matchNodes, function_name=function_name, c_is_target=c_is_target)
+    ged_generator = nx.optimize_graph_edit_distance(G1, G2, node_match=matcher)  #
     ged = 0
     count = 0
     for g in ged_generator:
@@ -324,8 +416,8 @@ def load_graph_from_dot(file_path):
 
 
 
-def calculate_distance(input_files_a,
-                       input_files_b):
+def calculate_distance(function_name, input_files_a,
+                       input_files_b, c_is_target):
     best_distance = None
     for i, file_path_a in enumerate(input_files_a):
         G1 = load_graph_from_dot(file_path_a)
@@ -336,7 +428,7 @@ def calculate_distance(input_files_a,
             num_nodes_b = len(G2.nodes)
 
             if num_nodes_a == num_nodes_b:
-                current_best = min(current_best, compare_graph_optimize_edit_distance(G1, G2))
+                current_best = min(current_best, compare_graph_optimize_edit_distance(G1, G2, function_name, c_is_target))
 
         if best_distance is None:
             best_distance = current_best
@@ -459,8 +551,8 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
             rust_dir = os.path.join(rust_base, best_r_key)
             rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
 
-            edit_distance = max(calculate_distance(c_files, rust_files),
-                                calculate_distance(rust_files, c_files))
+            edit_distance = max(calculate_distance(function_name, c_files, rust_files, True),
+                                calculate_distance(function_name, rust_files, c_files, False))
             results_best.append((function_name, argument_name, str(edit_distance)))
         else:
             results_best.append((function_name, argument_name, "Rust Empty!"))
