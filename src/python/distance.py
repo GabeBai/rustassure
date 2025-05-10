@@ -17,11 +17,13 @@ field_map_gpt_4o_mini = {
     },
     "opng_ullratio_to_percent_string": {
         "*(arg_value_2.field_0)": "*(arg_value_3.field_0)",
-        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)"
+        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)",
+        "input_argument_2": "input_argument_3"
     },
     "opng_ulratio_to_percent_string": {
         "*(arg_value_2.field_0)": "*(arg_value_3.field_0)",
-        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)"
+        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)",
+        "input_argument_2": "input_argument_3"
     }
     "check_obj_option" : {
         "arg_value_1" : "arg_value_2"
@@ -57,7 +59,8 @@ field_map_gpt_4o_mini = {
     "scan_option" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_4",
-        "*(arg_value_3)" : "*(arg_value_5)"
+        "*(arg_value_3)" : "*(arg_value_5)",
+        "input_argument_3": "input_argument_5"
     },
     "osys_path_chext" : {
         "arg_value_1" : "arg_value_2",
@@ -99,7 +102,6 @@ field_map_gpt_3_5 = {
     },
     "app_printf" : {
         "arg_value_0" : "arg_value_1",
-        "arg_value_0_pointer" : "arg_value_1_pointer"
     },
     "err_option_arg" : {
         "arg_value_1" : "arg_value_2"
@@ -108,6 +110,7 @@ field_map_gpt_3_5 = {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_3",
         "*(arg_value_3)" : "*(arg_value_4)",
+        "input_argument_3": "input_argument_4"
     },
     "osys_path_chext" : {
         "arg_value_3" : "arg_value_4",
@@ -166,7 +169,6 @@ field_map_gpt_4o = {
     },
     "app_printf" : {
         "arg_value_0" : "arg_value_1",
-        "arg_value_0_pointer" : "arg_value_1_pointer"
     },
     "err_option_arg" : {
         "arg_value_1" : "arg_value_2"
@@ -174,18 +176,18 @@ field_map_gpt_4o = {
     "scan_option" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_3",
-        "*(arg_value_3)" : "*(arg_value_4)"
+        "*(arg_value_3)" : "*(arg_value_4)",
+        "input_argument_3": "input_argument_4"
     },
     "osys_path_chext" : {
         "arg_value_3" : "arg_value_4",
-        "arg_value_3_pointer" : "arg_value_4_pointer"
     },
     "osys_path_chdir" : {
         "arg_value_3" : "arg_value_4",
     },
     "parse_args" : {
         "*(arg_value_1)" : "*(arg_value_0)",
-        "*(arg_value_1)_pointer" : "*(arg_value_0)_pointer"
+        "input_argument_1": "input_argument_0"
     }
 }
 
