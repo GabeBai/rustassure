@@ -15,6 +15,14 @@ field_map_gpt_4o_mini = {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_4"
     },
+    "opng_ullratio_to_percent_string": {
+        "*(arg_value_2.field_0)": "*(arg_value_3.field_0)",
+        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)"
+    },
+    "opng_ulratio_to_percent_string": {
+        "*(arg_value_2.field_0)": "*(arg_value_3.field_0)",
+        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)"
+    }
     "check_obj_option" : {
         "arg_value_1" : "arg_value_2"
     },
@@ -60,6 +68,9 @@ field_map_gpt_4o_mini = {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_3",
         "arg_value_3" : "arg_value_4"
+    },
+    "opng_ullratio_to_percent_string" : {
+        "arg_value_2" : "arg_value_3"
     }
 }
 
@@ -197,6 +208,12 @@ field_map_claude = {
     },
     "app_printf" : {
         "arg_value_0" : "arg_value_1",
+    },
+    "opng_is_apng_chunk" : {
+        "arg_value_0" : "*(arg_value_0)",
+    },
+    "opng_is_image_chunk" : {
+        "arg_value_0" : "*(arg_value_0)",
     }
 }
 
