@@ -25,7 +25,7 @@ field_map_gpt_4o_mini = {
         "*(arg_value_2.field_0)": "*(arg_value_3.field_0)",
         "*(arg_value_2.field_1)": "*(arg_value_3.field_1)",
         "input_argument_2": "input_argument_3"
-    }
+    },
     "check_obj_option" : {
         "arg_value_1" : "arg_value_2"
     },
