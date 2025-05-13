@@ -273,7 +273,13 @@ def sanitize(self, functionName):
     self.logger.debug("Sanitized function %s to %s", functionName, functionNameSanitized)
     return functionNameSanitized
 
-def matchNodes(node1, node2, function_name, c_is_target):
+def matchNodes(node1,
+               node2,
+               function_name,
+               c_is_target,
+               only_consider_struct):
+    if only_consider_struct:
+        return True
     label1 = node1.get('label')
     label2 = node2.get('label')
 
@@ -400,13 +406,21 @@ def traverse_two_levels_c():
 
     return path_to_file_dict
 
-def compare_graph_optimize_edit_distance(G1, G2, function_name, c_is_target, max_iterations = 1):
+def compare_graph_optimize_edit_distance(G1,
+                                         G2,
+                                         function_name,
+                                         c_is_target,
+                                         only_consider_struct,
+                                         max_iterations = 1):
     logger = SingletonLogger()
     logger.info("Graph1: number of nodes: %f, edges: %f", len(G1), len(G1.edges()))
     logger.info("Graph2: number of nodes: %f, edges: %f", len(G2), len(G2.edges()))
     print("Graph1: number of nodes:", len(G1), ", edges:", len(G1.edges()))
     print("Graph2: number of nodes:", len(G2), ", edges:", len(G2.edges()))
-    matcher = partial(matchNodes, function_name=function_name, c_is_target=c_is_target)
+    matcher = partial(matchNodes,
+                      function_name=function_name,
+                      c_is_target=c_is_target,
+                      only_consider_struct=only_consider_struct)
     ged_generator = nx.optimize_graph_edit_distance(G1, G2, node_match=matcher)  #
     ged = 0
     count = 0
@@ -431,7 +445,7 @@ def load_graph_from_dot(file_path):
 
 
 def calculate_distance(function_name, input_files_a,
-                       input_files_b, c_is_target):
+                       input_files_b, c_is_target, only_consider_struct):
     best_distance = None
     for i, file_path_a in enumerate(input_files_a):
         G1 = load_graph_from_dot(file_path_a)
@@ -442,7 +456,11 @@ def calculate_distance(function_name, input_files_a,
             num_nodes_b = len(G2.nodes)
 
             if num_nodes_a == num_nodes_b:
-                current_best = min(current_best, compare_graph_optimize_edit_distance(G1, G2, function_name, c_is_target))
+                current_best = min(current_best, compare_graph_optimize_edit_distance(G1,
+                                                                                      G2,
+                                                                                      function_name,
+                                                                                      c_is_target,
+                                                                                      only_consider_struct))
 
         if best_distance is None:
             best_distance = current_best
@@ -456,7 +474,10 @@ def calculate_distance(function_name, input_files_a,
 def all_lengths_equal(arr):
     return all(len(s) == len(arr[0]) for s in arr)
 
-def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
+def compare_and_export_csv(c_dict,
+                           rust_dict,
+                           only_consider_struct,
+                           output_csv_path):
     rust_base = "graph_output/Rust"
     c_base = "graph_output/C"
 
@@ -564,23 +585,40 @@ def compare_and_export_csv(c_dict, rust_dict, output_csv_path):
 
             rust_dir = os.path.join(rust_base, best_r_key)
             rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
-
-            edit_distance = max(calculate_distance(function_name, c_files, rust_files, True),
-                                calculate_distance(function_name, rust_files, c_files, False))
+            if only_consider_struct:
+                edit_distance = max(calculate_distance(function_name,
+                                                       c_files,
+                                                       rust_files,
+                                                       True,
+                                                       only_consider_struct),
+                                    calculate_distance(function_name,
+                                                       rust_files,
+                                                       c_files,
+                                                       False,
+                                                       only_consider_struct))
+            else:
+                edit_distance = max(calculate_distance(function_name, c_files, rust_files, True, only_consider_struct),
+                                    calculate_distance(function_name, rust_files, c_files, False, only_consider_struct))
             results_best.append((function_name, argument_name, str(edit_distance)))
         else:
             results_best.append((function_name, argument_name, "Rust Empty!"))
 
     os.makedirs(output_csv_path, exist_ok=True)
 
-    with open(os.path.join(output_csv_path, 'best_edit_distances.csv'), 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["function_name", "argument_name", "best_edit_distances"])
-        writer.writerows(results_best)
-    with open(os.path.join(output_csv_path, 'free_count.csv'), 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["function_name", "argument_name", "free_difference"])
-        writer.writerows(free_counts)
+    if only_consider_struct:
+        with open(os.path.join(output_csv_path, 'best_edit_distances_only_structure.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["function_name", "argument_name", "best_edit_distances"])
+            writer.writerows(results_best)
+    else:
+        with open(os.path.join(output_csv_path, 'best_edit_distances.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["function_name", "argument_name", "best_edit_distances"])
+            writer.writerows(results_best)
+        with open(os.path.join(output_csv_path, 'free_count.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["function_name", "argument_name", "free_difference"])
+            writer.writerows(free_counts)
 
 if __name__ == "__main__":
     logger = SingletonLogger()
@@ -595,4 +633,5 @@ if __name__ == "__main__":
         field_map = field_map_gpt_3_5
     elif gptmodel == "4":
         field_map = field_map_gpt_4o_mini
-    compare_and_export_csv(result_C, result_Rust, "edit_distance")
+    compare_and_export_csv(result_C, result_Rust, False, "edit_distance")
+    compare_and_export_csv(result_C, result_Rust, True, "edit_distance_only_structure")
