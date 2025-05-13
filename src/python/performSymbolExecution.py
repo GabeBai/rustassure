@@ -134,7 +134,7 @@ def libbmp_gpt_4o_mini():
 
 def libbmp_claude_3_5_sonnet():
     print("Executing libbmp task with Claude 3.5 Sonnet...")
-    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-02-24_17-11-26__complete"
+    source_dir = "inputs-complex/libbmp/src/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-05-07_23-13-55__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"
@@ -266,7 +266,7 @@ def u8c_gpt_4o_mini():
 
 def u8c_claude_3_5_sonnet():
     print("Executing u8c task with Claude 3.5 Sonnet...")
-    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-02-24_16-07-37__complete"
+    source_dir = "inputs-complex/u8c/test/archive/individual-funcs_claude-3-5-sonnet-20240620_2025-05-07_23-07-03__complete"
     function_name = inspect.currentframe().f_code.co_name
     timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
     directory_name = f"{function_name}_{timestamp}"

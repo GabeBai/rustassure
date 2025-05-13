@@ -75,6 +75,12 @@ field_map_gpt_4o_mini = {
     },
     "opng_ullratio_to_percent_string" : {
         "arg_value_2" : "arg_value_3"
+    },
+    "fold_search" : {
+        "arg_value_0" : "arg_value_1"
+    },
+    "u8next_FAST" : {
+        "arg_value_1" : "*(arg_value_2.field_1)"
     }
 }
 
@@ -124,6 +130,11 @@ field_map_gpt_3_5 = {
 }
 
 field_map_gpt_4o = {
+    "opng_ulratio_to_percent_string" : {
+        "*(arg_value_2.field_0)": "*(arg_value_1.field_0)",
+        "*(arg_value_2.field_1)": "*(arg_value_1.field_1)",
+        "input_argument_2": "input_argument_1"
+    },
     "osys_rename" : {
         "arg_value_1" : "arg_value_2",
         "arg_value_2" : "arg_value_4"
@@ -217,6 +228,9 @@ field_map_claude = {
     },
     "opng_is_image_chunk" : {
         "arg_value_0" : "*(arg_value_0)",
+    },
+    "u8next_FAST" : {
+        "arg_value_1" : "arg_value_2"
     }
 }
 
@@ -325,7 +339,7 @@ def special_handle_csv(c_is_target, label1, label2):
     memory_offset_map = {
         "24" : "40",
         "32" : "48",
-        "40" : "46",
+        "40" : "56",
         "44" : "60",
         "45" : "61",
         "46" : "62",
@@ -340,7 +354,7 @@ def special_handle_csv(c_is_target, label1, label2):
                 else:
                     return False
             else:
-                if label2 in memory_offset_map:
+                if label2 in map_offset:
                     return True
                 else:
                     return False
@@ -353,7 +367,7 @@ def special_handle_csv(c_is_target, label1, label2):
                 else:
                     return False
             else:
-                if label1 in memory_offset_map:
+                if label1 in map_offset:
                     return True
                 else:
                     return False

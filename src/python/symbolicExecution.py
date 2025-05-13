@@ -146,6 +146,9 @@ def create_json_4_mini():
         "scan_option": {
             "0": "core::ffi::c_str::CStr"
         },
+        "url_is_protocol": {
+            "0": "core::ffi::c_str::CStr"
+        },
         "bmp_img_read": {
             "0": "BmpImg"
         },
@@ -194,6 +197,9 @@ def create_json_3_5():
             "0": "BmpImg"
         },
         "bmp_img_write": {
+            "0": "BmpImg"
+        },
+        "bmp_img_free": {
             "0": "BmpImg"
         }
     }
@@ -262,7 +268,8 @@ def create_json_4():
             "0": "alloc::string::String"
         },
         "url_get_fragment": {
-            "0": "alloc::string::String"
+            "0": "alloc::string::String",
+            "1" : "core::ffi::c_str::CStr"
         },
         "url_get_query_value": {
             "106": "UrlKeyValue"
@@ -287,9 +294,6 @@ def create_json_claude():
     """
     data = {
         "csv_set_quote" : {
-            "0" : "CsvParser"
-        },
-        "csv_get_opts" : {
             "0" : "CsvParser"
         },
         "csv_set_space_func" : {
@@ -453,6 +457,8 @@ def process_rust_file(bc_file):
         f"llvm-link klee_ir_files/Rust/{base_name}.ll ../scripts/alloc_demangle.ll "
         f"-S -o klee_ir_files/Rust/{base_name}.ll"
     )
+
+    run_command(link_alloc)
 
     # symbolize
     cmd_opt1 = (
