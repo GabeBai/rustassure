@@ -118,66 +118,73 @@ std::vector<std::string> splitString(const std::string& str, const std::string& 
 	return tokens;
 }
 
-bool isFieldUnused(StructType *structType, int fieldIndex, Module &module) {
-	std::string filename = module.getModuleIdentifier();
-	std::filesystem::path filepath(filename);
-	std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
-	if (structType->getName() == "struct.url_key_value" && filename_without_extension == "url_free") {
-		return true;
-	}
-	for (auto &func : module) {
-		if (func.getName() == "main") {
+
+static bool pointsToField(Value *Ptr,
+						   StructType *TargetTy,
+						   unsigned FieldIdx) {
+
+	SmallVector<Value *, 4> Worklist{Ptr};
+	
+	while (!Worklist.empty()) {
+		Ptr = Worklist.pop_back_val();
+		if (Ptr->getType()->isPointerTy() &&
+			Ptr->getType()->getPointerElementType() == TargetTy) {
+			if (FieldIdx == 0)
+				return true;                 
+			}
+		if (auto *GEP = dyn_cast<GEPOperator>(Ptr)) {
+			if (GEP->getSourceElementType() == TargetTy &&
+				GEP->getNumIndices() >= 2) {
+				if (auto *CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
+					if (CI->getZExtValue() == FieldIdx)
+						return true;           
+				}
+			Worklist.push_back(GEP->getPointerOperand());
 			continue;
 		}
-		for (auto &bb : func) {
-			for (auto &inst : bb) {
-				if (auto *gep = dyn_cast<GetElementPtrInst>(&inst)) {
-					if (gep->getSourceElementType() == structType) {
-						if (gep->getNumOperands() > 2) {
-							if (auto *constIndex = dyn_cast<ConstantInt>(gep->getOperand(2))) {
-								if (constIndex->getZExtValue() == fieldIndex) {
-									// llvm::errs() << inst << "\n";
-									return false;
-								}
-							}
-						}
-					}
-				}
-			}
+		if (auto *BC = dyn_cast<BitCastOperator>(Ptr))
+			Worklist.push_back(BC->getOperand(0));
+		else if (auto *ASC = dyn_cast<AddrSpaceCastOperator>(Ptr))
+			Worklist.push_back(ASC->getOperand(0));
+	}
+	return false;
+}
+
+bool isFieldUnused(StructType *StructTy, unsigned FieldIdx, Module &M) {
+	bool seenWrite = false;
+	auto hitsFieldWrite = [&](Value *Dest, Instruction &I) {
+		if (pointsToField(Dest, StructTy, FieldIdx)) {
+			seenWrite = true;
+			// errs() << "[Field-write] " << StructTy->getName() << '.'
+			// 	   << FieldIdx << " ← " << I << '\n';
+		}
+	};
+
+	for (Function &F : M) {
+		if (F.getName().equals("main") || F.isDeclaration())
+			continue;
+		for (Instruction &I : instructions(F)) {
+			if (auto *SI = dyn_cast<StoreInst>(&I))
+				hitsFieldWrite(SI->getPointerOperand(), I);
+			else if (auto *RMW = dyn_cast<AtomicRMWInst>(&I))
+				hitsFieldWrite(RMW->getPointerOperand(), I);
+			else if (auto *CX = dyn_cast<AtomicCmpXchgInst>(&I))
+				hitsFieldWrite(CX->getPointerOperand(), I);
+			else if (auto *MI = dyn_cast<MemIntrinsic>(&I))
+				hitsFieldWrite(MI->getDest(), I);
 		}
 	}
-	if (fieldIndex == 0) {
-		for (auto &func : module) {
-			if (func.getName() == "main") {
-				continue;
-			}
-			for (auto &bb : func) {
-				for (auto &inst : bb) {
-					if (auto *bitCastInst = dyn_cast<BitCastInst>(&inst)) {
-						if (bitCastInst->getOperand(0)->getType() == structType->getPointerTo()) {
-							if (fieldIndex < structType->getNumElements()) {
-								Type *fieldType = structType->getElementType(fieldIndex);
-								if (bitCastInst->getType() == fieldType->getPointerTo()) {
-									llvm::errs() << inst << "\n";
-									return false;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	if (structType->getName() == "core::ffi::c_str::CStr" && fieldIndex == 0) {
+
+	if (StructTy->getName() == "core::ffi::c_str::CStr" && FieldIdx == 0) {
 		return false;
 	}
-	if (structType->getName().find("CStr_struct") == 0) {
+	if (StructTy->getName().find("CStr_struct") == 0) {
 		return false;
 	}
-	if (structType->getName().find("BmpPixel_struct") == 0) {
+	if (StructTy->getName().find("BmpPixel_struct") == 0) {
 		return false;
 	}
-	return true;
+	return !seenWrite;
 }
 
 std::set<std::string> tokenizeByUnderscore(const std::string& str) {
