@@ -349,7 +349,7 @@ def special_handle_csv(c_is_target, label1, label2):
         "44" : "60",
         "45" : "61",
         "46" : "62",
-        "64" : [95, 63]
+        "64" : ["95", "63"]
     }
     if c_is_target:
         if label1 in memory_offset_map:
