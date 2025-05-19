@@ -121,42 +121,34 @@ std::vector<std::string> splitString(const std::string& str, const std::string& 
 
 static bool pointsToField(Value *Ptr,
 						   StructType *TargetTy,
-						   unsigned FieldIdx) {
+						   unsigned FieldIdx,
+						   const DataLayout &DL) {
 
-	SmallVector<Value *, 4> Worklist{Ptr};
-	
-	while (!Worklist.empty()) {
-		Ptr = Worklist.pop_back_val();
-		if (Ptr->getType()->isPointerTy() &&
-			Ptr->getType()->getPointerElementType() == TargetTy) {
-			if (FieldIdx == 0)
-				return true;                 
-			}
-		if (auto *GEP = dyn_cast<GEPOperator>(Ptr)) {
-			if (GEP->getSourceElementType() == TargetTy &&
-				GEP->getNumIndices() >= 2) {
-				if (auto *CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
-					if (CI->getZExtValue() == FieldIdx)
-						return true;           
-				}
-			Worklist.push_back(GEP->getPointerOperand());
-			continue;
-		}
-		if (auto *BC = dyn_cast<BitCastOperator>(Ptr))
-			Worklist.push_back(BC->getOperand(0));
-		else if (auto *ASC = dyn_cast<AddrSpaceCastOperator>(Ptr))
-			Worklist.push_back(ASC->getOperand(0));
-	}
-	return false;
+	APInt Offset(DL.getIndexTypeSizeInBits(Ptr->getType()), 0);
+	Value *Base = Ptr->stripAndAccumulateConstantOffsets(DL, Offset, false);
+
+	if (!Base) return false;
+
+	Type *BaseTy = Base->getType()->getPointerElementType();
+	if (BaseTy != TargetTy) return false;
+
+	const StructLayout *SL = DL.getStructLayout(TargetTy);
+
+	uint64_t Off = Offset.getZExtValue();
+	if (Off >= SL->getSizeInBytes()) return false;
+
+	unsigned HitIdx = SL->getElementContainingOffset(Off);
+	return HitIdx == FieldIdx;
 }
 
 bool isFieldUnused(StructType *StructTy, unsigned FieldIdx, Module &M) {
 	bool seenWrite = false;
+	const DataLayout &DL = M.getDataLayout();
 	auto hitsFieldWrite = [&](Value *Dest, Instruction &I) {
-		if (pointsToField(Dest, StructTy, FieldIdx)) {
+		if (pointsToField(Dest, StructTy, FieldIdx, DL)) {
 			seenWrite = true;
-			// errs() << "[Field-write] " << StructTy->getName() << '.'
-			// 	   << FieldIdx << " ← " << I << '\n';
+			errs() << "[Field-write] " << StructTy->getName() << '.'
+				   << FieldIdx << " ← " << I << '\n';
 		}
 	};
 

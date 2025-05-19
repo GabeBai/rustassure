@@ -131,9 +131,7 @@ field_map_gpt_3_5 = {
 
 field_map_gpt_4o = {
     "opng_ulratio_to_percent_string" : {
-        "*(arg_value_2.field_0)": "*(arg_value_1.field_0)",
-        "*(arg_value_2.field_1)": "*(arg_value_1.field_1)",
-        "input_argument_2": "input_argument_1"
+        "arg_value_1" : "*(arg_value_0.field_0.field_1)",
     },
     "osys_rename" : {
         "arg_value_1" : "arg_value_2",
@@ -200,7 +198,7 @@ field_map_gpt_4o = {
     "parse_args" : {
         "*(arg_value_1)" : "*(arg_value_0)",
         "input_argument_1": "input_argument_0"
-    }
+    },
 }
 
 field_map_claude = {
@@ -299,6 +297,8 @@ def matchNodes(node1,
                 return True
         if function_name.startswith("csv"):
             return special_handle_csv(c_is_target, label1, label2)
+        if function_name.startswith("opng_initialize"):
+            return special_handle_opng_initialize(c_is_target, label1, label2)
         if function_name in field_map:
             return special_handle_map(c_is_target, function_name, label1, label2)
         return False
@@ -339,6 +339,41 @@ def special_handle_map(c_is_target, function_name, label1, label2):
                 return True
             else:
                 return False
+    return False
+
+def special_handle_opng_initialize(c_is_target, label1, label2):
+    memory_offset_map = {
+        "68" : "116",
+        "72" : "120",
+        "76" : "124",
+        "80" : "128",
+    }
+    if c_is_target:
+        if label1 in memory_offset_map:
+            map_offset = memory_offset_map[label1]
+            if isinstance(map_offset, str):
+                if label2 == map_offset:
+                    return True
+                else:
+                    return False
+            else:
+                if label2 in map_offset:
+                    return True
+                else:
+                    return False
+    else:
+        if label2 in memory_offset_map:
+            map_offset = memory_offset_map[label2]
+            if isinstance(map_offset, str):
+                if label1 == map_offset:
+                    return True
+                else:
+                    return False
+            else:
+                if label1 in map_offset:
+                    return True
+                else:
+                    return False
     return False
 
 def special_handle_csv(c_is_target, label1, label2):
