@@ -141,44 +141,6 @@ static bool pointsToField(Value *Ptr,
 	return HitIdx == FieldIdx;
 }
 
-bool isFieldUnused(StructType *StructTy, unsigned FieldIdx, Module &M) {
-	bool seenWrite = false;
-	const DataLayout &DL = M.getDataLayout();
-	auto hitsFieldWrite = [&](Value *Dest, Instruction &I) {
-		if (pointsToField(Dest, StructTy, FieldIdx, DL)) {
-			seenWrite = true;
-			errs() << "[Field-write] " << StructTy->getName() << '.'
-				   << FieldIdx << " ← " << I << '\n';
-		}
-	};
-
-	for (Function &F : M) {
-		if (F.getName().equals("main") || F.isDeclaration())
-			continue;
-		for (Instruction &I : instructions(F)) {
-			if (auto *SI = dyn_cast<StoreInst>(&I))
-				hitsFieldWrite(SI->getPointerOperand(), I);
-			else if (auto *RMW = dyn_cast<AtomicRMWInst>(&I))
-				hitsFieldWrite(RMW->getPointerOperand(), I);
-			else if (auto *CX = dyn_cast<AtomicCmpXchgInst>(&I))
-				hitsFieldWrite(CX->getPointerOperand(), I);
-			else if (auto *MI = dyn_cast<MemIntrinsic>(&I))
-				hitsFieldWrite(MI->getDest(), I);
-		}
-	}
-
-	if (StructTy->getName() == "core::ffi::c_str::CStr" && FieldIdx == 0) {
-		return false;
-	}
-	if (StructTy->getName().find("CStr_struct") == 0) {
-		return false;
-	}
-	if (StructTy->getName().find("BmpPixel_struct") == 0) {
-		return false;
-	}
-	return !seenWrite;
-}
-
 std::set<std::string> tokenizeByUnderscore(const std::string& str) {
 	std::set<std::string> result;
 	std::stringstream ss(str);
@@ -288,6 +250,42 @@ namespace {
 			"alloc::string::String",
 		};
 		GlobalVariable *gCallCounter;
+
+		Function *global_target_function;
+
+		bool isFieldUnused(StructType *StructTy, unsigned FieldIdx, Module &M) {
+			bool seenWrite = false;
+			const DataLayout &DL = M.getDataLayout();
+			auto hitsFieldWrite = [&](Value *Dest, Instruction &I) {
+				if (pointsToField(Dest, StructTy, FieldIdx, DL)) {
+					seenWrite = true;
+					errs() << "[Field-write] " << StructTy->getName() << '.'
+						   << FieldIdx << " ← " << I << '\n';
+				}
+			};
+		
+			for (Instruction &I : instructions(*global_target_function)) {
+				if (auto *SI = dyn_cast<StoreInst>(&I))
+					hitsFieldWrite(SI->getPointerOperand(), I);
+				else if (auto *RMW = dyn_cast<AtomicRMWInst>(&I))
+					hitsFieldWrite(RMW->getPointerOperand(), I);
+				else if (auto *CX = dyn_cast<AtomicCmpXchgInst>(&I))
+					hitsFieldWrite(CX->getPointerOperand(), I);
+				else if (auto *MI = dyn_cast<MemIntrinsic>(&I))
+					hitsFieldWrite(MI->getDest(), I);
+			}
+		
+			if (StructTy->getName() == "core::ffi::c_str::CStr" && FieldIdx == 0) {
+				return false;
+			}
+			if (StructTy->getName().find("CStr_struct") == 0) {
+				return false;
+			}
+			if (StructTy->getName().find("BmpPixel_struct") == 0) {
+				return false;
+			}
+			return !seenWrite;
+		}
 
 		void create_function(Module& M, Type* return_type, Function* function) {
 			LLVMContext& ctx = M.getContext();
@@ -579,6 +577,8 @@ namespace {
     			llvm::errs() << "Error: target function not found.\n";
     			return; 
 			}
+
+			global_target_function = target_function;
 
 			std::string fixedJsonPath = "input.json";
 			if (std::filesystem::exists(fixedJsonPath)) {
