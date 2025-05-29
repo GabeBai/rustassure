@@ -254,13 +254,14 @@ namespace {
 		Function *global_target_function;
 
 		bool isFieldUnused(StructType *StructTy, unsigned FieldIdx, Module &M) {
+			// return false;
 			bool seenWrite = false;
 			const DataLayout &DL = M.getDataLayout();
 			auto hitsFieldWrite = [&](Value *Dest, Instruction &I) {
 				if (pointsToField(Dest, StructTy, FieldIdx, DL)) {
 					seenWrite = true;
-					errs() << "[Field-write] " << StructTy->getName() << '.'
-						   << FieldIdx << " ← " << I << '\n';
+					// errs() << "[Field-write] " << StructTy->getName() << '.'
+					// 	   << FieldIdx << " ← " << I << '\n';
 				}
 			};
 		
@@ -275,13 +276,13 @@ namespace {
 					hitsFieldWrite(MI->getDest(), I);
 			}
 		
-			if (StructTy->getName() == "core::ffi::c_str::CStr" && FieldIdx == 0) {
+			if (!StructTy->isLiteral() && StructTy->getName() == "core::ffi::c_str::CStr" && FieldIdx == 0) {
 				return false;
 			}
-			if (StructTy->getName().find("CStr_struct") == 0) {
+			if (!StructTy->isLiteral() && StructTy->getName().find("CStr_struct") == 0) {
 				return false;
 			}
-			if (StructTy->getName().find("BmpPixel_struct") == 0) {
+			if (!StructTy->isLiteral() && StructTy->getName().find("BmpPixel_struct") == 0) {
 				return false;
 			}
 			return !seenWrite;
@@ -317,10 +318,14 @@ namespace {
 			if (PointerType *pointer_type = dyn_cast<PointerType>(value->getType())) {
 				if (PointerType *inner_pointer_type = dyn_cast<PointerType>(pointer_type->getPointerElementType())) {
 					if (StructType *struct_type = dyn_cast<StructType>(inner_pointer_type->getPointerElementType())) {
-						struct_name = struct_type->getName().str();
+						if (!struct_type->isLiteral()) {
+							struct_name = struct_type->getName().str();
+						}
 					}
 				} else if (StructType *struct_type = dyn_cast<StructType>(pointer_type->getPointerElementType())) {
-					struct_name = struct_type->getName().str();
+					if (!struct_type->isLiteral()) {
+						struct_name = struct_type->getName().str();
+					}
 				}
 			}
 			if (isa<PointerType>(type)) {
@@ -415,7 +420,7 @@ namespace {
 					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), argument_name, rootType);
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(pointer->getType()->getPointerElementType())) { // these are stack variables
-					if (struct_type->getName() == "struct._IO_FILE") {
+					if (!struct_type->isLiteral() && struct_type->getName() == "struct._IO_FILE") {
 						return;
 					}
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
@@ -505,7 +510,7 @@ namespace {
 					needIgnore = true;
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(type)) {
-					if (struct_type->getName() == "struct._IO_FILE") {
+					if (!struct_type->isLiteral() && struct_type->getName() == "struct._IO_FILE") {
 						needIgnore = true;
 					}
 				}
@@ -673,7 +678,7 @@ namespace {
 				Type *arg_type = arg_value->getType();
 				if (PointerType *pointerType = dyn_cast<PointerType>(arg_type)) {
 					if (StructType* structType = dyn_cast<StructType>(pointerType->getPointerElementType())) {
-						if (structType->getName() == "struct._IO_FILE") {
+						if (!structType->isLiteral() && structType->getName() == "struct._IO_FILE") {
 							continue;
 						}
 					}
