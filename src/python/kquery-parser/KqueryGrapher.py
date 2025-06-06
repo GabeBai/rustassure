@@ -384,10 +384,10 @@ version: '[' (update_list)? ']' '@' version
         """
         version_name = ctx.getText()
         version_node = None
-        if version_name.startswith("input_argument"):
-            version_node = Node(version_name, "", self.G)
-        else:
+        if not version_name or ctx.getChildCount() > 1:
             version_node = Node("version", "", self.G)
+        else:
+            version_node = Node(version_name, "", self.G)
         for i in range(ctx.getChildCount()):
             child = ctx.getChild(i)
             if isinstance(child, KqueryParser.Update_listContext):
@@ -402,6 +402,12 @@ version: '[' (update_list)? ']' '@' version
                 expr_node = self.visit(child)
                 version_node.children.append(expr_node)
                 self.G.add_edge(version_node.node_id, expr_node.node_id)
+            if child.getText() == "@":
+                version_target = ctx.getChild(i + 1).getText()
+                final_node = Node(f"target : {version_target}", "", self.G)
+                version_node.children.append(final_node)
+                self.G.add_edge(version_node.node_id, final_node.node_id)
+
         return version_node
 
     def visitExpr(self, ctx):

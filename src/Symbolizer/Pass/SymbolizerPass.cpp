@@ -1118,25 +1118,6 @@ namespace {
 							Function::arg_iterator args = dummy_func->arg_begin();
 							Value *return_value = Builder.CreateCall(malloc_function, args);
                             Builder.CreateRet(return_value);
-						} else if (function_name == "__rust_dealloc") {
-							findFreeFunction = true;
-							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
-							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
-							Builder.SetInsertPoint(basic_block);
-							Value *oldVal = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
-							Value *incVal = Builder.CreateAdd(oldVal, ConstantInt::get(Type::getInt32Ty(ctx), 1), "incVal");
-							Builder.CreateStore(incVal, gCallCounter);
-							Builder.CreateRetVoid();
-						} else if (function_name == "free") {
-							findFreeFunction = true;
-							dummy_func = Function::Create(func_type, Function::ExternalLinkage,"function_free" + std::to_string(count++), M);
-							BasicBlock *basic_block = BasicBlock::Create(ctx, "entry", dummy_func);
-							Builder.SetInsertPoint(basic_block);
-							//do logic
-							Value *oldVal = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
-							Value *incVal = Builder.CreateAdd(oldVal, ConstantInt::get(Type::getInt32Ty(ctx), 1), "incVal");
-							Builder.CreateStore(incVal, gCallCounter);
-							Builder.CreateRetVoid();
 						}
 					}
 					if (!findFreeFunction) {
