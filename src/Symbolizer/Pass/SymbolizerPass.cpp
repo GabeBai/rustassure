@@ -1,5 +1,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Pass.h"
+#include <regex>
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/User.h"
@@ -9,19 +10,12 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/ErrorHandling.h"
-
-#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/InstIterator.h"
 
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "llvm/IR/InlineAsm.h"
 #include <fstream>
 #include <vector>
 #include <string>
@@ -33,12 +27,10 @@
 #include <cstdio>
 #include <memory>
 #include <stdexcept>
-#include <string>
 #include <array>
 #include <filesystem>
 #include <sstream>
 #include <nlohmann/json.hpp>
-#include <filesystem>
 
 using namespace llvm;
 
@@ -48,6 +40,13 @@ void strip_new_line(std::string& str) {
 	if (!str.empty() && str.back() == '\n') {
 		str.erase(str.length() - 1);
 	}
+}
+
+static inline std::string trim(const std::string &s) {
+	auto start = s.find_first_not_of(" \t\n\r");
+	if (start == std::string::npos) return "";
+	auto end = s.find_last_not_of(" \t\n\r");
+	return s.substr(start, end - start + 1);
 }
 
 bool startsWith(const std::string& str, const std::string& prefix) {
@@ -71,35 +70,6 @@ int editDistance(const std::string &s1, const std::string &s2) {
         }
     }
     return dp[len1][len2];
-}
-
-Type* getLLVMType(LLVMContext &context, const std::string &typeStr) {
-	if (typeStr == "core::ffi::c_str::CStr") {
-		ArrayType *arrTy = ArrayType::get(Type::getInt8Ty(context), 100);
-		StructType *myStructTy = StructType::create(context, "CStr_struct");
-		myStructTy->setBody(arrTy);
-		return PointerType::get(myStructTy, 0);;
-	}
-	if (typeStr == "BmpImg") {
-		Type *field_type_0 = StructType::getTypeByName(context, "BmpHeader");
-		Type *field_type_1 = PointerType::get(PointerType::get(StructType::getTypeByName(context, "BmpPixel"), 0), 0);
-		StructType *myStructTy = StructType::create(context, "BmpPixel_struct");
-		std::vector<Type*> fields = {field_type_0, field_type_1};
-		myStructTy->setBody(fields);
-		return PointerType::get(myStructTy, 0);
-	}
-
-	if (StructType::getTypeByName(context, typeStr)) {
-		return PointerType::get(StructType::getTypeByName(context, typeStr), 0);
-	}
-
-	if (typeStr == "Integer_8") {
-		return Type::getInt8PtrTy(context);  // i8*
-	} else if (typeStr == "Integer_32") {
-		return Type::getInt32PtrTy(context); // i32*
-	}
-
-	return PointerType::get(StructType::create(context, typeStr), 0);
 }
 
 // Function to split a string by "::"
@@ -235,7 +205,8 @@ namespace {
 
 
 	struct Symbolizer : PassInfoMixin<Symbolizer> {
-		json ParsedJson;
+		json json_map;
+		json struct_map;
 		Function *malloc_function;
 		std::map<int, std::string> argumentsMap;
 		std::unordered_set<StructType*> visited_structs;
@@ -249,7 +220,6 @@ namespace {
 		std::list<std::string> skip_symbolized_struct = {
 			"alloc::string::String",
 		};
-		GlobalVariable *gCallCounter;
 
 		Function *global_target_function;
 
@@ -313,7 +283,7 @@ namespace {
 			}
 		}
 
-		void mark_symbolic(Module& M, Type *type, Value* value, IRBuilder<>& Builder, std::string &argument_name, Type *rootType) {
+		void mark_symbolic(Module& M, Type *type, Value* value, IRBuilder<>& Builder, std::string &argument_name) {
 			std::string struct_name = "";
 			if (PointerType *pointer_type = dyn_cast<PointerType>(value->getType())) {
 				if (PointerType *inner_pointer_type = dyn_cast<PointerType>(pointer_type->getPointerElementType())) {
@@ -329,9 +299,6 @@ namespace {
 				}
 			}
 			if (isa<PointerType>(type)) {
-				// if (!(isa<PointerType>(rootType) && isa<PointerType>(rootType->getPointerElementType()))) {
-				// 	argument_name = argument_name + "_pointer";
-				// }
 				argument_name = argument_name + "_pointer";
 			}
 			auto it = std::find(skip_symbolized_struct.begin(), skip_symbolized_struct.end(), struct_name);
@@ -375,9 +342,8 @@ namespace {
 			Value* pointer,
 			Type* type,
 			StringRef name,
-			std::string &argument_name,
-			Type *rootType) {
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, type, name, type, false, false, argument_name, rootType);
+			std::string &argument_name) {
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, type, name, type, false, false, argument_name);
 			if (pointer->getType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType());
 			}
@@ -385,13 +351,31 @@ namespace {
 			Builder.CreateStore(stack_load_inst, pointer);
 		}
 			
-		void initialize_inner_pointer(Module& M, IRBuilder<>& Builder, Value* pointer, PointerType* ptr_type, StringRef name, std::string &argument_name, Type *rootType) {
+		void initialize_inner_pointer(Module& M,
+			IRBuilder<>& Builder,
+			Value* pointer,
+			PointerType* ptr_type,
+			StringRef name,
+			std::string &argument_name,
+			std::string &struct_name,
+			const std::string &index) {
 			// If it is a pointer to a function, do nothing
 			if (isa<FunctionType>(ptr_type->getPointerElementType())) {
 				return;
 			}
 			// If it is, then allocate something and store it
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, ptr_type->getPointerElementType(), name, ptr_type, false, false, argument_name, rootType);
+			Type *converted_type = get_target_type(M, ptr_type->getPointerElementType(), struct_name, index);
+			bool need_ignore = false;
+			bool need_cast = false;
+			if (!converted_type) {
+				converted_type = ptr_type->getPointerElementType();
+				need_ignore = true;
+			} else {
+				if (converted_type != ptr_type->getPointerElementType()) {
+					need_cast = true;
+				}
+			}
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, converted_type, name, ptr_type, need_cast, need_ignore, argument_name);
 			// Store it to the pointer
 			if (pointer->getType()->getPointerElementType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType()->getPointerElementType());
@@ -402,8 +386,7 @@ namespace {
 		void initialize_inner_objects(Module& M,
 			IRBuilder<>& Builder,
 			Value* stack_var,
-			std::string &argument_name,
-			Type *rootType) {
+			std::string &argument_name) {
 			LLVMContext& ctx = M.getContext();
 
 			// We should keep following nested pointers and allocating them and marking them as symbolic
@@ -417,7 +400,9 @@ namespace {
 				nested_pointers.pop_back();
 				// Is it a C pointer?
 				if (PointerType* ptr_type = dyn_cast<PointerType>(pointer->getType()->getPointerElementType())) {
-					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), argument_name, rootType);
+				    std::string struct_name = "";
+					std::string index = "";
+					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), argument_name, struct_name, index);
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(pointer->getType()->getPointerElementType())) { // these are stack variables
 					if (!struct_type->isLiteral() && struct_type->getName() == "struct._IO_FILE") {
@@ -444,7 +429,13 @@ namespace {
 								}
 							}
 							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
-							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, rootType);
+
+							std::string struct_name = "";
+						    if (!struct_type->isLiteral()) {
+						        struct_name = struct_type->getName().str();
+						    }
+							const std::string &index = std::to_string(i);
+							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, struct_name, index);
 							if (visited_struct_flag) {
 								visited_structs.erase(struct_type);
 							}
@@ -455,10 +446,35 @@ namespace {
 								i,
 							"gep");
 							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
-							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field", update_argument_name, rootType);
+							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field", update_argument_name);
 						}
 					}
 				}
+			}
+		}
+
+		void initialize_fn_map() {
+			std::string fixedJsonPath = "fn_type_map.json";
+			if (std::filesystem::exists(fixedJsonPath)) {
+				llvm::errs() << "json founded " << fixedJsonPath << "\n";
+				std::ifstream jsonFile(fixedJsonPath);
+				json jsonData;
+				jsonFile >> jsonData;
+				if (jsonData.contains(global_target_function->getName())) {
+					json_map = jsonData[global_target_function->getName()];
+				} else {
+					llvm::errs() << "json not founded " << global_target_function->getName() << "\n";
+				}
+			}
+		}
+
+		void initialize_struct_map() {
+			std::string fixedJsonPath = "struct_map.json";
+			if (std::filesystem::exists(fixedJsonPath)) {
+				llvm::errs() << "json founded " << fixedJsonPath << "\n";
+				std::ifstream jsonFile(fixedJsonPath);
+				json jsonData;
+				jsonFile >> struct_map;
 			}
 		}
 
@@ -468,8 +484,7 @@ namespace {
 			Type* originType,
 			bool needCast,
 			bool needIgnore,
-			std::string &argument_name,
-			Type* rootType){
+			std::string &argument_name){
 			LLVMContext& ctx = M.getContext();
 			// special handling for i8* which could be strings
 			bool cast_to_integer = false;
@@ -503,7 +518,7 @@ namespace {
 				}
 				stack_arg = Builder.CreateAlloca(type, 0, name);
 				// Any inner objects, should also be initialized
-				initialize_inner_objects(M, Builder, stack_arg, argument_name, rootType);
+				initialize_inner_objects(M, Builder, stack_arg, argument_name);
 				// Only mark the non-pointers symbolic
 				// For structs, only mark the non-pointer fields symbolic
 				if (isa<PointerType>(type)) {
@@ -518,7 +533,7 @@ namespace {
 					// type is the type passed to the CreateAlloca
 					// For structs too, we can mark the whole struct
 					// as symbolic
-					mark_symbolic(M, type, stack_arg, Builder, argument_name, rootType);
+					mark_symbolic(M, type, stack_arg, Builder, argument_name);
 				}
 				if (needCast) {
 					return Builder.CreateBitCast(stack_arg, originType);
@@ -584,20 +599,8 @@ namespace {
 			}
 
 			global_target_function = target_function;
-
-			std::string fixedJsonPath = "input.json";
-			if (std::filesystem::exists(fixedJsonPath)) {
-				llvm::errs() << "json founded " << fixedJsonPath << "\n";
-				std::ifstream jsonFile(fixedJsonPath);
-				if (!jsonFile.is_open()) {
-					llvm::errs() << "Error: Could not open JSON file: " << fixedJsonPath << "\n";
-				}
-				json jsonData;
-				jsonFile >> jsonData;
-				if (jsonData.contains(target_function->getName())) {
-					ParsedJson = jsonData[target_function->getName()];
-				}
-			}
+			initialize_fn_map();
+			initialize_struct_map();
 
 			// Target function
 			// Add an entry block to the main function
@@ -605,7 +608,6 @@ namespace {
 			IRBuilder<> Builder(ctx);
 
 			Builder.SetInsertPoint(EntryBB);
-
 
 			std::vector<Value*> actual_args;
 			// Now create a stack object of each of the argument type
@@ -626,27 +628,16 @@ namespace {
 						argument_name = "input_argument_" + std::to_string(pos);
 					}
 				}
-				Value* stackArg = nullptr;
-				unsigned argIndex = arg.getArgNo();
-				bool needReplace = false;
+				Type *targetType = get_argument_type(M, arg.getArgNo());
 				bool needIgnore = false;
-				std::string targetName;
-
-				if (!ParsedJson.empty() && ParsedJson.contains(std::to_string(argIndex))) {
-					targetName = ParsedJson[std::to_string(argIndex)];;
-				}
-				if (!targetName.empty()) {
-					if (targetName == "function") {
-						needIgnore = true;
-					} else {
-						needReplace = true;
-					}
-				}
-
-				Type* targetType = arg.getType();
-				Type* originalType = PointerType::get(targetType, 0);
-				if (needReplace) {
-					targetType = getLLVMType(ctx, targetName);
+				bool needReplace = false;
+				if (!targetType) {
+					needIgnore = true;
+					targetType = arg.getType();
+				} else if (targetType != arg.getType()) {
+					needReplace = true;
+				} else {
+					needReplace = false;
 				}
 
 				if (isa<PointerType>(targetType) && isa<FunctionType>(targetType->getPointerElementType())) {
@@ -655,15 +646,14 @@ namespace {
 					create_function(M, functionType->getReturnType(), function);
 					actual_args.push_back(function);
 				} else {
-					stackArg = create_object_and_mark_symbolic(M,
+					Value *stackArg = create_object_and_mark_symbolic(M,
 						Builder,
 						targetType,
 						arg.getName(),
-						originalType,
+						PointerType::get(arg.getType(), 0),
 						needReplace,
 						needIgnore,
-						argument_name,
-						targetType);
+						argument_name);
 					LoadInst* stack_load_inst = Builder.CreateLoad(stackArg->getType()->getPointerElementType(), stackArg);
 					actual_args.push_back(stack_load_inst);
 				}
@@ -686,29 +676,9 @@ namespace {
 				if (llvm::isa<llvm::Function>(arg_value)) {
 					continue;
 				}
-                bool needReplace = false;
-				bool needIgnore = false;
-				std::string targetName;
 
-                if (!ParsedJson.empty() && ParsedJson.contains(std::to_string(i))) {
-                    targetName = ParsedJson[std::to_string(i)];;
-                }
-				if (!targetName.empty()) {
-					if (targetName == "function") {
-						needIgnore = true;
-					} else {
-						needReplace = true;
-					}
-				}
+                Type* targetType = get_argument_type(M, i);
 
-
-                Type* targetType = arg_value->getType();
-                if (needReplace) {
-                	targetType = getLLVMType(ctx, targetName);
-                }
-				if (needIgnore) {
-					continue;
-				}
 				std::string prefix = "arg_value_";
 				if (argumentsMap.find(i) != argumentsMap.end() && argumentsMap[i] == "Ret") {
 					prefix = "ret_value";
@@ -720,9 +690,11 @@ namespace {
 						index--;
 					}
 				}
-
+				if (!targetType) {
+					continue;
+				}
 				Value *target_value = arg_value;
-				if (needReplace) {
+				if (targetType != arg_value->getType()) {
 					target_value = Builder.CreateBitCast(arg_value, targetType);
 				}
 				if (!target_function->getArg(i)->hasAttribute(Attribute::StructRet)) {
@@ -734,25 +706,8 @@ namespace {
 			// The return value
 			if (!call_with_symb_args->getType()->isVoidTy()) {
 				std::string targetName;
-				if (!ParsedJson.empty() && ParsedJson.contains("ret_value")) {
-					targetName = ParsedJson["ret_value"];
-					Type* targetType = getLLVMType(ctx, targetName);
-					print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(call_with_symb_args, targetType), std::string("ret_value"));
-				} else {
-					print_nested_klee_exprs(M, Builder, call_with_symb_args, std::string("ret_value"));
-				}
+				print_nested_klee_exprs(M, Builder, call_with_symb_args, std::string("ret_value"));
 			}
-
-			Value *free_count = Builder.CreateLoad(Type::getInt32Ty(ctx), gCallCounter, "oldVal");
-			std::vector<Value*> args_vec;
-
-			std::string new_label = "free_call_counts";
-
-			args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + new_label + " : "));
-			args_vec.push_back(free_count);
-			Function* klee_print_expr_function = M.getFunction("klee_print_expr");
-			Builder.CreateCall(klee_print_expr_function, args_vec);
-
 
 			Builder.CreateRetVoid();
 		}
@@ -818,14 +773,18 @@ namespace {
 				for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
 					Type* field_type = struct_type->getElementType(i);
 					bool need_cast = false;
-					// 100 is a magic number, we use it to represent a field in the struct
-					if (!ParsedJson.empty() && ParsedJson.contains(std::to_string(i + 100))) {
-						std::string target_string = ParsedJson[std::to_string(i + 100)];
-						if (target_string == "function") {
-							continue;
-						}
-						Type *target_type = getLLVMType(ctx, target_string);
-						field_type = PointerType::get(target_type, 0);
+					std::string struct_name = "";
+					const std::string &index = std::to_string(i);
+                    if (!struct_type->isLiteral()) {
+                        struct_name = struct_type->getName().str();
+                    }
+					Type *converted_type = get_target_type(M, field_type, struct_name, index);
+					if (!converted_type) {
+						//function pointer
+						continue;
+					}
+					if (converted_type != field_type) {
+						//need cast to real type
 						need_cast = true;
 					}
 					if (!startsWith(label, "ret_value") && isFieldUnused(struct_type, i, M)) {
@@ -839,14 +798,6 @@ namespace {
 							i,
 							"gep");
 					if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
-						// todo fix me !!
-						// temporary solution for i64 * inside struct (In rust, it is a function pointer)
-						if (auto *ptrType = dyn_cast<PointerType>(field_type)) {
-							Type *pointeeType = ptrType->getElementType();
-							if (pointeeType->isIntegerTy(64)) {
-								continue;
-							}
-						}
 						bool visited_struct_flag = false;
 						if (isa<PointerType>(field_type)) {
 							if (StructType *inner_struct_type = dyn_cast<StructType>(field_type->getPointerElementType())) {
@@ -1183,7 +1134,7 @@ namespace {
 			}
 		}
 
-		// todo: discuss how to process these exeternal global variable
+		// todo: discuss how to process these external global variable
 		void convert_global_const(Module &M) {
 			std::vector<std::string> Names = {"__cp_begin", "__cp_end", "__cp_cancel", "_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17hb7b9c59f381708c2E", "_ZN3std9panicking11panic_count18GLOBAL_PANIC_COUNT17h00399aec441edfe5E",
 			"_ZN3std11collections4hash3map11RandomState3new4KEYS7__getit5__KEY17h2685127cc93352fdE"};
@@ -1224,13 +1175,135 @@ namespace {
 			}
 		}
 
+		Type* check_struct_pointer(Module &M, Argument &arg) {
+			for (User *U : arg.users()) {
+				if (auto *SI = dyn_cast<StoreInst>(U)) {
+					if (SI->getValueOperand() != &arg) {
+						continue;
+					}
+					Value *ptrOp = SI->getPointerOperand();
+					for (User *PU : ptrOp->users()) {
+						if (auto *BC = dyn_cast<BitCastInst>(PU)) {
+							// errs() << "    Target pointer is bitcasted here: " << *BC << "\n";
+							Type *dstTy = BC->getDestTy();
+							if (PointerType *inner_pointer_ty = dyn_cast<PointerType>(dstTy->getPointerElementType())) {
+								if (StructType *structTy = dyn_cast<StructType>(inner_pointer_ty->getPointerElementType())) {
+									errs() << "inner struct type: " << structTy->getName() << "\n";
+									return PointerType::get(structTy, 0);
+								}
+							}
+						}
+					}
+				}
+
+			}
+			return NULL;
+		}
+
+		bool check_function_ptr(std::string &str) {
+			static const std::regex wrapper_re(R"!(^\s*(?:Option|Box)\s*<\s*(.+)\s*>\s*$)!");
+			std::smatch m;
+			while (std::regex_match(str, m, wrapper_re)) {
+				str = trim(m[1].str());
+			}
+
+			static const std::regex dyn_fn_re(
+				R"!(^\s*(?:&?'\w+\s+)?dyn\s+Fn\s*\([^)]*\)\s*(?:->\s*.*)?\s*$)!"
+			);
+			static const std::regex fn_ptr_re(
+				R"!(^\s*fn\s*\([^)]*\)\s*(?:->\s*.*)?\s*$)!"
+			);
+
+			if ( std::regex_match(str, dyn_fn_re)
+			  || std::regex_match(str, fn_ptr_re) )
+			{
+				errs() << "found function pointer: " << str << "\n";
+				return true;
+			}
+			return false;
+		}
+
+		bool check_argument_function_ptr(const std::string &index) {
+			if (!json_map.contains(index))
+				return false;
+
+			std::string s = trim((json_map)[index].get<std::string>());
+			return check_function_ptr(s);
+		}
+
+
+		bool check_struct_function_ptr(Type *type,
+									   Module &M,
+									   const std::string &struct_name,
+									   const std::string &index) {
+
+			auto sit = struct_map.find(struct_name);
+			if (sit == struct_map.end()) {
+				return false;
+			}
+
+			auto &field_map = sit.value();
+
+			auto fit = field_map.find(index);
+			if (fit == field_map.end()) {
+				return false;
+			}
+
+			std::string type_str = fit.value().get<std::string>();
+			return check_function_ptr(type_str);
+		}
+
+
+		Type* get_target_type(Module &M, Type *type, std::string &struct_name, const std::string &index) {
+			//check basic type
+
+
+			//check struct
+			if (struct_name == "") {
+				//literacy struct
+				return type;
+			}
+			//check function pointer
+			if (check_struct_function_ptr(type, M, struct_name, index)) {
+				return NULL;
+			}
+			//check other type...
+
+			return type;
+		}
+
+		Type* get_argument_type(Module &M, unsigned index) {
+			for (Function::arg_iterator AI = global_target_function->arg_begin(), AE = global_target_function->arg_end(); AI != AE; ++AI) {
+				Argument &arg = *AI;
+				if (arg.getArgNo() != index) {
+					continue;
+				}
+				Type* Integer = Type::getInt8PtrTy(M.getContext());
+				if (Integer == arg.getType()) {
+					Type *target_type = check_struct_pointer(M, arg);
+					//check struct type
+					if (target_type) {
+						return target_type;
+					}
+				}
+				//check function pointer type
+				if (check_argument_function_ptr(std::to_string(index))) {
+					return NULL;
+				}
+
+
+				//check other type
+
+
+
+				//return original type
+				return arg.getType();
+			}
+
+			return NULL;
+		}
+
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
-			gCallCounter = new GlobalVariable(M,
-				Type::getInt32Ty(M.getContext()),
-				false,
-				GlobalValue::ExternalLinkage,
-				ConstantInt::get(Type::getInt32Ty(M.getContext()), 0),
-				"free_function_call_count");
 			FunctionType *func_type = FunctionType::get(PointerType::get(Type::getInt8Ty(M.getContext()), 0), IntegerType::get(M.getContext(), 64), 0);
 			Function *func = Function::Create(func_type, Function::ExternalLinkage, "malloc", M);
 			malloc_function = func;
