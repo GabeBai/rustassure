@@ -342,8 +342,21 @@ namespace {
 			Value* pointer,
 			Type* type,
 			StringRef name,
-			std::string &argument_name) {
-			Value* stack_object = create_object_and_mark_symbolic(M, Builder, type, name, type, false, false, argument_name);
+			std::string &argument_name,
+			std::string &struct_name,
+			const std::string &index) {
+			Type *converted_type = get_target_type(M, type, struct_name, index);
+			bool need_ignore = false;
+			bool need_cast = false;
+			if (!converted_type) {
+				converted_type = type;
+				need_ignore = true;
+			} else {
+				if (converted_type != type) {
+					need_cast = true;
+				}
+			}
+			Value* stack_object = create_object_and_mark_symbolic(M, Builder, converted_type, name, PointerType::get(type, 0), need_cast, need_ignore, argument_name);
 			if (pointer->getType() != stack_object->getType()) {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType());
 			}
@@ -408,8 +421,13 @@ namespace {
 					if (!struct_type->isLiteral() && struct_type->getName() == "struct._IO_FILE") {
 						return;
 					}
+					std::string struct_name = "";
+					if (!struct_type->isLiteral()) {
+						struct_name = struct_type->getName().str();
+					}
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
 						Type* field_type = struct_type->getElementType(i);
+						const std::string &index = std::to_string(i);
 						// If it is a pointer, then we try to initialize it and make it work
 						if (PointerType* field_ptr_type = dyn_cast<PointerType>(field_type)) {
 							// Load the struct
@@ -430,10 +448,6 @@ namespace {
 							}
 							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
 
-							std::string struct_name = "";
-						    if (!struct_type->isLiteral()) {
-						        struct_name = struct_type->getName().str();
-						    }
 							const std::string &index = std::to_string(i);
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, struct_name, index);
 							if (visited_struct_flag) {
@@ -446,7 +460,7 @@ namespace {
 								i,
 							"gep");
 							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
-							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field", update_argument_name);
+							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field", update_argument_name, struct_name, index);
 						}
 					}
 				}
@@ -775,18 +789,9 @@ namespace {
 					bool need_cast = false;
 					std::string struct_name = "";
 					const std::string &index = std::to_string(i);
-                    if (!struct_type->isLiteral()) {
+                    if (!(struct_type->isLiteral())) {
                         struct_name = struct_type->getName().str();
                     }
-					Type *converted_type = get_target_type(M, field_type, struct_name, index);
-					if (!converted_type) {
-						//function pointer
-						continue;
-					}
-					if (converted_type != field_type) {
-						//need cast to real type
-						need_cast = true;
-					}
 					if (!startsWith(label, "ret_value") && isFieldUnused(struct_type, i, M)) {
 						std::string new_label = label + "." + "field_" + std::to_string(i);
 						outs() << "Arguments have not been used: " << new_label << "\n";
@@ -798,6 +803,7 @@ namespace {
 							i,
 							"gep");
 					if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
+						Type *converted_type = field_type;
 						bool visited_struct_flag = false;
 						if (isa<PointerType>(field_type)) {
 							if (StructType *inner_struct_type = dyn_cast<StructType>(field_type->getPointerElementType())) {
@@ -808,10 +814,31 @@ namespace {
 									visited_struct_flag = true;
 								}
 							}
+							Type *original_converted_type = get_target_type(M, field_type->getPointerElementType(), struct_name, index);
+							if (!original_converted_type) {
+								//function pointer
+								continue;
+							}
+							if (original_converted_type != field_type) {
+								//need cast to real type
+								need_cast = true;
+							}
+							converted_type = PointerType::get(original_converted_type, 0);
+						} else {
+							converted_type = get_target_type(M, field_type, struct_name, index);
+							if (!converted_type) {
+								//function pointer
+								continue;
+							}
+							if (converted_type != field_type) {
+								//need cast to real type
+								need_cast = true;
+							}
 						}
+						//need pointer again..
+						converted_type = PointerType::get(converted_type, 0);
 						if (need_cast) {
-							// field_type is address of the targetType
-							print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, field_type), label + "." + "field_" + std::to_string(i));
+							print_nested_klee_exprs(M, Builder, Builder.CreateBitCast(gep, converted_type), label + "." + "field_" + std::to_string(i));
 						} else {
 							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
 						}
@@ -819,10 +846,8 @@ namespace {
 							visited_structs.erase(struct_type);
 						}
 					} else {
-						
 						// Create a load
 						Value* load_arg_value = Builder.CreateLoad(gep->getType()->getPointerElementType(), gep);
-
 
 						std::vector<Value*> args_vec;
 						
@@ -1258,6 +1283,17 @@ namespace {
 			//check basic type
 
 
+			if (StructType *struct_type = dyn_cast<StructType>(type)) {
+				if (!(struct_type->isLiteral())) {
+					//core::option::Option<alloc::vec::Vec<u8>> -> alloc::vec::Vec<u8>
+					const std::string &type_str = struct_type->getName().str();
+					if (type_str == "core::option::Option<alloc::vec::Vec<u8>>") {
+						const std::string &convert_type_string = "alloc::vec::Vec<u8>";
+						return StructType::getTypeByName(M.getContext(), convert_type_string);
+					}
+				}
+			}
+
 			//check struct
 			if (struct_name == "") {
 				//literacy struct
@@ -1267,7 +1303,6 @@ namespace {
 			if (check_struct_function_ptr(type, M, struct_name, index)) {
 				return NULL;
 			}
-			//check other type...
 
 			return type;
 		}
