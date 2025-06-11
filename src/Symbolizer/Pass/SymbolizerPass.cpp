@@ -11,7 +11,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/InstIterator.h"
 
 #include "llvm/Passes/PassBuilder.h"
@@ -954,62 +953,6 @@ namespace {
 			Function::Create(klee_print_expr_type, Function::ExternalLinkage, "klee_print_expr", M);
 		}
 
-		void convert_unreachable_conditions(Module &M) {
-		    for (Function &F : M) {
-		        if (F.isDeclaration())
-		            continue;
-
-		        Type *RetTy = F.getReturnType();
-		        Constant *DefaultRetVal = nullptr;
-		        if (!RetTy->isVoidTy()) {
-		            DefaultRetVal = Constant::getNullValue(RetTy);
-		        }
-		        for (BasicBlock &BB : F) {
-		            SmallVector<Instruction*, 8> Insts;
-		            for (auto &I : BB) {
-		                Insts.push_back(&I);
-		            }
-		            for (Instruction *I : Insts) {
-		                if (auto *SW = dyn_cast<SwitchInst>(I)) {
-		                    BasicBlock *DefaultBB = SW->getDefaultDest();
-		                    if (SW->getNumCases() > 0) {
-		                        if (DefaultBB->size() == 1 && isa<UnreachableInst>(DefaultBB->front())) {
-		                            BasicBlock *FirstCaseBB = SW->case_begin()->getCaseSuccessor();
-		                            SW->setDefaultDest(FirstCaseBB);
-
-		                            if (!DefaultBB->hasNPredecessorsOrMore(1)) {
-		                                DefaultBB->dropAllReferences();
-		                                DefaultBB->eraseFromParent();
-		                            }
-		                        }
-		                    }
-		                } else if (auto *UI = dyn_cast<UnreachableInst>(I)) {
-		                    BasicBlock *CurBB = UI->getParent();
-		                    bool IsSwitchDefault = false;
-		                    for (auto *U : CurBB->users()) {
-		                        if (auto *SW = dyn_cast<SwitchInst>(U)) {
-		                            if (SW->getDefaultDest() == CurBB) {
-		                                IsSwitchDefault = true;
-		                                break;
-		                            }
-		                        }
-		                    }
-
-		                    if (!IsSwitchDefault) {
-		                        IRBuilder<> Builder(UI);
-		                        if (RetTy->isVoidTy()) {
-		                            Builder.CreateRetVoid();
-		                        } else {
-		                            Builder.CreateRet(DefaultRetVal);
-		                        }
-		                        UI->eraseFromParent();
-		                    }
-		                }
-		            }
-		        }
-		    }
-		}
-
 		void convert_function_calls(Module& M) {
 			LLVMContext &ctx = M.getContext();
 			IRBuilder<> Builder(ctx);
@@ -1277,8 +1220,6 @@ namespace {
 
 		Type* get_target_type(Module &M, Type *type, std::string &struct_name, const std::string &index) {
 			//check basic type
-
-
 			if (StructType *struct_type = dyn_cast<StructType>(type)) {
 				if (!(struct_type->isLiteral())) {
 					//core::option::Option<alloc::vec::Vec<u8>> -> alloc::vec::Vec<u8>
@@ -1287,10 +1228,20 @@ namespace {
 						const std::string &convert_type_string = "alloc::vec::Vec<u8>";
 						return StructType::getTypeByName(M.getContext(), convert_type_string);
 					}
+					if (type_str == "core::option::Option<alloc::string::String>") {
+						const std::string &convert_type_string = "alloc::string::String";
+						return StructType::getTypeByName(M.getContext(), convert_type_string);
+					}
+					if (type_str == "core::ffi::c_str::CStr") {
+						ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
+						StructType *cstr_struct = StructType::create(M.getContext(), "cstr_struct");
+						cstr_struct->setBody(inner_array_type);
+						return cstr_struct;;
+					}
 				}
 			}
 
-			//check struct
+			//use index to check the field inside struct
 			if (struct_name == "") {
 				//literacy struct
 				return type;
@@ -1322,10 +1273,44 @@ namespace {
 					return NULL;
 				}
 
-
-				//check other type
-
-
+				//Pointer type
+				if (PointerType *pointer_type = dyn_cast<PointerType>(arg.getType())) {
+					if (StructType *struct_type = dyn_cast<StructType>(pointer_type->getPointerElementType())) {
+						if (!(struct_type->isLiteral())) {
+							//core::option::Option<alloc::vec::Vec<u8>> -> alloc::vec::Vec<u8>
+							const std::string &type_str = struct_type->getName().str();
+							if (type_str == "core::option::Option<alloc::vec::Vec<u8>>") {
+								const std::string &convert_type_string = "alloc::vec::Vec<u8>";
+								return PointerType::get(StructType::getTypeByName(M.getContext(), convert_type_string), 0);
+							}
+							if (type_str == "core::option::Option<alloc::string::String>") {
+								const std::string &convert_type_string = "alloc::string::String";
+								return PointerType::get(StructType::getTypeByName(M.getContext(), convert_type_string), 0);
+							}
+							if (type_str == "core::ffi::c_str::CStr") {
+								ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
+								StructType *cstr_struct = StructType::create(M.getContext(), "cstr_struct");
+								cstr_struct->setBody(inner_array_type);
+								return PointerType::get(cstr_struct, 0);;
+							}
+						}
+					}
+				}
+				//Struct type
+				if (StructType *struct_type = dyn_cast<StructType>(arg.getType())) {
+					if (!(struct_type->isLiteral())) {
+						//core::option::Option<alloc::vec::Vec<u8>> -> alloc::vec::Vec<u8>
+						const std::string &type_str = struct_type->getName().str();
+						if (type_str == "core::option::Option<alloc::vec::Vec<u8>>") {
+							const std::string &convert_type_string = "alloc::vec::Vec<u8>";
+							return StructType::getTypeByName(M.getContext(), convert_type_string);
+						}
+						if (type_str == "core::option::Option<alloc::string::String>") {
+							const std::string &convert_type_string = "alloc::string::String";
+							return StructType::getTypeByName(M.getContext(), convert_type_string);
+						}
+					}
+				}
 
 				//return original type
 				return arg.getType();
@@ -1343,7 +1328,6 @@ namespace {
 			symbolize_function_args_and_invoke(M);
 			convert_function_calls(M);
 			convert_global_const(M);
-			// convert_unreachable_conditions(M);
 			//M.dump();
 			return PreservedAnalyses::none();
 		}
