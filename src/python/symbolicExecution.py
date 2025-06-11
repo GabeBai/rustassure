@@ -276,6 +276,12 @@ def main():
     except Exception as e:
         logger.error("compile C error: %s", e, exc_info=True)
 
+    # 1.5) create C map
+    try:
+        run_command("python3 ../../python/process_c_file.py testcase/C")
+    except Exception as e:
+        logger.error("process rust error: %s", e, exc_info=True)
+
     # 2) Process each C .bc file in parallel
     c_bc_files = glob.glob("testcase/C/*.bc")
     with ThreadPoolExecutor(max_workers=MAX_JOBS) as executor:
