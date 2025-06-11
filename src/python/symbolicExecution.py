@@ -462,8 +462,8 @@ def process_rust_file(bc_file):
 
     # symbolize
     cmd_opt1 = (
-        f"opt -load-pass-plugin ../build/Pass/SymbolizerPass.so "
-        f"-O0 klee_ir_files/Rust/{base_name}.ll -S -o klee_ir_files/Rust/{base_name}_klee.ll"
+        f"opt -load ../build/Pass/SymbolizerPass.so -load-pass-plugin ../build/Pass/SymbolizerPass.so"
+        f"-O0 -isRust=true klee_ir_files/Rust/{base_name}.ll -S -o klee_ir_files/Rust/{base_name}_klee.ll"
     )
     run_command(cmd_opt1)
 
@@ -533,7 +533,6 @@ def main():
             except Exception as e:
                 logger.error(f"C symbolic {f} failed", exc_info=True)
 
-    
     # Deduplicate + convertGraph for C
     try:
         run_command("python3 ../scripts/deduplicate.py C")
@@ -565,6 +564,12 @@ def main():
         run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/Rust")
     except Exception as e:
         logger.error("compile rust error: %s", e, exc_info=True)
+
+    # 3.5) create Rust map
+    try:
+        run_command("python3 ../../python/process_rust_file.py testcase/Rust")
+    except Exception as e:
+        logger.error("process rust error: %s", e, exc_info=True)
 
     # 4) Process each Rust .bc file in parallel
     r_bc_files = glob.glob("testcase/Rust/*.bc")

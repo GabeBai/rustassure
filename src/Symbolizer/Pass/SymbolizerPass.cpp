@@ -36,6 +36,8 @@ using namespace llvm;
 
 using json = nlohmann::json;
 
+static bool is_rust;
+
 void strip_new_line(std::string& str) {
 	if (!str.empty() && str.back() == '\n') {
 		str.erase(str.length() - 1);
@@ -224,7 +226,10 @@ namespace {
 		Function *global_target_function;
 
 		bool isFieldUnused(StructType *StructTy, unsigned FieldIdx, Module &M) {
-			// return false;
+			// for Rust, we consider they are all used.
+			if (is_rust) {
+				return false;
+			}
 			bool seenWrite = false;
 			const DataLayout &DL = M.getDataLayout();
 			auto hitsFieldWrite = [&](Value *Dest, Instruction &I) {
@@ -245,16 +250,7 @@ namespace {
 				else if (auto *MI = dyn_cast<MemIntrinsic>(&I))
 					hitsFieldWrite(MI->getDest(), I);
 			}
-		
-			if (!StructTy->isLiteral() && StructTy->getName() == "core::ffi::c_str::CStr" && FieldIdx == 0) {
-				return false;
-			}
-			if (!StructTy->isLiteral() && StructTy->getName().find("CStr_struct") == 0) {
-				return false;
-			}
-			if (!StructTy->isLiteral() && StructTy->getName().find("BmpPixel_struct") == 0) {
-				return false;
-			}
+
 			return !seenWrite;
 		}
 
@@ -1355,6 +1351,10 @@ namespace {
 	}; // end of struct
 }  // end of anonymous namespace
 
+static cl::opt<bool> isRust("isRust",
+	cl::desc("is processing rust"),
+	cl::init(false));
+
 /* New PM Registration */
 llvm::PassPluginLibraryInfo getSymbolizerPluginInfo() {
 	return {LLVM_PLUGIN_API_VERSION, "Symbolizer", LLVM_VERSION_STRING,
@@ -1363,6 +1363,7 @@ llvm::PassPluginLibraryInfo getSymbolizerPluginInfo() {
 					[](llvm::ModulePassManager &PM, OptimizationLevel Level) {
 					PM.addPass(Symbolizer());
 					});
+			is_rust = isRust;
 		}};
 }
 
