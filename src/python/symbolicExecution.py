@@ -64,7 +64,7 @@ def run_command(cmd, cwd=None):
     safe_cmd = re.sub(r"[^\w.-]", "_", cmd)
     log_file = f"all_logs/{safe_cmd}.log"
 
-    with open(log_file, "w") as log
+    with open(log_file, "w") as log:
         process = subprocess.run(cmd, shell=True, cwd=cwd, stdout=log, stderr=log, text=True)
 
     if process.returncode != 0:
@@ -75,7 +75,7 @@ def run_command(cmd, cwd=None):
         logger.info(f"[ERROR] command fail: {cmd}")
         raise subprocess.CalledProcessError(process.returncode, cmd, output=msg)
     print(f"[INFO] command success: {cmd}")
-
+    
 
 def prepare_directory(dir_path):
     """
@@ -217,7 +217,7 @@ def process_rust_file(bc_file):
 
     # symbolize
     cmd_opt1 = (
-        f"opt -load ../build/Pass/SymbolizerPass.so -load-pass-plugin ../build/Pass/SymbolizerPass.so"
+        f"opt -load ../build/Pass/SymbolizerPass.so -load-pass-plugin ../build/Pass/SymbolizerPass.so "
         f"-O0 -isRust=true klee_ir_files/Rust/{base_name}.ll -S -o klee_ir_files/Rust/{base_name}_klee.ll"
     )
     run_command(cmd_opt1)
