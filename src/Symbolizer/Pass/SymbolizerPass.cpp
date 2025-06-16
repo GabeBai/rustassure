@@ -1242,11 +1242,18 @@ namespace {
 							return type;
 						}
 					}
-					if (type_str == "core::ffi::c_str::CStr") {
-						ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
-						StructType *cstr_struct = StructType::create(M.getContext(), "cstr_struct");
-						cstr_struct->setBody(inner_array_type);
-						return cstr_struct;;
+
+					//unwind::libunwind::_Unwind_Context has same defination with
+					//"core::ffi::c_str::CStr"
+					const std::string &target_string = "core::ffi::c_str::CStr";
+					StructType *cstr_struct_type =  StructType::getTypeByName(M.getContext(), target_string);
+					if (cstr_struct_type) {
+						if (type == cstr_struct_type) {
+							ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
+							StructType *cstr_struct = StructType::create(M.getContext(), "cstr_struct");
+							cstr_struct->setBody(inner_array_type);
+							return cstr_struct;;
+						}
 					}
 				}
 			}
@@ -1307,11 +1314,18 @@ namespace {
 									return arg.getType();
 								}
 							}
-							if (type_str == "core::ffi::c_str::CStr") {
-								ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
-								StructType *cstr_struct = StructType::create(M.getContext(), "cstr_struct");
-								cstr_struct->setBody(inner_array_type);
-								return PointerType::get(cstr_struct, 0);;
+
+							//unwind::libunwind::_Unwind_Context has same defination with
+							//"core::ffi::c_str::CStr"
+							const std::string &target_string = "core::ffi::c_str::CStr";
+							StructType *cstr_struct_type =  StructType::getTypeByName(M.getContext(), target_string);
+							if (cstr_struct_type) {
+								if (struct_type == cstr_struct_type) {
+									ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
+									StructType *cstr_struct = StructType::create(M.getContext(), "cstr_struct");
+									cstr_struct->setBody(inner_array_type);
+									return PointerType::get(cstr_struct, 0);
+								}
 							}
 						}
 					}
