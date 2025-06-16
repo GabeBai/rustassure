@@ -1226,11 +1226,21 @@ namespace {
 					const std::string &type_str = struct_type->getName().str();
 					if (type_str == "core::option::Option<alloc::vec::Vec<u8>>") {
 						const std::string &convert_type_string = "alloc::vec::Vec<u8>";
-						return StructType::getTypeByName(M.getContext(), convert_type_string);
+						StructType *return_type = StructType::getTypeByName(M.getContext(), convert_type_string);
+						if (return_type) {
+							return return_type;
+						} else {
+							return type;
+						}
 					}
 					if (type_str == "core::option::Option<alloc::string::String>") {
 						const std::string &convert_type_string = "alloc::string::String";
-						return StructType::getTypeByName(M.getContext(), convert_type_string);
+						StructType *return_type = StructType::getTypeByName(M.getContext(), convert_type_string);
+						if (return_type) {
+							return return_type;
+						} else {
+							return type;
+						}
 					}
 					if (type_str == "core::ffi::c_str::CStr") {
 						ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
@@ -1281,11 +1291,21 @@ namespace {
 							const std::string &type_str = struct_type->getName().str();
 							if (type_str == "core::option::Option<alloc::vec::Vec<u8>>") {
 								const std::string &convert_type_string = "alloc::vec::Vec<u8>";
-								return PointerType::get(StructType::getTypeByName(M.getContext(), convert_type_string), 0);
+								StructType *return_type = StructType::getTypeByName(M.getContext(), convert_type_string);
+								if (return_type) {
+									return PointerType::get(return_type, 0);;
+								} else {
+									return arg.getType();
+								}
 							}
 							if (type_str == "core::option::Option<alloc::string::String>") {
 								const std::string &convert_type_string = "alloc::string::String";
-								return PointerType::get(StructType::getTypeByName(M.getContext(), convert_type_string), 0);
+								StructType *return_type = StructType::getTypeByName(M.getContext(), convert_type_string);
+								if (return_type) {
+									return PointerType::get(return_type, 0);
+								} else {
+									return arg.getType();
+								}
 							}
 							if (type_str == "core::ffi::c_str::CStr") {
 								ArrayType *inner_array_type = ArrayType::get(Type::getInt8Ty(M.getContext()), 100);
@@ -1303,11 +1323,21 @@ namespace {
 						const std::string &type_str = struct_type->getName().str();
 						if (type_str == "core::option::Option<alloc::vec::Vec<u8>>") {
 							const std::string &convert_type_string = "alloc::vec::Vec<u8>";
-							return StructType::getTypeByName(M.getContext(), convert_type_string);
+							StructType *return_type = StructType::getTypeByName(M.getContext(), convert_type_string);
+							if (return_type) {
+								return return_type;
+							} else {
+								return arg.getType();
+							}
 						}
 						if (type_str == "core::option::Option<alloc::string::String>") {
 							const std::string &convert_type_string = "alloc::string::String";
-							return StructType::getTypeByName(M.getContext(), convert_type_string);
+							StructType *return_type = StructType::getTypeByName(M.getContext(), convert_type_string);
+							if (return_type) {
+								return return_type;
+							} else {
+								return arg.getType();
+							}
 						}
 					}
 				}
