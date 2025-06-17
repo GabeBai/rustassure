@@ -89,6 +89,38 @@ std::vector<std::string> splitString(const std::string& str, const std::string& 
 	return tokens;
 }
 
+static bool doesPointerEventuallyStore(Value *Ptr) {
+	SmallVector<Value *, 8> WorkList{Ptr};
+	SmallPtrSet<Value *, 8> Visited;
+
+	while (!WorkList.empty()) {
+		Value *V = WorkList.pop_back_val();
+		if (!Visited.insert(V).second)
+			continue;
+
+		for (User *U : V->users()) {
+			// llvm::errs() << "U: " << *V << '\n';
+			// llvm::errs() << "V: " << *U << '\n';
+			if (auto *SI = dyn_cast<StoreInst>(U)) {
+				if (SI->getPointerOperand() == V) return true;
+			} else if (auto *RMW = dyn_cast<AtomicRMWInst>(U)) {
+				if (RMW->getPointerOperand() == V) return true;
+			} else if (auto *CX = dyn_cast<AtomicCmpXchgInst>(U)) {
+				if (CX->getPointerOperand() == V) return true;
+			} else if (auto *MI = dyn_cast<MemIntrinsic>(U)) {
+				if (MI->getDest() == V) return true;
+			}
+
+			if (isa<GetElementPtrInst>(U) ||
+				isa<BitCastInst>(U)      ||
+				isa<AddrSpaceCastInst>(U)) {
+				WorkList.push_back(U);
+				}
+		}
+	}
+	return false;
+}
+
 
 static bool pointsToField(Value *Ptr,
 						   StructType *TargetTy,
@@ -248,6 +280,15 @@ namespace {
 					hitsFieldWrite(CX->getPointerOperand(), I);
 				else if (auto *MI = dyn_cast<MemIntrinsic>(&I))
 					hitsFieldWrite(MI->getDest(), I);
+				else if (auto *LI = dyn_cast<LoadInst>(&I)) {
+					//for load, we need to confirm that it has been changed
+					if (pointsToField(LI->getPointerOperand(), StructTy, FieldIdx, DL) &&
+						doesPointerEventuallyStore(LI))
+						seenWrite = true;
+				}
+				if (seenWrite) {
+					return false;
+				}
 			}
 
 			return !seenWrite;
