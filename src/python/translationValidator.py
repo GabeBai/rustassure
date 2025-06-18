@@ -1,4 +1,4 @@
-import os
+struct-with-generic-pointer-printer ./inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2025-06-18_11-38-59/csv_strerror.iimport os
 import logging
 import sys
 import re
@@ -196,6 +196,8 @@ def processCodebase(codebasePath,
     # Refresh from the individual function files
     funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, []) # No filtering using file-list this time because we have already filtered
 
+    extractor.extractGlobalTypeUsageDetails(individualFuncPath, funcMap)
+
     translator.preanalyze(funcMap, individualFuncPath)
     if not preanalysisOnly:
         translator.translateAll(funcMap, individualFuncPath, multiThreading)
@@ -257,7 +259,7 @@ Some common invocations:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
-    parser.add_argument("--src", type=str, default="./inputs-complex/zlib-1.3.1/", help="The source directory that contains the preprocessed C files")
+    parser.add_argument("--src", type=str, default="./inputs-complex/libcsv", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")

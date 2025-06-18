@@ -336,7 +336,10 @@ class Translator:
         return extractedErr
 
     def preTranslateComplexStructs(self):
-        if self.translatorMode not in [TranslatorModes.CF_STRUCT_REPLAY, TranslatorModes.CF_STRUCT_FN_REPLAY, TranslatorModes.CF_SINGLE_REQUEST_MERGE]:
+        if self.translatorMode not in [TranslatorModes.CF_STRUCT_REPLAY,
+                                       TranslatorModes.CF_STRUCT_FN_REPLAY,
+                                       TranslatorModes.CF_SINGLE_REQUEST_MERGE,
+                                       TranslatorModes.COMPILATION_FEEDBACK]:
             return
         for structName in FunctionAndDependencies.structsWithUsageInfoMap:
             structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[structName]
