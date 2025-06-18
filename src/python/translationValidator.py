@@ -1,4 +1,4 @@
-struct-with-generic-pointer-printer ./inputs-complex/libcsv/individual-funcs_gpt-3.5-turbo_2025-06-18_11-38-59/csv_strerror.iimport os
+import os
 import logging
 import sys
 import re
