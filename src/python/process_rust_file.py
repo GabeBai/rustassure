@@ -120,6 +120,8 @@ def get_fn_params(src_bytes: bytes, fn_name: str):
                         pname = src_bytes[idn.start_byte:idn.end_byte].decode()
                         ptype = src_bytes[typ.start_byte:typ.end_byte].decode()
                         results.append((pname, ptype))
+                    elif child.type == 'self_parameter':
+                        results.append(("self", "self"))
                 return
 
         for c in node.children:
