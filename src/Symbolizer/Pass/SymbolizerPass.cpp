@@ -1222,7 +1222,7 @@ namespace {
 			if ( std::regex_match(str, dyn_fn_re)
 			  || std::regex_match(str, fn_ptr_re) )
 			{
-				errs() << "found function pointer: " << str << "\n";
+				// errs() << "found function pointer: " << str << "\n";
 				return true;
 			}
 			return false;
@@ -1233,7 +1233,12 @@ namespace {
 				return false;
 
 			std::string s = trim((json_map)[index].get<std::string>());
-			return check_function_ptr(s);
+			if (check_function_ptr(s)) {
+				llvm::errs() << "function pointer in argument" << index << "\n";
+				return true;
+			} else {
+				return false;
+			}
 		}
 
 
@@ -1255,7 +1260,14 @@ namespace {
 			}
 
 			std::string type_str = fit.value().get<std::string>();
-			return check_function_ptr(type_str);
+
+
+			if (check_function_ptr(type_str)) {
+				llvm::errs() << "found function pointer in " << struct_name << index << "\n";
+				return true;
+			} else {
+				return false;
+			}
 		}
 
 
