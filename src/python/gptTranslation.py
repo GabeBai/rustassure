@@ -283,6 +283,17 @@ class Translator:
         self.logger.info("Sent request in %d chunks", numChunks)
         return fullResponse
 
+
+    def checkStructDefination(self, code):
+        structPattern = r"(struct\s+\w+\s*\{[^}]*\})"
+        structs = re.findall(structPattern, code, re.DOTALL)
+        for translatedStruct in structs:
+            for preTranslatedStruct in FunctionAndDependencies.structsWithUsageInfoMap:
+                if translatedStruct == preTranslatedStruct:
+                    struct_info = structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[preTranslatedStruct]
+
+
+
     def cleanCode(self, code):
         # remove identical duplicate structs
         structPattern = r"(struct\s+\w+\s*\{[^}]*\})"
@@ -335,6 +346,37 @@ class Translator:
         self.logger.debug("Full compilation error: " + errStr)
         return extractedErr
 
+    def cleanStruct(self, src: str, struct_name: str):
+        match = m = re.search(r"\bstruct\s+[A-Za-z_]\w*\b", src)
+        if not match:
+            return None
+
+        i = match.end()
+        try:
+            start_brace = src.index('{', i)
+        except ValueError:
+            return None
+        brace_depth = 0
+        for j in range(start_brace, len(src)):
+            if src[j] == '{':
+                brace_depth += 1
+            elif src[j] == '}':
+                brace_depth -= 1
+                if brace_depth == 0:
+                    end_brace = j
+                    break
+        else:
+            return None
+
+        end = end_brace + 1
+        while end < len(src) and src[end].isspace():
+            end += 1
+        if end < len(src) and src[end] == ';':
+            end += 1
+
+        return src[match.start():end]
+
+
     def preTranslateComplexStructs(self):
         if self.translatorMode not in [TranslatorModes.CF_STRUCT_REPLAY,
                                        TranslatorModes.CF_STRUCT_FN_REPLAY,
@@ -355,6 +397,7 @@ class Translator:
                 if len(err):
                     request = request + "Previous translation gave error \n" + err
                 result = self.chunkAndSend(structName, request)
+                result = self.cleanStruct(result, structName)
                 trialCount = trialCount + 1
                 # self.logger.debug("Translated struct \n: %s", result)
                 (successFlag, err) = self.compile(self.cleanCode(result))
@@ -378,7 +421,7 @@ class Translator:
                 # We will add it to the request later
                 if len(rustTranslatedStructs) == 0:
                     rustTranslatedStructPrompt = "Please use the following Rust translations of struct definitions enclosed in /* Rust struct definitions ... */. Please include the original struct translation in your response. \n"
-                rustTranslatedStructs = rustTranslatedStructs + structWithUsageInfo.rustCode + "\n"
+                rustTranslatedStructs = "/* Rust struct definitions" + "\n" + structWithUsageInfo.rustCode + "\n" + "*/"
                 # self.logger.info("Rust translated structs: %s", rustTranslatedStructs)
 
                 # Remove the definition of this struct from the 
