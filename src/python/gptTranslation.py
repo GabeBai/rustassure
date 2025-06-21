@@ -11,6 +11,7 @@ import tiktoken
 import threading
 
 from more_itertools import unique_everseen
+from typing import Dict, List, Tuple
 
 from functionAndDeps import FunctionAndDependencies
 from enum import Enum
@@ -30,6 +31,7 @@ GPT4_MINI_CTX_WINDOW_LEN=128*1024
 GPT4_MINI_MAX_COMPLETION_TOKENS=4096
 
 COMPILATION_RETRIES=5
+STRUCT_RETRIES=5
 MAX_THREADS=40
 
 # https://docs.anthropic.com/en/docs/about-claude/models#model-comparison-table
@@ -283,17 +285,6 @@ class Translator:
         self.logger.info("Sent request in %d chunks", numChunks)
         return fullResponse
 
-
-    def checkStructDefination(self, code):
-        structPattern = r"(struct\s+\w+\s*\{[^}]*\})"
-        structs = re.findall(structPattern, code, re.DOTALL)
-        for translatedStruct in structs:
-            for preTranslatedStruct in FunctionAndDependencies.structsWithUsageInfoMap:
-                if translatedStruct == preTranslatedStruct:
-                    struct_info = structWithUsageInfo = FunctionAndDependencies.structsWithUsageInfoMap[preTranslatedStruct]
-
-
-
     def cleanCode(self, code):
         # remove identical duplicate structs
         structPattern = r"(struct\s+\w+\s*\{[^}]*\})"
@@ -442,9 +433,26 @@ class Translator:
         if len(funcDepsObj.previouslyTranslatedFunctions) != 0:
             previouslyTranslatedPrompt = "Please use the following previously translated Rust functions, included in /*// and //*/ for context. Please DO NOT include these already translated functions in your response.\n"
         # Now we enter the compile + feedback loop
-        (successFlag, result) = self.compileAndRetryLoop(funcName, prompt, rustTranslatedStructPrompt, rustTranslatedStructs, previouslyTranslatedPrompt, funcDepsObj.previouslyTranslatedFunctions, funcSrc)
+        (successFlag, result) = self.compileAndRetryLoop(funcName,
+                                                         prompt,
+                                                         rustTranslatedStructPrompt,
+                                                         rustTranslatedStructs,
+                                                         previouslyTranslatedPrompt,
+                                                         funcDepsObj.previouslyTranslatedFunctions,
+                                                         funcSrc)
         
         return (successFlag, result)
+
+    def checkStructDefination(self, code, translatedStruct, funcName) -> bool:
+        pat = re.compile(r"struct\s+\w+\s*\{[^}]*\}", re.DOTALL)
+        struct_def = pat.search(translatedStruct).group(0)
+        if not (struct_def in code):
+            print(f"function : {funcName} does not include target struct !")
+            return False
+        else:
+            print(f"function : {funcName} include target struct !")
+            return True
+
 
     def compileAndRetryLoop(self, funcName, prompt, translatedStructPrompt, translatedStructs, translatedFuncPrompt, translatedFuncs, funcSrc):
         
@@ -454,7 +462,32 @@ class Translator:
         if len(translatedFuncs) > 0:
             request = request + "\n" + translatedFuncPrompt + "/*// \n" + translatedFuncs + "/*//\n";
         result = self.chunkAndSend(funcName, request)
-        (successFlag, err) = self.compile(self.cleanCode(result + "\n" + translatedFuncs))
+        result = self.cleanCode(result)
+
+        if len(translatedStructs) > 0:
+            structIncluded = self.checkStructDefination(result, translatedStructs, funcName)
+
+            structAttempt = 0
+
+            while not structIncluded and structAttempt < STRUCT_RETRIES:
+                self.logger.info("function %s does not include target struct, attempt # %d", funcName, structAttempt)
+
+                pat = re.compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{")
+                # struct_name = pat.search(translatedStructs)
+                request = ("The original function miss a necessary struct definition. please help me include that and make sure the result function can be compiled"
+                            + "\n" + "The original function is" + "\n" + funcSrc + "necessary struct : " + translatedStructs)
+                if len(translatedStructs) > 0:
+                    request = request + "\n" + translatedStructPrompt + "/*\n" + translatedStructs + "\n*/\n"
+
+                if len(translatedFuncs) > 0:
+                    request = request + "\n" + translatedFuncPrompt + "/*// \n" + translatedFuncs + "/*//\n"
+                result = self.chunkAndSend(funcName, request)
+                result = self.cleanCode(result)
+                structIncluded = self.checkStructDefination(result, translatedStructs, funcName)
+                structAttempt = structAttempt + 1
+                if structAttempt != 0:
+                    self.logger.debug("After %d struct retranslation attempts result: %s", structAttempt, result)
+        (successFlag, err) = self.compile(result)
         if "extern \"C\"" in result:
             successFlag = False
         if "fn " not in result:
