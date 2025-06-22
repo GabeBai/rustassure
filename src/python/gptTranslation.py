@@ -448,6 +448,7 @@ class Translator:
             r"struct\s+\w+\s*(?:<[^>]*>)?\s*\{[^}]*\}",
             re.DOTALL
         )
+        self.logger.info("struct info %s :", pat.search(translatedStruct))
         struct_def = pat.search(translatedStruct).group(0)
         if not (struct_def in code):
             print(f"function : {funcName} does not include target struct !")
@@ -475,10 +476,10 @@ class Translator:
             while not structIncluded and structAttempt < STRUCT_RETRIES:
                 self.logger.info("function %s does not include target struct, attempt # %d", funcName, structAttempt)
 
-                pat = re.compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{")
+                # pat = re.compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{")
                 # struct_name = pat.search(translatedStructs)
                 request = ("The original function miss a necessary struct definition. please help me include that and make sure the result function can be compiled"
-                            + "\n" + "The original function is" + "\n" + funcSrc + "necessary struct : " + translatedStructs)
+                            + "\n" + "The original function is" + "\n" + result + "necessary struct : " + translatedStructs)
                 if len(translatedStructs) > 0:
                     request = request + "\n" + translatedStructPrompt + "/*\n" + translatedStructs + "\n*/\n"
 
@@ -750,3 +751,99 @@ class Claude_3_5_Translator(Translator):
         response = self.extractRustCode(completion.content[0].text)
         self.logger.debug("Rust response: %s", response)
         return (completion, response)
+
+def cleanCode(code):
+    # remove identical duplicate structs
+    structPattern = r"(struct\s+\w+\s*\{[^}]*\})"
+    # Find all struct definitions
+    structs = re.findall(structPattern, code, re.DOTALL)
+
+    # Track unique struct definitions
+    unique_structs = []
+    seen_structs = set()
+    duplicate_struct_bodies = set()
+
+    # Keep only unique structs
+    for struct in structs:
+        print("struct: " + struct)
+        struct_name = re.search(r"struct\s+([A-Za-z_]\w*)", struct).group(1)
+        print("name: " + struct_name)
+        if struct_name in seen_structs:
+            duplicate_struct_bodies.add(struct)
+        seen_structs.add(struct_name)
+
+    tempCode = code
+    for duplicate_struct_body in duplicate_struct_bodies:
+        tempCode = code.replace(duplicate_struct_body, "")
+
+    for duplicate_struct_body in duplicate_struct_bodies:
+        tempCode = tempCode + "\n" + duplicate_struct_body
+
+    return tempCode
+
+if __name__ == "__main__":
+    rust_code = r"""
+    struct CsvParser<'a> {
+        pstate: i32,
+        quoted: i32,
+        spaces: usize,
+        entry_buf: Option<&'a mut [u8]>,
+        entry_pos: usize,
+        entry_size: usize,
+        status: i32,
+        options: u8,
+        quote_char: u8,
+        delim_char: u8,
+        is_space: Option<fn(u8) -> i32>,
+        is_term: Option<fn(u8) -> i32>,
+        blk_size: usize,
+        malloc_func: Option<fn(usize) -> *mut u8>,
+        realloc_func: Option<fn(*mut u8, usize) -> *mut u8>,
+        free_func: Option<fn(*mut u8)>,
+    }
+
+    impl<'a> CsvParser<'a> {
+        fn csv_init(p: &mut CsvParser<'a>, options: u8) -> i32 {
+            if p as *const _ == std::ptr::null() {
+                return -1;
+            }
+            p.entry_buf = None;
+            p.pstate = 0;
+            p.quoted = 0;
+            p.spaces = 0;
+            p.entry_pos = 0;
+            p.entry_size = 0;
+            p.status = 0;
+            p.options = options;
+            p.quote_char = 0x22;
+            p.delim_char = 0x2c;
+            p.is_space = None;
+            p.is_term = None;
+            p.blk_size = 128;
+            p.malloc_func = None;
+            p.realloc_func = Some(realloc);
+            p.free_func = Some(free);
+            0
+        }
+    }
+
+    fn realloc(ptr: *mut u8, size: usize) -> *mut u8 {
+        unsafe {
+            if ptr.is_null() {
+                std::alloc::alloc(std::alloc::Layout::from_size_align(size, std::mem::align_of::<u8>()).unwrap())
+            } else {
+                std::alloc::realloc(ptr, std::alloc::Layout::from_size_align(size, std::mem::align_of::<u8>()).unwrap(), size)
+            }
+        }
+    }
+
+    fn free(ptr: *mut u8) {
+        unsafe {
+            if !ptr.is_null() {
+                std::alloc::dealloc(ptr, std::alloc::Layout::from_size_align(0, std::mem::align_of::<u8>()).unwrap());
+            }
+        }
+    }
+    """
+    code = cleanCode(rust_code)
+    print(f"{code}")
