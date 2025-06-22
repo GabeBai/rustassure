@@ -444,7 +444,10 @@ class Translator:
         return (successFlag, result)
 
     def checkStructDefination(self, code, translatedStruct, funcName) -> bool:
-        pat = re.compile(r"struct\s+\w+\s*\{[^}]*\}", re.DOTALL)
+        pat = re.compile(
+            r"struct\s+\w+\s*(?:<[^>]*>)?\s*\{[^}]*\}",
+            re.DOTALL
+        )
         struct_def = pat.search(translatedStruct).group(0)
         if not (struct_def in code):
             print(f"function : {funcName} does not include target struct !")
