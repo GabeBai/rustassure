@@ -286,13 +286,13 @@ def main():
 
     # 1.2) create individual argument map
     try:
-        run_command("python3 ../../python/createArgumentMap.py ./function_map.json")
+        run_command("python3 ../../python/createArgumentMap.py ./testcase")
     except Exception as e:
         logger.error("createArgumentMap error: %s", e, exc_info=True)
 
     # 1.3) map c argument to rust by LLM
     try:
-        run_command("python3 ../../python/generateCToRustArgumentMap.py ")
+        run_command("python3 ../../python/generateCToRustArgumentMap.py ./function_map.json")
     except Exception as e:
         logger.error("generate c2rust argument map error: %s", e, exc_info=True)
 
