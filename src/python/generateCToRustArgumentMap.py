@@ -59,6 +59,7 @@ if __name__ == '__main__':
         input_path = sys.argv[1]
 
     input_path = Path(input_path)
+    output_path = Path("argument_order_map.json")
     input_json = load_samples(input_path)
     results = {}
     for fname, data in input_json.items():
@@ -75,6 +76,12 @@ if __name__ == '__main__':
         results[fname] = mapping
         print(f"{fname}: {mapping}")
 
-    print(json.dumps(results, indent=2))
+    with output_path.open("w", encoding="utf-8") as fp:
+        json.dump(
+            results,
+            fp,
+            indent=2,
+            ensure_ascii=False
+        )
 
 

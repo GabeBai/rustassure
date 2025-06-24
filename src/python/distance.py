@@ -5,232 +5,45 @@ import logging
 import csv
 import glob
 import sys
+import re
+from pathlib import Path
+import json
 from functools import partial
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 field_map = {}
 
-field_map_gpt_4o_mini = {
-    "osys_rename" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4"
-    },
-    "opng_ullratio_to_percent_string": {
-        "*(arg_value_2.field_0)": "*(arg_value_3.field_0)",
-        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)",
-        "input_argument_2": "input_argument_3"
-    },
-    "opng_ulratio_to_percent_string": {
-        "*(arg_value_2.field_0)": "*(arg_value_3.field_0)",
-        "*(arg_value_2.field_1)": "*(arg_value_3.field_1)",
-        "input_argument_2": "input_argument_3"
-    },
-    "check_obj_option" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "check_power2_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5"
-    },
-    "opng_strcasecmp" : {
-        "arg_value_1" : "arg_value_2",
-    },
-    "check_num_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5"
-    },
-    "opng_init_iteration" : {
-        "arg_value_3" : "arg_value_4",
-    },
-    "opng_print_image_info" : {
-        "arg_value_0" : "arg_value_1",
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_3",
-        "arg_value_3" : "arg_value_4"
-    },
-    "app_printf" : {
-        "arg_value_0" : "arg_value_1",
-    },
-    "err_option_arg" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "scan_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "*(arg_value_3)" : "*(arg_value_5)",
-        "input_argument_3": "input_argument_5"
-    },
-    "osys_path_chext" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_3",
-        "arg_value_3" : "arg_value_5"
-    },
-    "osys_path_chdir" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_3",
-        "arg_value_3" : "arg_value_4"
-    },
-    "opng_ullratio_to_percent_string" : {
-        "arg_value_2" : "arg_value_3"
-    },
-    "fold_search" : {
-        "arg_value_0" : "arg_value_1"
-    },
-    "u8next_FAST" : {
-        "arg_value_1" : "*(arg_value_2.field_1)"
-    }
-}
+# todo : delete this
+function_list = ["osys_rename",
+                 "check_obj_option",
+                 "check_power2_option",
+                 "opng_strcasecmp",
+                 "check_num_option",
+                 "opng_init_iteration",
+                 "opng_print_image_info",
+                 "app_printf",
+                 "err_option_arg",
+                 "scan_option",
+                 "osys_path_chext",
+                 "osys_path_chdir",
+                 "opng_ullratio_to_percent_string",
+                 "fold_search",
+                 "u8next_FAST",
+                 "fill",
+                 "opng_sprint_uratio_impl",
+                 "opng_ulratio_to_percent_string",
+                 "opng_rangeset_string_to_bitset",
+                 "check_rangeset_option",
+                 "opng_strtail",
+                 "parse_args"]
 
-field_map_gpt_3_5 = {
-    "fill" : {
-        "arg_value_2" : "arg_value_3"
-    },
-    "check_obj_option" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "check_power2_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5",
-    },
-    "check_num_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5"
-    },
-    "opng_print_image_info" : {
-        "arg_value_0" : "arg_value_1",
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_3",
-        "arg_value_3" : "arg_value_4"
-    },
-    "app_printf" : {
-        "arg_value_0" : "arg_value_1",
-    },
-    "err_option_arg" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "scan_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_3",
-        "*(arg_value_3)" : "*(arg_value_4)",
-        "input_argument_3": "input_argument_4"
-    },
-    "osys_path_chext" : {
-        "arg_value_3" : "arg_value_4",
-    },
-    "opng_sprint_uratio_impl" : {
-        "arg_value_2" : "arg_value_1",
-        "arg_value_3" : "arg_value_2",
-        "arg_value_4" : "arg_value_3",
-    }
-}
+def replace_arg_index(expr: str, new_idx: str) -> str:
+    return re.sub(r'arg_value_\d+\b', f'arg_value_{new_idx}', expr)
 
-field_map_gpt_4o = {
-    "opng_ulratio_to_percent_string" : {
-        "arg_value_1" : "*(arg_value_0.field_0.field_1)",
-    },
-    "osys_rename" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4"
-    },
-    "opng_rangeset_string_to_bitset" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "check_rangeset_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4"
-    },
-    "check_obj_option" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "check_power2_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5",
-    },
-    "opng_strcasecmp" : {
-        "arg_value_1" : "arg_value_2",
-    },
-    "opng_sprint_uratio_impl" : {
-        "arg_value_2" : "arg_value_1",
-        "arg_value_3" : "arg_value_2",
-        "arg_value_4" : "arg_value_3",
-    },
-    "opng_strtail" : {
-        "arg_value_1" : "arg_value_2",
-    },
-    "check_num_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5"
-    },
-    "opng_init_iteration" : {
-        "arg_value_3" : "ret_value",
-    },
-    "opng_print_image_info" : {
-        "arg_value_0" : "arg_value_1",
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_3",
-        "arg_value_3" : "arg_value_4"
-    },
-    "app_printf" : {
-        "arg_value_0" : "arg_value_1",
-    },
-    "err_option_arg" : {
-        "arg_value_1" : "arg_value_2"
-    },
-    "scan_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_3",
-        "*(arg_value_3)" : "*(arg_value_4)",
-        "input_argument_3": "input_argument_4"
-    },
-    "osys_path_chext" : {
-        "arg_value_3" : "arg_value_4",
-    },
-    "osys_path_chdir" : {
-        "arg_value_3" : "arg_value_4",
-    },
-    "parse_args" : {
-        "*(arg_value_1)" : "*(arg_value_0)",
-        "input_argument_1": "input_argument_0"
-    },
-}
-
-field_map_claude = {
-    "osys_rename" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4"
-    },
-    "check_rangeset_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4"
-    },
-    "check_power2_option" : {
-        "arg_value_1" : "arg_value_2",
-        "arg_value_2" : "arg_value_4",
-        "arg_value_3" : "arg_value_5",
-    },
-    "opng_strcasecmp" : {
-        "arg_value_1" : "arg_value_2",
-    },
-    "app_printf" : {
-        "arg_value_0" : "arg_value_1",
-    },
-    "opng_is_apng_chunk" : {
-        "arg_value_0" : "*(arg_value_0)",
-    },
-    "opng_is_image_chunk" : {
-        "arg_value_0" : "*(arg_value_0)",
-    },
-    "u8next_FAST" : {
-        "arg_value_1" : "arg_value_2"
-    }
-}
+def extract_single_index(expr: str):
+    m = re.search(r'arg_value_(\d+)', expr)
+    return int(m.group(1)) if m else None
 
 class SingletonLogger:
     _instance = None
@@ -305,41 +118,27 @@ def matchNodes(node1,
 
 def special_handle_map(c_is_target, function_name, label1, label2):
     target_field_map = field_map[function_name]
-    if not (label1.startswith("input_argument") and label2.startswith("input_argument")):
+    if not (label1.startswith("arg_value_") and label2.startswith("arg_value_")):
         return False
 
+    label1_index = label1[-1]
+    label2_index = label2[-1]
+
     if c_is_target:
-        if label1 in target_field_map:
-            current_field = target_field_map[label1]
-            if label2 == current_field:
+        if label1_index in target_field_map:
+            current_field = target_field_map[label1_index]
+            if label2_index == current_field:
                 return True
             else:
                 return False
     else:
-        if label2 in target_field_map:
-            current_field = target_field_map[label2]
-            if label1 == current_field:
+        if label2_index in target_field_map:
+            current_field = target_field_map[label2_index]
+            if label1_index == current_field:
                 return True
             else:
                 return False
 
-    label1_changed = "arg_value_" + label1[-1]
-    label2_changed = "arg_value_" + label2[-1]
-    if c_is_target:
-        if label1_changed in target_field_map:
-            current_field = target_field_map[label1_changed]
-            if label2_changed == current_field:
-                return True
-            else:
-                return False
-    else:
-        if label2_changed in target_field_map:
-            current_field = target_field_map[label2_changed]
-            if label1_changed == current_field:
-                return True
-            else:
-                return False
-    return False
 
 def special_handle_opng_initialize(c_is_target, label1, label2):
     memory_offset_map = {
@@ -528,9 +327,9 @@ def compare_and_export_csv(c_dict,
         mapped_c_key = c_key
         if function_name in field_map:
             field_name_map = field_map[function_name]
-            if argument_name in field_name_map:
-                new_argument_name_suffix = field_name_map[argument_name]
-                mapped_c_key = f"{function_name}/{new_argument_name_suffix}"
+            if function_name in function_list and str(extract_single_index(argument_name)) in field_name_map:
+                new_argument_name_suffix = field_name_map[str(extract_single_index(argument_name))]
+                mapped_c_key = replace_arg_index(mapped_c_key, new_argument_name_suffix)
 
         c_dir = os.path.join(c_base, c_key)
         c_files = sorted(glob.glob(os.path.join(c_dir, "*.dot")))
@@ -546,8 +345,6 @@ def compare_and_export_csv(c_dict,
                 found_match_input_directory = True
                 break
             if r_key.startswith(mapped_c_key):
-                if not mapped_c_key.endswith("pointer") and r_key.endswith("pointer"):
-                    continue
                 matching_r_keys.append(r_key)
                 found_match_input_directory = True
 
@@ -560,25 +357,18 @@ def compare_and_export_csv(c_dict,
                         best_r_key = r_key
 
         if not found_match_input_directory:
-            if mapped_c_key.endswith("pointer"):
-                c_key_modified = mapped_c_key[:-9]
-            elif mapped_c_key.endswith(')'):
-                # case : lib_csv : csv_error
+            if  mapped_c_key.endswith(')'):
                 c_key_modified = mapped_c_key[:-1]
             else:
                 c_key_modified = mapped_c_key
 
             for r_key in rust_dict.keys():
-                if not mapped_c_key.endswith("pointer") and r_key.endswith("pointer"):
-                    continue
                 if r_key.startswith(c_key_modified) and function_name in r_key:
                     matching_r_keys.append(r_key)
                 elif "ret_value" in c_key_modified:
-                    # case : url_parser : url_get_port
                     if "ret_value" in r_key and function_name in r_key:
                         matching_r_keys.append(r_key)
                 else:
-                    # case : url_parser : decode_percent
                     slash_index = c_key.find('/')
                     if slash_index != -1:
                         temp_c_key = c_key_modified[:slash_index + 1] + '*(' + c_key_modified[slash_index + 1:]
@@ -655,18 +445,15 @@ def compare_and_export_csv(c_dict,
             writer.writerow(["function_name", "argument_name", "free_difference"])
             writer.writerows(free_counts)
 
+def read_json(dir_path: str | Path, filename: str):
+    file_path = Path(dir_path) / filename
+    with file_path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data
+
 if __name__ == "__main__":
     logger = SingletonLogger()
     result_C = traverse_two_levels_c()
     result_Rust = traverse_two_levels_rust()
-    gptmodel = sys.argv[1]
-    if gptmodel == "1":
-        field_map = field_map_claude
-    elif gptmodel == "2":
-        field_map = field_map_gpt_4o
-    elif gptmodel == "3":
-        field_map = field_map_gpt_3_5
-    elif gptmodel == "4":
-        field_map = field_map_gpt_4o_mini
+    field_map = read_json("./", "argument_order_map.json")
     compare_and_export_csv(result_C, result_Rust, False, "edit_distance")
-    compare_and_export_csv(result_C, result_Rust, True, "edit_distance_only_structure")

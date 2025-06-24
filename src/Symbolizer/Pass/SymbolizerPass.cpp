@@ -673,9 +673,9 @@ namespace {
 					has_struct_ret = true;
 				} else {
 					if (has_struct_ret) {
-						argument_name = "input_argument_" + std::to_string(pos - 1);
+						argument_name = "arg_value_" + std::to_string(pos - 1);
 					} else {
-						argument_name = "input_argument_" + std::to_string(pos);
+						argument_name = "arg_value_" + std::to_string(pos);
 					}
 				}
 				Type *targetType = get_argument_type(M, arg.getArgNo());
