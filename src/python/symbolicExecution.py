@@ -270,11 +270,31 @@ def main():
     prepare_directory("klee_symbol_error_log")
     prepare_directory("graph_output")
 
+
     # 1) Emitting LLVM bitcode for C
     try:
         run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/C")
     except Exception as e:
         logger.error("compile C error: %s", e, exc_info=True)
+
+    # 1.1) Emitting LLVM bitcode for Rust
+    try:
+        run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/Rust")
+    except Exception as e:
+        logger.error("compile rust error: %s", e, exc_info=True)
+
+
+    # 1.2) create individual argument map
+    try:
+        run_command("python3 ../../python/createArgumentMap.py ./function_map.json")
+    except Exception as e:
+        logger.error("createArgumentMap error: %s", e, exc_info=True)
+
+    # 1.3) map c argument to rust by LLM
+    try:
+        run_command("python3 ../../python/generateCToRustArgumentMap.py ")
+    except Exception as e:
+        logger.error("generate c2rust argument map error: %s", e, exc_info=True)
 
     # 1.5) create C map
     try:
@@ -304,12 +324,6 @@ def main():
         run_command("python3 ../scripts/convertGraph.py C")
     except Exception as e:
         logger.error("convertGraph C outputs error: %s", e, exc_info=True)
-
-    # 3) Emitting LLVM bitcode for Rust
-    try:
-        run_command("python3 ../../python/llvmBitcodeEmitter.py testcase/Rust")
-    except Exception as e:
-        logger.error("compile rust error: %s", e, exc_info=True)
 
     # 3.5) create Rust map
     try:
