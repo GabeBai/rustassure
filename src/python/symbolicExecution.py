@@ -1,12 +1,7 @@
-import os
-import shutil
-import subprocess
-import glob
 import time
-import json
 from llvmBitcodeEmitter import*
 import logging
-
+from fetchTargetFunction import*
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 MAX_JOBS = 8
@@ -137,6 +132,10 @@ def process_c_file(bc_file):
       3) Run KqueryConverter
     """
     base_name = os.path.basename(bc_file).replace(".i.bc", "")
+    input_path = os.path.basename(bc_file).replace(".bc", "")
+
+    src = open(f"testcase/C/{input_path}", 'rb').read()
+    target_function_name = find_target_c_function(src, base_name)
 
     # 1) opt pass
 
@@ -164,7 +163,7 @@ def process_c_file(bc_file):
     # 2) klee. We capture the entire output.
     cmd_klee = (
         f"klee --libc=klee --write-no-tests=true --max-time=7200 --max-tests=5000000 "
-        f"klee_ir_files/C/{base_name}_klee.ll"
+        f"--target-function-name={target_function_name} klee_ir_files/C/{base_name}_klee.ll"
     )
 
     try:
@@ -192,6 +191,10 @@ def process_rust_file(bc_file):
       4) Run KqueryConverter
     """
     base_name = os.path.basename(bc_file).replace(".rs.bc", "")
+    input_path = os.path.basename(bc_file).replace(".bc", "")
+
+    src = open(f"testcase/Rust/{input_path}", 'rb').read()
+    target_function_name = find_target_rust_function(src, base_name)
 
     # demangle
     demangle_opt = (
@@ -233,8 +236,9 @@ def process_rust_file(bc_file):
     # 3) klee
     cmd_klee = (
         f"klee --libc=klee --write-no-tests=true --max-time=10800 --max-tests=500000 "
-        f"klee_ir_files/Rust/{base_name}_klee.ll"
+        f"--target-function-name={target_function_name} klee_ir_files/Rust/{base_name}_klee.ll"
     )
+
     try:
         run_command_and_log(cmd_klee, f"klee_symbol_log/Rust/{base_name}_klee_log.txt", timeout=11000)
     except Exception as e:
