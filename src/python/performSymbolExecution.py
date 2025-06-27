@@ -25,7 +25,7 @@ convert_klee_4omini = "../scripts/convert_klee_4omini.sh"
 
 def start_process(source_path, model : Model):
     subprocess.run(["bash", divide_script_path], cwd=source_path, text=True)
-    subprocess.run(["python3", "../../python/symbolicExecution.py", str(model.value)], cwd=source_path, text=True)
+    subprocess.run(["python3", "../../python/symbolicExecution.py", str(model.value), str(create_map_by_llm)], cwd=source_path, text=True)
     # if model == Model.claude:
     #     subprocess.run(["bash", convert_klee_claude], cwd=source_path, text=True)
     # elif model == Model.gpt_4o:
@@ -309,9 +309,12 @@ if __name__ == "__main__":
         description="custom your input directory")
     parser.add_argument("--src", type=str, default="",
                         help="The source directory that contains the original files")
+    parser.add_argument("--createArgumentOrderMap", type=bool, default=False,
+                        help="create the argument order map by LLM")
 
     args = parser.parse_args()
     args.src = os.path.expanduser(args.src)
+    create_map_by_llm = args.createArgumentOrderMap
 
     if args.src:
         directory = perform_general_execution(args.src)

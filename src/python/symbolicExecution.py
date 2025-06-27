@@ -23,6 +23,13 @@ info_handler.setFormatter(formatter)
 logger.addHandler(error_handler)
 logger.addHandler(info_handler)
 
+def str_to_bool(s: str) -> bool:
+    s = s.strip().lower()
+    if s == "true":
+        return True
+    if s == "false":
+        return False
+
 def run_command_and_log(cmd, log_file, cwd=None, timeout=3600):
     """
     Run a shell command and write both stdout and stderr to a log file.
@@ -257,9 +264,26 @@ def process_rust_file(bc_file):
 
     print(f"[INFO] Rust file processed successfully: {bc_file}")
 
+def create_argument_map(create_map_by_llm, model):
+    if create_map_by_llm:
+        # 1.2) create individual argument map
+        try:
+            run_command("python3 ../../python/createArgumentMap.py ./testcase")
+        except Exception as e:
+            logger.error("createArgumentMap error: %s", e, exc_info=True)
+
+        # 1.3) map c argument to rust by LLM
+        try:
+            run_command("python3 ../../python/generateCToRustArgumentMap.py ./function_map.json")
+        except Exception as e:
+            logger.error("generate c2rust argument map error: %s", e, exc_info=True)
+    else:
+        shutil.copy2(f"../scripts/map/{model}/argument_order_map.json",  "./argument_order_map.json")
+
 def main():
 
     model = sys.argv[1]
+    create_map_by_llm = sys.argv[2]
 
     # Clean up old logs if present
     if os.path.exists("compare_graph_output_log.log"):
@@ -287,18 +311,7 @@ def main():
     except Exception as e:
         logger.error("compile rust error: %s", e, exc_info=True)
 
-
-    # 1.2) create individual argument map
-    try:
-        run_command("python3 ../../python/createArgumentMap.py ./testcase")
-    except Exception as e:
-        logger.error("createArgumentMap error: %s", e, exc_info=True)
-
-    # 1.3) map c argument to rust by LLM
-    try:
-        run_command("python3 ../../python/generateCToRustArgumentMap.py ./function_map.json")
-    except Exception as e:
-        logger.error("generate c2rust argument map error: %s", e, exc_info=True)
+    create_argument_map(str_to_bool(create_map_by_llm), model)
 
     # 1.5) create C map
     try:

@@ -68,4 +68,3 @@ def calculate_coverage(directory):
 
 if __name__ == "__main__":
     calculate_coverage(sys.argv[1])
-
