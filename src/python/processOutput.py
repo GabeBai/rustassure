@@ -9,6 +9,7 @@ from evaluationScripts.countKleeTerminate import count_klee_terminate
 c_directory = "testcase/C"
 rust_directory = "testcase/Rust"
 rust_ir_directory = "klee_ir_files/Rust"
+c_ir_directory = "klee_ir_files/C"
 execution_time = "execution_time.txt"
 
 best_edit_distance_directory = "edit_distance/best_edit_distances.csv"
@@ -73,7 +74,8 @@ def process_output(input_directory, model, code_base):
     overall_lines_sum, overall_unsafe_sum, overall_safe_lines = analyze_rs_files(rust_test_case_directory, "", True)
 
     # coverage Data
-    coverage = calculate_coverage(os.path.join(input_directory, rust_ir_directory))
+    rust_coverage = calculate_coverage(os.path.join(input_directory, rust_ir_directory))
+    c_coverage = calculate_coverage(os.path.join(input_directory, c_ir_directory))
 
     # terminate count
     count_klee_terminate(input_directory)
@@ -91,7 +93,8 @@ def process_output(input_directory, model, code_base):
             "overall_lines_sum": overall_lines_sum,
             "overall_unsafe_sum": overall_unsafe_sum,
             "overall_safe_lines": overall_safe_lines,
-            "coverage": coverage,
+            "rust_coverage": rust_coverage,
+            "c_coverage": c_coverage,
             "execution_time": elapsed_time}
     df = pd.DataFrame([data])
     result_directory = os.path.join(input_directory, "result.csv")
