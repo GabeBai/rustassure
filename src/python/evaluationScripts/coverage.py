@@ -66,4 +66,6 @@ def calculate_coverage(directory):
 
     return avg_icov
 
+if __name__ == "__main__":
+    calculate_coverage(sys.argv[1])
 
