@@ -166,7 +166,7 @@ def fetch_rust_function_signature(intput_path, target_function_name):
     fn_node = find_func(root, code, target_function_name)
     if not fn_node:
         print(f"function '{target_function_name}' not found")
-        exit()
+        return "", ""
     result = extract_signature(fn_node, code, target_function_name)
     return target_function_name, result
 
@@ -179,7 +179,7 @@ def fetch_c_function_signature(intput_path, target_function_name):
     fn_node = find_c_func(root, code, target_function_name)
     if not fn_node:
         print(f"function '{target_function_name}' not found")
-        exit()
+        return "", ""
     result = extract_c_signature(fn_node, code, target_function_name)
     return target_function_name, result
 
@@ -251,7 +251,7 @@ def find_best_match(target_function_name: str, function_map) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        input_path = "repo/Rust/rustify-validator/src/Symbolizer/test_input/testcase"
+        input_path = "/Users/gab/repo/server/testcase"
     else:
         input_path = sys.argv[1]
 
@@ -269,6 +269,8 @@ if __name__ == "__main__":
     # C original code
     for full_path, name in c_files:
         target_function_name, result = fetch_c_function_signature(full_path, name)
+        if target_function_name == "":
+            continue
         if target_function_name in function_argument_map:
             print(f"{target_function_name} occur more than once")
         else :
@@ -287,6 +289,8 @@ if __name__ == "__main__":
     # Rust original code
     for full_path, name in rs_files:
         target_function_name, result = fetch_rust_function_signature(full_path, name)
+        if target_function_name == "":
+            continue
         if target_function_name in function_argument_map:
             function_argument_map[target_function_name]["rust_original_code"] = result
         else:
