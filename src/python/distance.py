@@ -41,6 +41,10 @@ function_list = ["osys_rename",
 def replace_arg_index(expr: str, new_idx: str) -> str:
     return re.sub(r'arg_value_\d+\b', f'arg_value_{new_idx}', expr)
 
+def first_token(v):
+    s = str(v)
+    return s.split(',', 1)[0] if ',' in s else s
+
 def extract_single_index(expr: str):
     m = re.search(r'arg_value_(\d+)', expr)
     return int(m.group(1)) if m else None
@@ -126,14 +130,14 @@ def special_handle_map(c_is_target, function_name, label1, label2):
 
     if c_is_target:
         if label1_index in target_field_map:
-            current_field = target_field_map[label1_index]
+            current_field = first_token(target_field_map[label1_index])
             if label2_index == current_field:
                 return True
             else:
                 return False
     else:
         if label2_index in target_field_map:
-            current_field = target_field_map[label2_index]
+            current_field = first_token(target_field_map[label2_index])
             if label1_index == current_field:
                 return True
             else:
@@ -328,7 +332,7 @@ def compare_and_export_csv(c_dict,
         if function_name in field_map:
             field_name_map = field_map[function_name]
             if function_name in function_list and str(extract_single_index(argument_name)) in field_name_map:
-                new_argument_name_suffix = field_name_map[str(extract_single_index(argument_name))]
+                new_argument_name_suffix = first_token(field_name_map[str(extract_single_index(argument_name))])
                 mapped_c_key = replace_arg_index(mapped_c_key, new_argument_name_suffix)
 
         c_dir = os.path.join(c_base, c_key)
