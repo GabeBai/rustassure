@@ -389,6 +389,10 @@ def compare_and_export_csv(c_dict,
                             best_r_key = r_key
                             found_match_input_directory = True
 
+            if not found_match_input_directory and matching_r_keys:
+                best_r_key = matching_r_keys[0]
+                found_match_input_directory = True
+
         if c_key.endswith("free_call_counts"):
             free_call_max_c = 0
             free_call_max_rust = 0
