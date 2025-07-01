@@ -265,7 +265,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")
     parser.add_argument("--use-gpt4mini", type=bool, default=False, help="Use GPT4Mini")
 
-    parser.add_argument("--translator-mode", type=str, default="feedback", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--translator-mode", type=str, default="cf-struct-replay", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")
