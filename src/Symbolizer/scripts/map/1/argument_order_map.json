@@ -1,0 +1,15 @@
+{
+  "opng_strcasecmp": {
+    "0": "0",
+    "1": "2"
+  },
+  "opng_is_apng_chunk": {
+    "0": "0"
+  },
+  "opng_is_image_chunk": {
+    "0": "0"
+  },
+  "u8next_FAST" : {
+    "1" : "2"
+  }
+}
