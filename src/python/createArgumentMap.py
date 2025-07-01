@@ -200,8 +200,21 @@ def fetch_llvm_function_signature(intput_directory, target_function_name):
     return target.name, str(target.type)
 
 def fetch_complete_llvm_function_signature(input_directory, target_function_name):
-    with open(input_directory, "r", encoding="utf-8") as f:
+    with open(input_directory, "r",
+              encoding="utf-8") as f:
         llvm_ir = f.read()
+
+    mod = llvm.parse_assembly(llvm_ir)
+    mod.verify()
+    best_distance = sys.maxsize
+    target = None
+    for func in mod.functions:
+        current_distance = edit_distance(target_function_name, func.name)
+        if current_distance < best_distance:
+            best_distance = current_distance
+            target = func
+
+    target_function_name = target.name
 
     pattern = rf'define.*?@{re.escape(target_function_name)}\s*\(.*?\)'
     match = re.search(pattern, llvm_ir)
