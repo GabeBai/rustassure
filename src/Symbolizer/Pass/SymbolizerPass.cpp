@@ -1087,9 +1087,6 @@ namespace {
 						Builder.SetInsertPoint(basic_block);
 
 						Type *return_type = func_type->getReturnType();
-						std::string filename = M.getModuleIdentifier();
-						std::filesystem::path filepath(filename);
-						std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
 						if (return_type->isVoidTy()) {
 							Builder.CreateRetVoid();
 						} else {
@@ -1100,14 +1097,14 @@ namespace {
 
 
 							// Call klee_make_symbolic
-							// Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
+							Function *klee_make_symbolic = M.getFunction("klee_make_symbolic");
 							// assert(klee_make_symbolic && "Can't find klee_make_symbolic function!");
 
-							// Builder.CreateCall(
-							// 	klee_make_symbolic,
-							// 	{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
-							// 	ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
-							// 	Builder.CreateGlobalStringPtr("symbolic_var")});
+							Builder.CreateCall(
+								klee_make_symbolic,
+								{Builder.CreateBitCast(symbolic_ret_val, Type::getInt8PtrTy(ctx)),
+								ConstantInt::get(Type::getInt64Ty(ctx), M.getDataLayout().getTypeAllocSize(return_type)),
+								Builder.CreateGlobalStringPtr("symbolic_var")});
 
 							// Return the global variable
 							Builder.CreateRet(Builder.CreateLoad(return_type, symbolic_ret_val));
