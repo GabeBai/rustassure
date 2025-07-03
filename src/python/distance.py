@@ -122,7 +122,12 @@ def matchNodes(node1,
 
 def special_handle_map(c_is_target, function_name, label1, label2):
     target_field_map = field_map[function_name]
-    if not (label1.startswith("arg_value_") and label2.startswith("arg_value_")):
+    # if not (label1.startswith("arg_value_") and label2.startswith("arg_value_")):
+    #     return False
+
+    # TODO : match field
+    _PATTERN = re.compile(r"^arg_value_\d+$")
+    if not (bool(_PATTERN.fullmatch(label1)) and bool(_PATTERN.fullmatch(label2))):
         return False
 
     label1_index = label1[-1]
@@ -142,6 +147,7 @@ def special_handle_map(c_is_target, function_name, label1, label2):
                 return True
             else:
                 return False
+    return False
 
 
 def special_handle_opng_initialize(c_is_target, label1, label2):
