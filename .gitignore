@@ -27,3 +27,6 @@ src/python/inputs-complex/optipng/src/optipng/.DS_Store
 src/Symbolizer/r.ll
 src/Symbolizer/r.rs
 src/Symbolizer/tempCase/
+src/Symbolizer/temp_archive
+src/Symbolizer/understand
+src/Symbolizer/klee_manual_case
