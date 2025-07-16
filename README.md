@@ -71,7 +71,9 @@ Backend includes using LLVM to modify all rust and C files and use KLEE to get s
 	 * Run `cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_TCMALLOC=0 -DENABLE_SOLVER_Z3=ON ../klee`
 	* Run `make -j4 && sudo make install`
 
-4. Build the Symbolizer pass. This is LLVM tool that automatically inserts the `klee_make_symbolic` and `klee_print_exprs` functions to the LLVM bitcode. 
+4. install json dependency by `git submodule update --init`
+
+5. Build the Symbolizer pass. This is LLVM tool that automatically inserts the `klee_make_symbolic` and `klee_print_exprs` functions to the LLVM bitcode. 
 	 Inside `rustify/src/Symbolizer` run `./build.sh`.
 
  
