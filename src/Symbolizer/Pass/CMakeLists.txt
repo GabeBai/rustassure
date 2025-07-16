@@ -33,7 +33,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 			LLVMAnalysis
 			LLVMOption
 			LLVMDemangle
-			nlohmann_json::nlohmann_json
 			LLVMCore
 			C++
 	)
