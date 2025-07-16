@@ -1,7 +1,5 @@
 #![allow(unaligned_references)]
 
-mod alllink;
-
 // Rust struct definitions
 use libc::{c_char, c_int, option, size_t};
 use std::{ptr, slice, cmp};
@@ -225,6 +223,8 @@ unsafe fn csv_fini<'a>(
             entry_pos = p.entry_pos;
 
 
+            //fix : match will not execute other state like what does switch do in C
+            // we need to add the following process just like in 1 or 2 state
             if quoted == 0 {
                 entry_pos -= spaces;
             }
@@ -402,7 +402,6 @@ unsafe fn csv_parse<'a>(
     let mut entry_pos = p.entry_pos;
 
     if p.entry_buf.is_none() && pos < s.len() {
-        //bug : initialize
         if csv_increase_buffer(p) != 0 {
             p.quoted = quoted;
             p.pstate = pstate;
@@ -413,7 +412,6 @@ unsafe fn csv_parse<'a>(
     }
 
     while pos < s.len() {
-        //bug : check entry_pos
         if entry_pos == if (p.options & 8) != 0 { p.entry_size - 1 } else { p.entry_size } {
             if csv_increase_buffer(p) != 0 {
                 p.quoted = quoted;
@@ -1419,80 +1417,80 @@ fn test_19() {
 
 fn test_all_parse() {
     // test_00();
-    // println!("test 01 \n");
-    // test_01();
-    // println!("test 01a \n");
-    // test_01_strict();
-    // println!("test 01b \n");
-    // test_01_strict_or_empty();
-    // println!("test 02 \n");
-    // test_02();
-    // println!("test 02a \n");
-    // test_02_strict();
-    // println!("test 03 \n");
-    // test_03();
-    // println!("test 03a \n");
-    // test_03_strict();
-    // println!("test 04 \n");
-    // test_04();
-    // println!("test 04a \n");
-    // test_04_strict();
-    // println!("test 05 \n");
-    // test_05();
-    // println!("test 05a \n");
-    // test_05_strict();
-    // println!("test 05b \n");
-    // test_05_strict_fini();
-    // println!("test 06 \n");
-    // test_06();
-    // println!("test 06a \n");
-    // test_06_strict();
-    // println!("test 07 \n");
-    // test_07();
-    // println!("test 07a \n");
-    // test_07_b();
-    // println!("test 08 \n");
-    // test_08();
-    // println!("test 09 \n");
-    // test_09();
-    // println!("test 09a \n");
-    // test_09_empty_isnull();
-    // println!("test 10 \n");
-    // test_10();
-    // println!("test 11 \n");
-    // test_11();
-    // println!("test 11a \n");
-    // test_11_empty_isnull();
-    // println!("test 12 \n");
-    // test_12();
-    // println!("test 12a \n");
-    // test_12_empty_isnull();
-    // println!("test 12b \n");
-    // test_12_b();
-    // println!("test 12c \n");
-    // test_12_b_isnull();
-    // println!("test 13 \n");
-    // test_13();
-    // println!("test 14 \n");
-    // test_14();
-    // println!("test 14a \n");
-    // test_14_strict();
-    // println!("test 15 \n");
-    // test_15();
-    // println!("test 15a \n");
-    // test_15_strict();
-    // println!("test 16 \n");
-    // test_16();
-    // println!("test 16a \n");
-    // test_16_strict();
-    // println!("test 17 \n");
-    // test_17();
-    // println!("test 17a \n");
-    // test_17_strict();
-    // println!("test 17b \n");
-    // test_17_strict_is_null();
-    // println!("test 19 \n");
-    // test_19();
+    println!("test 01 \n");
+    test_01();
+    println!("test 01a \n");
+    test_01_strict();
+    println!("test 01b \n");
+    test_01_strict_or_empty();
+    println!("test 02 \n");
+    test_02();
+    println!("test 02a \n");
+    test_02_strict();
+    println!("test 03 \n");
+    test_03();
+    println!("test 03a \n");
+    test_03_strict();
+    println!("test 04 \n");
+    test_04();
+    println!("test 04a \n");
+    test_04_strict();
+    println!("test 05 \n");
+    test_05();
+    println!("test 05a \n");
+    test_05_strict();
+    println!("test 05b \n");
+    test_05_strict_fini();
+    println!("test 06 \n");
+    test_06();
+    println!("test 06a \n");
+    test_06_strict();
+    println!("test 07 \n");
+    test_07();
+    println!("test 07a \n");
+    test_07_b();
+    println!("test 08 \n");
+    test_08();
+    println!("test 09 \n");
+    test_09();
+    println!("test 09a \n");
+    test_09_empty_isnull();
+    println!("test 10 \n");
+    test_10();
+    println!("test 11 \n");
+    test_11();
+    println!("test 11a \n");
+    test_11_empty_isnull();
+    println!("test 12 \n");
+    test_12();
+    println!("test 12a \n");
+    test_12_empty_isnull();
+    println!("test 12b \n");
+    test_12_b();
+    println!("test 12c \n");
+    test_12_b_isnull();
+    println!("test 13 \n");
+    test_13();
+    println!("test 14 \n");
+    test_14();
+    println!("test 14a \n");
+    test_14_strict();
+    println!("test 15 \n");
+    test_15();
+    println!("test 15a \n");
+    test_15_strict();
+    println!("test 16 \n");
+    test_16();
+    println!("test 16a \n");
+    test_16_strict();
+    println!("test 17 \n");
+    test_17();
+    println!("test 17a \n");
+    test_17_strict();
+    println!("test 17b \n");
+    test_17_strict_is_null();
+    println!("test 19 \n");
+    test_19();
 }
 
 
