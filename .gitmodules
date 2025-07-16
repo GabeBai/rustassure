@@ -13,3 +13,6 @@
 [submodule "src/klee"]
 	path = src/klee
 	url = git@github.com:davsec-lab/rustify-klee.git
+[submodule "src/Symbolizer/json"]
+	path = src/Symbolizer/json
+	url = https://github.com/nlohmann/json.git
