@@ -296,9 +296,22 @@ unsafe fn csv_fini<'a>(
     0
 }
 
-#[no_mangle]
-fn csv_free(p: &mut CsvParser) {
-    if p.entry_buf.is_some() && p.free_func as usize != 0 {
+// #[no_mangle]
+// fn csv_free(p: &mut CsvParser) {
+//     if p.entry_buf.is_some() && p.free_func as usize != 0 {
+//         (p.free_func)(p.entry_buf.as_mut().unwrap().as_mut_ptr());
+//     }
+//     p.entry_buf = None;
+//     p.entry_size = 0;
+// }
+
+
+// change this to a bug version found by rust assure
+#[no_mangle] fn csv_free(p: &mut CsvParser) {
+    if p as *mut _ == std::ptr::null_mut() {
+        return;
+    }
+    if let Some(ref entry_buf) = p.entry_buf {
         (p.free_func)(p.entry_buf.as_mut().unwrap().as_mut_ptr());
     }
     p.entry_buf = None;
@@ -1564,6 +1577,6 @@ pub fn test_write_all_case() {
 }
 
 fn main() {
-    // test_all_parse();
-    test_write_all_case();
+    test_all_parse();
+    // test_write_all_case();
 }

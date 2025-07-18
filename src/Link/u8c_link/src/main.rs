@@ -314,7 +314,8 @@ fn u8next_(txt: *const u8, ch: &mut i32) -> i32 {
     len
 }
 
-fn u8next_fast(txt: *const u8, ch: &mut i32) -> i32 {
+//gpt 4o
+fn u8next_fast_4o(txt: *const u8, ch: &mut i32) -> i32 {
     let mut len = 0;
     let mut s = txt;
     let first = unsafe { *s };
@@ -338,6 +339,96 @@ fn u8next_fast(txt: *const u8, ch: &mut i32) -> i32 {
         len = 1 + (s as isize - txt as isize) as i32;
     }
     *ch = val;
+    len
+}
+
+// claude
+// gabe fix : change ownership
+fn u8next_fast_claude(txt: &str, ch: & mut Option<&mut i32>) -> usize {
+    let mut len = 0;
+    let s = txt.as_bytes();
+    if let Some(&first) = s.get(0) {
+        let mut val = first as i32;
+        if first > 0x7F {
+            let mut i = 1;
+            val = (s[i] & 0x3F) as i32;
+            if (first & 0xF8) == 0xF0 {
+                val |= (first as i32 & 0x07) << 6;
+                val <<= 6;
+                i += 1;
+                if let Some(&byte) = s.get(i) {
+                    val |= (byte & 0x3F) as i32;
+                }
+                val <<= 6;
+                i += 1;
+                if let Some(&byte) = s.get(i) {
+                    val |= (byte & 0x3F) as i32;
+                }
+            } else if (first & 0xF0) == 0xE0 {
+                val |= (first as i32 & 0x0F) << 6;
+                val <<= 6;
+                i += 1;
+                if let Some(&byte) = s.get(i) {
+                    val |= (byte & 0x3F) as i32;
+                }
+            } else {
+                val |= (first as i32 & 0x1F) << 6;
+            }
+            len = i + 1;
+        } else {
+            len = 1;
+        }
+
+        // if let Some(ch_ref) = ch {
+        //     *ch_ref = val;
+        // }
+        // gabe fix : change ownership
+        let inner = ch.as_mut().map(|b| &mut **b).unwrap();
+        *inner = val;
+    }
+    len
+}
+
+// gpt 4o mini
+fn u8next_fast_mini(txt: &str, ch: &mut Option<i32>) -> usize {
+    let mut len = 0;
+    let mut val = 0;
+    let mut chars = txt.chars();
+
+    if let Some(first) = chars.next() {
+        val = first as i32; // Convert char to i32
+        if first > '\u{007F}' {
+            if let Some(next) = chars.next() {
+                val = (next as i32) & 0x3F;
+                if (first as u32 & 0xF8) == 0xF0 {
+                    val |= ((first as i32 & 0x07) << 6);
+                } else if (first as u32 & 0xF0) == 0xE0 {
+                    val |= ((first as i32 & 0x0F) << 6);
+                } else {
+                    val |= ((first as i32 & 0x1F) << 6);
+                }
+            }
+            // Handle additional bytes if necessary
+            if (first as u32 & 0xF8) == 0xF0 {
+                if let Some(next) = chars.next() {
+                    val <<= 6;
+                    val |= (next as i32 & 0x3F);
+                }
+            } else if (first as u32 & 0xF0) == 0xE0 {
+                if let Some(next) = chars.next() {
+                    val <<= 6;
+                    val |= (next as i32 & 0x3F);
+                }
+            } else {
+                // Handle the case for 2-byte sequences
+            }
+        }
+        len = 1 + txt.chars().count() - chars.count();
+    }
+
+    if let Some(ch_ref) = ch {
+        *ch_ref = val;
+    }
     len
 }
 
@@ -443,6 +534,13 @@ fn test_02() {
         "𧀀𧀍\0".as_bytes().as_ptr(),
     ];
 
+    let data_str: [&str; 4] = [
+        "Aa",
+        "èa",
+        "会員",
+        "𧀀𧀍",
+    ];
+
     let expected_code_point = [
         0x41,
         0xE8,
@@ -451,6 +549,7 @@ fn test_02() {
     ];
 
     let mut ch = 0;
+    //for gpt 4o
     for (k, &s) in data_slice_pointer.iter().enumerate() {
         let mut ch = 0;
         let l  = unsafe { u8next_(s, &mut ch) };
@@ -461,12 +560,44 @@ fn test_02() {
             println!("wrong code point")
         }
 
-        let l2 = u8next_fast(s, &mut ch);
+        let l2 = u8next_fast_4o(s, &mut ch);
         if (l2 != (k + 1) as i32) {
             println!("(fast) wrong length")
         }
         if (ch != expected_code_point[k]) {
             println!("(fast) wrong code point")
+        }
+    }
+
+    //for gpt 4o mini wrong u8next_fast
+    for (k, &s) in data_str.iter().enumerate() {
+        let mut my_ch: Option<i32> = Some(-1);
+        let p = &mut my_ch;
+        let l2 = u8next_fast_mini(s, p);
+        if (l2 != (k + 1)) {
+            println!("wrong length")
+        }
+        if let Some(ch) = p {
+            if (*ch != expected_code_point[k]) {
+                println!("wrong code point")
+            }
+        }
+    }
+
+    //for claude wrong u8next_fast
+    for (k, &s) in data_str.iter().enumerate() {
+        let mut value: i32 = -1;
+        let ref_mut: &mut i32 = &mut value;
+        let mut p: Option<&mut i32> = Some(ref_mut);
+
+        let l2 = u8next_fast_claude(s, & mut p);
+        if (l2 != (k + 1)) {
+            println!("wrong length")
+        }
+        if let Some(ch) = p {
+            if (*ch != expected_code_point[k]) {
+                println!("wrong code point")
+            }
         }
     }
 }
@@ -634,11 +765,11 @@ fn test_07() {
 }
 
 fn main() {
-    test_01();
-    test_02();
-    test_03();
-    test_04();
-    test_05();
-    test_06();
-    test_07();
+    // test_01();
+    // test_02();
+    // test_03();
+    // test_04();
+    // test_05();
+    // test_06();
+    // test_07();
 }
