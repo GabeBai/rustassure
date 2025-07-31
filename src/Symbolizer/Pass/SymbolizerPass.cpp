@@ -767,22 +767,7 @@ namespace {
 			// Now we add the calls to the klee_print_expr functions
 			Function* klee_print_expr_function = M.getFunction("klee_print_expr");
 
-			// If it's not a pointer (not an LLVM pointer, basically a loadInst)
-			// then just pass it directly
-			// and return.
-
-			//special handle array when its size is 0
-			if (auto *pointer_type = dyn_cast<PointerType>(arg_value->getType())) {
-				Type *element_type = pointer_type->getPointerElementType();
-				if (auto *arrTy = dyn_cast<ArrayType>(element_type)) {
-					Type *arrElmTy = arrTy->getElementType();
-					if (arrTy->getNumElements() == 0) {
-						Type *integer_type = PointerType::get(arrElmTy, 0);
-						arg_value = Builder.CreateBitCast(arg_value, integer_type, "cast_size");
-					}
-				}
-			}
-
+			//if it is a struct, then we print the field inside it.
 			if (StructType* struct_type = dyn_cast<StructType>(arg_value->getType())) {
 					for (unsigned int i = 0; i < struct_type->getNumElements(); i++) {
 						Type* field_type = struct_type->getElementType(i);
@@ -799,7 +784,7 @@ namespace {
 					}
 					return;
 			}
-			
+			//if it is not a pointer, then we print it directly.
 			if (!isa<PointerType>(arg_value->getType())) {
 				std::vector<Value*> args_vec;
 				args_vec.push_back(Builder.CreateGlobalStringPtr("SYM VALUE: " + label + " : "));
@@ -813,6 +798,18 @@ namespace {
 				label = "*(" + label + ")";
 				// Create a load
 				arg_value = Builder.CreateLoad(arg_value->getType()->getPointerElementType(), arg_value);
+			}
+
+			//special handle array when its size is 0
+			if (auto *pointer_type = dyn_cast<PointerType>(arg_value->getType())) {
+				Type *element_type = pointer_type->getPointerElementType();
+				if (auto *arrTy = dyn_cast<ArrayType>(element_type)) {
+					Type *arrElmTy = arrTy->getElementType();
+					if (arrTy->getNumElements() == 0) {
+						Type *integer_type = PointerType::get(arrElmTy, 0);
+						arg_value = Builder.CreateBitCast(arg_value, integer_type, "cast_size");
+					}
+				}
 			}
 
 			if (isa<FunctionType>(arg_value->getType()->getPointerElementType())) {
