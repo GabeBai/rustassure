@@ -1,23 +1,18 @@
 from antlr4 import *
 
 from KqueryLexer import KqueryLexer 
-from KqueryListener import KqueryListener
 from KqueryParser import KqueryParser
 from KqueryVisitor import KqueryVisitor
 from networkx.drawing.nx_pydot import write_dot
 import os
-import re
 import sys
 sys.setrecursionlimit(5000)
-import subprocess
 from PostProcess import process_graph
 from PostProcess import process_graph_ZExt
 from PostProcess import process_graph_sub
 from PostProcess import process_root_zext_eq_only
 from PostProcess import process_extract_with_single_node_subtree
 from Node import Node
-import logging
-import networkx as nx
 
 module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(module_path)
@@ -45,11 +40,50 @@ def extract_unique_numbers_from_string(s):
 
     return ','.join(sorted(numbers_before_eq, key=int)) if numbers_before_eq else ""
 
+def extract_and_relabel_subtree(G: nx.DiGraph, root) -> nx.DiGraph:
+    """
+    1) Walk G in pre-order (root, then each successor in insertion order).
+    2) Assign new labels 0,1,2,… in the order we see them.
+    3) Copy over all node- and edge-attributes.
+    """
+    if root not in G:
+        raise KeyError(f"Node {root!r} is not in the graph")
+
+    H = nx.DiGraph()
+    mapping = {}          # old_id -> new_label
+    next_label = 0        # counter for new labels
+
+    def dfs(u):
+        nonlocal next_label
+
+        # 1) assign a new label to u and copy its attrs
+        mapping[u] = next_label
+        H.add_node(next_label, **G.nodes[u])
+        my_label = next_label
+        next_label += 1
+
+        # 2) visit each child *in the order it was originally inserted*
+        for v in G.successors(u):
+            dfs(v)
+            # after v has a label, copy the edge over
+            H.add_edge(my_label, mapping[v], **G.get_edge_data(u, v))
+
+    dfs(root)
+    return H
+
+def is_duplicate_graph(new_graph, seen_list):
+    for old_graph in seen_list:
+        ged = compare_graph_optimize_edit_distance(new_graph, old_graph, "", True, False, 3)
+        if ged == 0:
+            return True
+    return False
+
 class KqueryASTVisitor(KqueryVisitor):
 
     def __init__(self):
         self.definition_map = {} # Map of definition to Node
         self.G = nx.DiGraph()
+        self.G.update_list_value_node = []
 
     def visitIdentifier(self, ctx):
         identifier = ctx.getText()
@@ -365,6 +399,7 @@ class KqueryASTVisitor(KqueryVisitor):
             if isinstance(lhs_expr_child, KqueryParser.ExprContext):
                 lhs_expr_node = self.visit(lhs_expr_child)
                 rhs_expr_node = self.visit(rhs_expr_child)
+                self.G.update_list_value_node.append((rhs_expr_child.getText(), rhs_expr_node.node_id))
                 sub_node.children.append(lhs_expr_node)
                 sub_node.children.append(rhs_expr_node)
 
@@ -404,7 +439,7 @@ version: '[' (update_list)? ']' '@' version
                 self.G.add_edge(version_node.node_id, expr_node.node_id)
             if child.getText() == "@":
                 version_target = ctx.getChild(i + 1).getText()
-                final_node = Node(f"target : {version_target}", "", self.G)
+                final_node = Node(f'"target : {version_target}"', "", self.G)
                 version_node.children.append(final_node)
                 self.G.add_edge(version_node.node_id, final_node.node_id)
 
@@ -420,20 +455,13 @@ version: '[' (update_list)? ']' '@' version
             return self.visit(ctx.getChild(0))
         else:
             return self.visit(ctx)
-        
 
-def is_duplicate_graph(new_graph, seen_list):
-    for old_graph in seen_list:
-        ged, norm_ged = compare_graph_optimize_edit_distance(new_graph, old_graph, 1)
-        if ged == 0:
-            return True
-    return False
-
-def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs, dedup = True):
+def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs):
     # Create the directory if it doesn't exist
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    expression_index = 0
     for i in range(len(expressions)):
         Node.reset_node_id()
         expression = expressions[i]
@@ -456,30 +484,29 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs,
         except Exception as e:
             print(f"error expression {expression}")
             raise RuntimeError(f"error in expression {i}") from e
-
+        seen_graphs.add(expression)
         print(f"finish processing expression {i}")
-        removed = process_graph(visitor.G)
-        removed_zext = process_graph_ZExt(visitor.G)
-        removed_sub = process_graph_sub(visitor.G)
-        removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
-        removed_zext_eq = process_root_zext_eq_only(visitor.G)
 
-        # if dedup:
-        #     if is_duplicate_graph(visitor.G, seen_graphs):
-        #         continue
-        # Save the output to the specified directory
-        output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(i) + ".dot")
-        # if (removed):
-        #     logging.info(f"{current_dir}/{output_file} - removed is True")
-        # if (removed_zext):
-        #     logging.info(f"{current_dir}/{output_file} - removed_zext is True")
-        # if (removed_sub):
-        #     logging.info(f"{current_dir}/{output_file} - removed_sub is True")
-        write_dot(visitor.G, output_file)
-
-        # seen_graphs.append(visitor.G)
-
-
+        if len(visitor.G.update_list_value_node):
+            for idx, (current_exp, current_node) in enumerate(visitor.G.update_list_value_node):
+                if current_exp not in seen_graphs:
+                    output_file = os.path.join(output_dir,
+                                               "output_graph_" + function_name + "_" + str(
+                                                   expression_index + idx) + ".dot")
+                    new_graph = extract_and_relabel_subtree(visitor.G, current_node)
+                    seen_graphs.add(current_exp)
+                    write_dot(new_graph, output_file)
+            expression_index = expression_index + len(visitor.G.update_list_value_node)
+        else:
+            # TODO : @gabe : add to a else branch after finish development handle updatelist
+            removed = process_graph(visitor.G)
+            removed_zext = process_graph_ZExt(visitor.G)
+            removed_sub = process_graph_sub(visitor.G)
+            removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
+            removed_zext_eq = process_root_zext_eq_only(visitor.G)
+            output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".dot")
+            write_dot(visitor.G, output_file)
+            expression_index += 1
 
 if __name__ == "__main__":
     kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446613489242865665
@@ -491,5 +518,5 @@ if __name__ == "__main__":
     expressions = [
         kquery_expression,
     ]          
-    convert_kquery_to_graph(expressions, "abc", "text", [])
+    convert_kquery_to_graph(expressions, "abc", "text", set())
 

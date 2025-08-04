@@ -74,13 +74,8 @@ def extract_values(processed_lines):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        if os.path.exists("temp"):
-            # Delete all contents in the directory
-            shutil.rmtree("temp")
-        os.makedirs("temp")
-        result = process_sym_values(sys.argv[1])
-        proccess_c = True
+    if len(sys.argv) == 1:
+        result = process_sym_values("text.txt")
     else:
         directory_name = sys.argv[2]
         if os.path.exists(directory_name):
@@ -88,12 +83,8 @@ if __name__ == "__main__":
             shutil.rmtree(directory_name)
         os.makedirs(directory_name)
         os.chdir(directory_name)
-        proccess_c = (sys.argv[3] == 'c')
         result = process_sym_values(sys.argv[1])
 
     for key, values in result.items():
-        seen_graph = []
-        # if (directory_name == 'csv_increase_buffer' and key == '*(arg_value_0.field_5)' and (not proccess_c)):
-        #     convert_kquery_to_graph(values, "", key, seen_graph, False)
-        # else:
-        convert_kquery_to_graph(values, "", key, seen_graph, False)
+        seen_graph = set()
+        convert_kquery_to_graph(values, "", key, seen_graph)
