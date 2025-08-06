@@ -406,8 +406,8 @@ class KqueryASTVisitor(KqueryVisitor):
                 sub_node.children.append(rhs_expr_node)
 
                 # Add edges
-                self.G.add_edge(sub_node.node_id, lhs_expr_node.node_id)
-                self.G.add_edge(sub_node.node_id, rhs_expr_node.node_id)
+                self.G.add_edge(sub_node.node_id, lhs_expr_node.node_id, label="offset")
+                self.G.add_edge(sub_node.node_id, rhs_expr_node.node_id, label="value")
             i += 3
         return update_node
            
@@ -511,8 +511,8 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs)
         removed_zext_eq = process_root_zext_eq_only(visitor.G)
         output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".dot")
         write_dot(visitor.G, output_file)
-        """
         # convert to pdf
+        """
         png_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".png")
         os.system(f"dot -Tpng {output_file} -o {png_file}")
         """
