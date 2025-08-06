@@ -130,6 +130,7 @@ class KqueryASTVisitor(KqueryVisitor):
         if ctx.getChildCount() == 1:
             symbolic = ctx.getChild(0).getText()
             child = Node(symbolic, "", self.G)
+            node.children.append(child)
             self.G.add_edge(node.node_id, child.node_id)
         else:
             number_list = self.visit(ctx.getChild(1))
@@ -392,6 +393,7 @@ class KqueryASTVisitor(KqueryVisitor):
                 continue
             sub_node = Node("update_list_sub_node", "", self.G)
             lhs_expr_child = ctx.getChild(i)
+            update_node.children.append(sub_node)
             self.G.add_edge(update_node.node_id, sub_node.node_id)
             rhs_expr_child = ctx.getChild(i + 2)
             # print("LHS: " + lhs_expr_child.getText())
@@ -487,6 +489,7 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs)
         seen_graphs.add(expression)
         print(f"finish processing expression {i}")
 
+        """
         if len(visitor.G.update_list_value_node):
             for idx, (current_exp, current_node) in enumerate(visitor.G.update_list_value_node):
                 if current_exp not in seen_graphs:
@@ -496,17 +499,24 @@ def convert_kquery_to_graph(expressions, function_name, output_dir, seen_graphs)
                     new_graph = extract_and_relabel_subtree(visitor.G, current_node)
                     seen_graphs.add(current_exp)
                     write_dot(new_graph, output_file)
+                    # Generate the corresponding PDF using Graphviz
             expression_index = expression_index + len(visitor.G.update_list_value_node)
         else:
-            # TODO : @gabe : add to a else branch after finish development handle updatelist
-            removed = process_graph(visitor.G)
-            removed_zext = process_graph_ZExt(visitor.G)
-            removed_sub = process_graph_sub(visitor.G)
-            removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
-            removed_zext_eq = process_root_zext_eq_only(visitor.G)
-            output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".dot")
-            write_dot(visitor.G, output_file)
-            expression_index += 1
+        """
+        # TODO : @gabe : add to a else branch after finish development handle updatelist
+        removed = process_graph(visitor.G)
+        removed_zext = process_graph_ZExt(visitor.G)
+        removed_sub = process_graph_sub(visitor.G)
+        removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
+        removed_zext_eq = process_root_zext_eq_only(visitor.G)
+        output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".dot")
+        write_dot(visitor.G, output_file)
+        """
+        # convert to pdf
+        png_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".png")
+        os.system(f"dot -Tpng {output_file} -o {png_file}")
+        """
+        expression_index += 1
 
 if __name__ == "__main__":
     kquery_expression = r"""(Read w8 (Extract w32 0 (Add w64 18446613489242865665
