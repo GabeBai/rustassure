@@ -256,7 +256,7 @@ namespace {
 		};
 
 		Function *global_target_function;
-
+		std::queue<Value*> worklist;
 		std::string map_key(const std::string &name, const std::string &index) {
 			return name + "_" + index;
 		}
@@ -435,13 +435,11 @@ namespace {
 				stack_object = Builder.CreateBitCast(stack_object, pointer->getType()->getPointerElementType());
 			}
 			Builder.CreateStore(stack_object, pointer);
-			if (struct_name != "") {
-				if (need_cast) {
-					converted_type = PointerType::get(converted_type, 0);
-					stack_object = Builder.CreateBitCast(stack_object, converted_type);
-				}
-				struct_field_map[map_key(struct_name, index)] = stack_object;
+			if (need_cast) {
+				converted_type = PointerType::get(converted_type, 0);
+				stack_object = Builder.CreateBitCast(stack_object, converted_type);
 			}
+			worklist.push(stack_object);
 		}
 
 		void initialize_inner_objects(Module& M,
@@ -793,7 +791,20 @@ namespace {
 						Type* field_type = struct_type->getElementType(i);
 						Value *gep = Builder.CreateExtractValue(arg_value, {i});
 						if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
-							print_nested_klee_exprs(M, Builder, gep, label + "." + "field_" + std::to_string(i));
+							std::string new_label = "";
+							if (!worklist.empty()) {
+								Value *cur = worklist.front();
+								worklist.pop();
+								if (PointerType *gep_pointer_type = dyn_cast<PointerType>(gep->getType()->getPointerElementType())) {
+									if (cur->getType() == gep_pointer_type) {
+										new_label = "*(" + label + "." + "field_" + std::to_string(i) + ")";
+									} else {
+										new_label = label + "." + "field_" + std::to_string(i);
+									}
+								}
+								gep = cur;
+							}
+							print_nested_klee_exprs(M, Builder, gep, new_label);
 						} else {
 							std::vector<Value*> args_vec;
 							std::string new_label = label + "." + "field_" + std::to_string(i);
@@ -888,19 +899,18 @@ namespace {
 								need_cast = true;
 							}
 						}
-						std::string key = map_key(struct_name, index);
-						auto it = struct_field_map.find(key);
-						if (it != struct_field_map.end()) {
+						if (!worklist.empty() && !isa<StructType>(converted_type)) {
+							Value *cur = worklist.front();
+							worklist.pop();
 							std::string new_label = "";
-							llvm::Value *buffer = it->second;
 							if (PointerType *gep_pointer_type = dyn_cast<PointerType>(gep->getType()->getPointerElementType())) {
-								if (buffer->getType() == gep_pointer_type) {
+								if (cur->getType() == gep_pointer_type) {
 									new_label = "*(" + label + "." + "field_" + std::to_string(i) + ")";
 								} else {
 									new_label = label + "." + "field_" + std::to_string(i);
 								}
 							}
-							print_nested_klee_exprs(M, Builder, buffer, new_label);
+							print_nested_klee_exprs(M, Builder, cur, new_label);
 							if (visited_struct_flag) {
 								visited_structs.erase(struct_type);
 							}
