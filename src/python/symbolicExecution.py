@@ -181,11 +181,21 @@ def process_c_file(bc_file):
     # # Extract SYM VALUE block
     # parse_klee_output(f"klee_symbol_log/C/{base_name}_original_log.txt", f"klee_symbol_log/C/{base_name}_klee_log.txt")
 
+
+    # fetch offset.json
+    offset_file = f"{base_name}_offset.json"
+    src_path = os.path.join(os.getcwd(), offset_file)
+    dst_dir = os.path.join("klee_symbol_log", "C")
+
+    if os.path.exists(src_path):
+        dst_path = os.path.join(dst_dir, offset_file)
+        shutil.move(src_path, dst_path)
+
     # 3) Run KqueryConverter (into graph_output/C)
     graph_output_dir = "graph_output/C"
     converter_cmd = (
         f"python3 ../../../../python/kquery-parser/KqueryConverter.py "
-        f"../../../klee_symbol_log/C/{base_name}_klee_log.txt {base_name} c"
+        f"../../../klee_symbol_log/C/{base_name}_klee_log.txt {base_name} ../../../klee_symbol_log/C/{base_name}_offset.json"
     )
     run_command(converter_cmd, cwd=graph_output_dir)
 
@@ -254,11 +264,21 @@ def process_rust_file(bc_file):
     # Extract SYM VALUE block
     # parse_klee_output(f"klee_symbol_log/Rust/{base_name}_original_log.txt", f"klee_symbol_log/Rust/{base_name}_klee_log.txt")
 
+    # fetch offset.json
+    offset_file = f"{base_name}_offset.json"
+    src_path = os.path.join(os.getcwd(), offset_file)
+    dst_dir = os.path.join("klee_symbol_log", "Rust")
+
+    if os.path.exists(src_path):
+        dst_path = os.path.join(dst_dir, offset_file)
+        shutil.move(src_path, dst_path)
+
+
     # 4) Run KqueryConverter
     graph_output_dir = "graph_output/Rust"
     converter_cmd = (
         f"python3 ../../../../python/kquery-parser/KqueryConverter.py "
-        f"../../../klee_symbol_log/Rust/{base_name}_klee_log.txt {base_name} Rust"
+        f"../../../klee_symbol_log/Rust/{base_name}_klee_log.txt {base_name} ../../../klee_symbol_log/Rust/{base_name}_offset.json"
     )
     run_command(converter_cmd, cwd=graph_output_dir)
 

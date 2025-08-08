@@ -10,6 +10,7 @@ def process_sym_values(file_path):
     
     lines = data.split('\n')
     processed_lines = []
+    base_address = []
     buffer = ""
     global_left = 0
     global_right = 0
@@ -19,6 +20,15 @@ def process_sym_values(file_path):
             global_right = line.count(")")
             if global_left == global_right:
                 processed_lines.append(line)
+                global_left = 0
+                global_right = 0
+            else:
+                buffer = line
+        elif line.startswith("Base Address"):
+            global_left = line.count("(")
+            global_right = line.count(")")
+            if global_left == global_right:
+                base_address.append(line)
                 global_left = 0
                 global_right = 0
             else:
@@ -36,6 +46,7 @@ def process_sym_values(file_path):
                 buffer = ""
 
     result = extract_values(processed_lines)
+    all_address = extract_base_address(base_address)
 
     filtered_result = {}
     numeric_values = None
@@ -53,7 +64,7 @@ def process_sym_values(file_path):
         with open(directory, "w") as output_file:
             output_file.write(str(max(numeric_values)))
 
-    return filtered_result
+    return filtered_result, all_address
 
 
 
@@ -70,12 +81,42 @@ def extract_values(processed_lines):
                 sym_dict[key].append(expression)
 
     return sym_dict
-    
 
+def extract_base_address(address):
+    result = []
+    for cur_address in address:
+        m = re.search(r'(\d+)', cur_address)
+        if m:
+            result.append(int(m.group(1)))
+    return result
+
+def load_json_map(json_path):
+    if os.path.isfile(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data
+        except (json.JSONDecodeError, OSError) as e:
+            return None
+    else:
+        return None
+
+def lookup_arg_value(s: str, json_map: dict):
+    m = re.search(r'arg_value_(\d+)', s)
+    if not m:
+        raise ValueError(f"Cannot find 'arg_value_<num>' in {s!r}")
+    idx = int(m.group(1))
+
+    if idx in json_map:
+        return json_map[idx]
+    key_str = str(idx)
+    if key_str in json_map:
+        return json_map[key_str]
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        result = process_sym_values("text.txt")
+        result, all_address = process_sym_values("text.txt")
+        json_map = load_json_map("text.json")
     else:
         directory_name = sys.argv[2]
         if os.path.exists(directory_name):
@@ -83,8 +124,15 @@ if __name__ == "__main__":
             shutil.rmtree(directory_name)
         os.makedirs(directory_name)
         os.chdir(directory_name)
-        result = process_sym_values(sys.argv[1])
+        result, all_address = process_sym_values(sys.argv[1])
+        json_map = load_json_map(sys.argv[3])
 
     for key, values in result.items():
+        target_json_map = lookup_arg_value(key, json_map)
         seen_graph = set()
-        convert_kquery_to_graph(values, "", key, seen_graph)
+        convert_kquery_to_graph(values,
+                                "",
+                                key,
+                                seen_graph,
+                                json_map,
+                                all_address)

@@ -1,7 +1,3 @@
-from KqueryLexer import KqueryLexer
-from KqueryListener import KqueryListener
-from KqueryParser import KqueryParser
-from KqueryVisitor import KqueryVisitor
 import re
 
 
@@ -14,11 +10,32 @@ class Node:
         cls.NODE_ID = 0
 
     def process_value(self, value):
-        if bool(re.fullmatch(r'\d{20}', value)):
-            return "KLEE_Offset"
-        elif value.startswith("const_arr"):
+        if not value:
+            return value
+        if value.startswith("const_arr"):
             return "const_arr"
         return value
+
+    def check_klee_offset(self, value):
+        if not value:
+            return False
+        if bool(re.fullmatch(r'\d{20}', value)):
+            return True
+        else:
+            return False
+
+    def fetch_klee_offset_type(self, G, value):
+        if G.offset_converter.fetch_base_offset(value):
+            return "normal_klee_offset"
+        else:
+            return "other_klee_offset"
+
+    def convert_real_offset(self, G, value):
+        offset = G.offset_converter.fetch_base_offset(value)
+        if offset:
+            return offset
+        else:
+            return value
 
     def __init__(self, value, type_value, G):
         # We maintain a reference to the networkx graph in each Node
@@ -28,10 +45,15 @@ class Node:
         # with same value.
         Node.NODE_ID+=1
         self.node_id = Node.NODE_ID
-        self.value = self.process_value(value)
-        self.type_value = type_value
         self.children = [] # List of Nodes
         attr = {}
+
+        if self.check_klee_offset(value):
+            self.value = self.convert_real_offset(G, value)
+            self.type_value = self.fetch_klee_offset_type(G, value)
+        else:
+            self.value = self.process_value(value)
+            self.type_value = type_value
 
         if self.value:
             attr = {'label': self.value}

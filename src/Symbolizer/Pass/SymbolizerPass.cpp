@@ -29,6 +29,9 @@
 #include <array>
 #include <filesystem>
 #include <sstream>
+#include <map>
+#include <system_error>
+#include "llvm/Support/FileSystem.h"
 #include <nlohmann/json.hpp>
 
 using namespace llvm;
@@ -469,12 +472,6 @@ namespace {
 					if (!struct_type->isLiteral() && struct_type->getName() == "struct._IO_FILE") {
 						return;
 					}
-					for (unsigned i = 0, e = struct_type->getNumElements(); i != e; ++i) {
-						Type *element_type = struct_type->getElementType(i);
-						uint64_t size = DL.getTypeAllocSize(element_type);
-						uint64_t offset = SL->getElementOffset(i);
-						errs() << "  ["<< i <<"] offset="<< offset << " size=" << size << "\n";
-					}
 					std::string struct_name = "";
 					if (!struct_type->isLiteral()) {
 						struct_name = struct_type->getName().str();
@@ -615,6 +612,34 @@ namespace {
 			}
 		}
 
+		void write_json(Module &M, std::map<std::string, std::map<unsigned,uint64_t>> offsetMap) {
+			std::error_code EC;
+			std::string file_path = M.getModuleIdentifier();
+			std::filesystem::path filepath(file_path);
+			std::string filename_without_extension = splitString(filepath.stem().string(), ".")[0];
+			std::string file_name = filename_without_extension + "_offset.json";
+			raw_fd_ostream OS(file_name, EC, sys::fs::OF_None);
+			if (EC) {
+				errs() << "Error: cannot open offset.json for writing: "
+					   << EC.message() << "\n";
+			} else {
+				OS << "{\n";
+				for (auto sit = offsetMap.begin(), sie = offsetMap.end(); sit != sie; ++sit) {
+					OS << "  \"" << sit->first << "\": {\n";
+					auto &fields = sit->second;
+					for (auto fit = fields.begin(), fie = fields.end(); fit != fie; ++fit) {
+						OS << "    \"" << fit->first << "\": \"" << fit->second << "\"";
+						if (std::next(fit) != fie) OS << ",";
+						OS << "\n";
+					}
+					OS << "  }";
+					if (std::next(sit) != sie) OS << ",";
+					OS << "\n";
+				}
+				OS << "}\n";
+			}
+		}
+
 		void symbolize_function_args_and_invoke(Module& M) {
 			LLVMContext& ctx = M.getContext();
 			ArrayRef<Type*> args;
@@ -707,6 +732,22 @@ namespace {
 				} else {
 					needReplace = false;
 				}
+				std::map<std::string, std::map<unsigned,uint64_t>> offsetMap;
+				if (isa<PointerType>(targetType)) {
+					const DataLayout &DL = M.getDataLayout();
+					if (StructType* struct_type = dyn_cast<StructType>(targetType->getPointerElementType())) {
+						const StructLayout *SL = DL.getStructLayout(struct_type);
+						auto &fieldMap = offsetMap[std::to_string(arg.getArgNo())];
+						for (unsigned i = 0, e = struct_type->getNumElements(); i != e; ++i) {
+							// Type *element_type = struct_type->getElementType(i);
+							// uint64_t size = DL.getTypeAllocSize(element_type);
+							// uint64_t offset = SL->getElementOffset(i);
+							fieldMap[i] = SL->getElementOffset(i);
+						}
+					}
+				}
+
+				write_json(M, offsetMap);
 
 				if (isa<PointerType>(targetType) && isa<FunctionType>(targetType->getPointerElementType())) {
 					FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
@@ -1486,7 +1527,7 @@ llvm::PassPluginLibraryInfo getSymbolizerPluginInfo() {
 					[](llvm::ModulePassManager &PM, OptimizationLevel Level) {
 					PM.addPass(Symbolizer());
 					});
-			is_rust = true;
+			is_rust = isRust;
 		}};
 }
 

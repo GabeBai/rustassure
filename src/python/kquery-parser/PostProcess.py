@@ -236,3 +236,57 @@ def process_graph(G: nx.DiGraph):
 
         break
     return removed
+
+def get_siblings(G, n):
+    # get the (first) parent of n
+    parents = list(G.predecessors(n))
+    if not parents:
+        return []   # n is a root or has no parent
+    parent = parents[0]
+
+    # all children of parent, except n
+    siblings = [child for child in G.successors(parent) if child != n]
+    return siblings
+
+def find_first_klee_offset(root, G):
+    """DFS from `root` to find the first node whose type == 'klee_offset'."""
+    for n in nx.dfs_preorder_nodes(G, root):
+        if G.nodes[n].get('type') == 'normal_klee_offset':
+            siblings = get_siblings(G, n)
+            if siblings[0].get('label') == "Add":
+                return None
+            return n
+    return None
+
+def remove_current_subtree(G: nx.DiGraph, root, offset_node):
+    for child in list(G.successors(root)):
+        remove_current_subtree(G, child, offset_node)
+    if G.has_node(root) and root is not offset_node:
+        G.remove_node(root)
+
+def simplify_update_list(G: nx.DiGraph) -> bool:
+    for upd in list(G.nodes()):
+        if G.nodes[upd].get('label') != 'update_list':
+            continue
+
+        for child in list(G.successors(upd)):
+            succs = list(G.successors(child))
+            if not succs:
+                continue
+            left_root = succs[0]
+
+            offset_node = find_first_klee_offset(left_root, G)
+            if offset_node is None:
+                continue
+
+            for gc in list(G.successors(left_root)):
+                if gc is not offset_node:
+                    remove_current_subtree(G, gc, offset_node)
+
+            G.remove_node(left_root)
+            if G.has_edge(child, left_root):
+                G.remove_edge(child, left_root)
+            G.add_edge(child, offset_node)
+
+        return True
+    return False
