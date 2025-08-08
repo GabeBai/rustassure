@@ -707,6 +707,7 @@ namespace {
 			std::vector<Value*> actual_args;
 			// Now create a stack object of each of the argument type
 			bool has_struct_ret = false;
+			std::map<std::string, std::map<unsigned,uint64_t>> offsetMap;
 			for (Argument& arg: target_function->args()) {
 				// If it's a C pointer type, then we must create a stack object (AllocaInst) of the base type, mark it symbolic, and pass it directly to the function
 				// If it's a scalar, then we must create a stack object, load it and pass it to the function
@@ -734,7 +735,6 @@ namespace {
 				} else {
 					needReplace = false;
 				}
-				std::map<std::string, std::map<unsigned,uint64_t>> offsetMap;
 				if (isa<PointerType>(targetType)) {
 					const DataLayout &DL = M.getDataLayout();
 					if (StructType* struct_type = dyn_cast<StructType>(targetType->getPointerElementType())) {
@@ -748,8 +748,6 @@ namespace {
 						}
 					}
 				}
-
-				write_json(M, offsetMap);
 
 				if (isa<PointerType>(targetType) && isa<FunctionType>(targetType->getPointerElementType())) {
 					FunctionType *functionType = cast<FunctionType>(targetType->getPointerElementType());
@@ -769,6 +767,7 @@ namespace {
 					actual_args.push_back(stack_load_inst);
 				}
 			}
+			write_json(M, offsetMap);
 
 			// Now we pass these arguments to the actual function
 			CallInst* call_with_symb_args = Builder.CreateCall(target_function, actual_args);
@@ -1537,10 +1536,10 @@ namespace {
 
 	}; // end of struct
 }  // end of anonymous namespace
-
-static cl::opt<bool> isRust("isRust",
-	cl::desc("is processing rust"),
-	cl::init(false));
+//
+// static cl::opt<bool> isRust("isRust",
+// 	cl::desc("is processing rust"),
+// 	cl::init(false));
 
 /* New PM Registration */
 llvm::PassPluginLibraryInfo getSymbolizerPluginInfo() {
@@ -1550,7 +1549,7 @@ llvm::PassPluginLibraryInfo getSymbolizerPluginInfo() {
 					[](llvm::ModulePassManager &PM, OptimizationLevel Level) {
 					PM.addPass(Symbolizer());
 					});
-			is_rust = isRust;
+			is_rust = true;
 		}};
 }
 
