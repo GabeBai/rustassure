@@ -104,7 +104,7 @@ def load_json_map(json_path):
 def lookup_arg_value(s: str, json_map: dict):
     m = re.search(r'arg_value_(\d+)', s)
     if not m:
-        raise ValueError(f"Cannot find 'arg_value_<num>' in {s!r}")
+        return []
     idx = int(m.group(1))
 
     if idx in json_map:

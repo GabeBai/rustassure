@@ -442,7 +442,9 @@ namespace {
 				converted_type = PointerType::get(converted_type, 0);
 				stack_object = Builder.CreateBitCast(stack_object, converted_type);
 			}
-			worklist.push(stack_object);
+			if (!isa<StructType>(converted_type)) {
+				worklist.push(stack_object);
+			}
 		}
 
 		void initialize_inner_objects(Module& M,
@@ -833,7 +835,17 @@ namespace {
 						Value *gep = Builder.CreateExtractValue(arg_value, {i});
 						if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
 							std::string new_label = "";
-							if (!worklist.empty()) {
+
+							bool is_struct_type = false;
+							if (PointerType *pointer_type = dyn_cast<PointerType>(field_type)) {
+								if (StructType *inner_struct_type = dyn_cast<StructType>(pointer_type->getPointerElementType())) {
+									is_struct_type = true;
+								}
+							} else if (isa<StructType>(field_type)) {
+								is_struct_type = true;
+							}
+
+							if (!worklist.empty() && !is_struct_type) {
 								Value *cur = worklist.front();
 								worklist.pop();
 								if (PointerType *gep_pointer_type = dyn_cast<PointerType>(gep->getType()->getPointerElementType())) {
@@ -900,6 +912,11 @@ namespace {
 					if (!startsWith(label, "ret_value") && isFieldUnused(struct_type, i, M)) {
 						std::string new_label = label + "." + "field_" + std::to_string(i);
 						outs() << "Arguments have not been used: " << new_label << "\n";
+						if (isa<PointerType>(field_type) || isa<ArrayType>(field_type)) {
+							if (!worklist.empty()) {
+								worklist.pop();
+							}
+						}
 						continue;
 					}
 					Value* gep = Builder.CreateStructGEP(
@@ -929,6 +946,12 @@ namespace {
 								need_cast = true;
 							}
 							converted_type = PointerType::get(original_converted_type, 0);
+							if (isa<FunctionType>(converted_type->getPointerElementType())) {
+								if (!worklist.empty()) {
+									worklist.pop();
+								}
+								continue;
+							}
 						} else {
 							converted_type = get_target_type(M, field_type, struct_name, index);
 							if (!converted_type) {
