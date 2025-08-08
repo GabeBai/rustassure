@@ -253,7 +253,7 @@ def find_first_klee_offset(root, G):
     for n in nx.dfs_preorder_nodes(G, root):
         if G.nodes[n].get('type') == 'normal_klee_offset':
             siblings = get_siblings(G, n)
-            if siblings[0].get('label') == "Add":
+            if G.nodes[siblings[0]].get('label') == "Add":
                 return None
             return n
     return None
