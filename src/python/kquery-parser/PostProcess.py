@@ -1,9 +1,8 @@
+from xmlrpc.client import boolean
+
 import networkx as nx
 import pydot
-import subprocess
-from networkx.drawing.nx_pydot import write_dot
 from Node import Node
-import os
 
 
 def is_single_node_subtree(g: nx.DiGraph, n) -> bool:
@@ -251,7 +250,7 @@ def get_siblings(G, n):
 def find_first_klee_offset(root, G):
     """DFS from `root` to find the first node whose type == 'klee_offset'."""
     for n in nx.dfs_preorder_nodes(G, root):
-        if G.nodes[n].get('type') == 'normal_klee_offset':
+        if G.nodes[n].get('type') == 'normal_klee_offset' or G.nodes[n].get('type') == 'concrete_klee_offset':
             siblings = get_siblings(G, n)
             if G.nodes[siblings[0]].get('label') == "Add":
                 return None
@@ -265,7 +264,10 @@ def remove_current_subtree(G: nx.DiGraph, root, offset_node):
         G.remove_node(root)
 
 def simplify_update_list(G: nx.DiGraph) -> bool:
+    find_offset_node = False
     for upd in list(G.nodes()):
+        if upd not in G.nodes:
+            continue
         if G.nodes[upd].get('label') != 'update_list':
             continue
 
@@ -278,7 +280,9 @@ def simplify_update_list(G: nx.DiGraph) -> bool:
             offset_node = find_first_klee_offset(left_root, G)
             if offset_node is None:
                 continue
-
+            if G.nodes[offset_node].get('type') == 'concrete_klee_offset':
+                continue
+            find_offset_node = True
             for gc in list(G.successors(left_root)):
                 if gc is not offset_node:
                     remove_current_subtree(G, gc, offset_node)
@@ -288,5 +292,24 @@ def simplify_update_list(G: nx.DiGraph) -> bool:
                 G.remove_edge(child, left_root)
             G.add_edge(child, offset_node)
 
-        return True
-    return False
+    return find_offset_node
+
+def find_target_offset_node(G, root, target_offset):
+    for n in nx.dfs_preorder_nodes(G, root):
+        if G.nodes[n].get('type') == 'normal_klee_offset' or G.nodes[n].get('type') == 'concrete_klee_offset':
+            if G.nodes[n].get('label') == target_offset:
+                return n
+    return None
+
+def find_target_value_node(G, target_offset):
+    result = []
+    for upd in list(G.nodes()):
+        if G.nodes[upd].get('label') != 'update_list':
+            continue
+
+        for child in list(G.successors(upd)):
+            target_offset_nodes = find_target_offset_node(G, child, target_offset)
+            if target_offset_nodes:
+                target_value_node = get_siblings(G, target_offset_nodes)[0]
+                result.append(target_value_node)
+    return result

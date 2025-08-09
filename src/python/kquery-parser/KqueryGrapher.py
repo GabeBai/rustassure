@@ -75,6 +75,10 @@ def is_duplicate_graph(new_graph, seen_list):
     return False
 
 
+def get_last_field_number(s: str) -> int:
+    match = re.search(r'field_(\d+)(?!.*field_)', s)
+    return int(match.group(1)) if match else None
+
 class OffsetConverter:
 
     def __init__(self, offset_map, base_address):
@@ -410,8 +414,9 @@ class KqueryASTVisitor(KqueryVisitor):
             # print("RHS: " + rhs_expr_child.getText())
             if isinstance(lhs_expr_child, KqueryParser.ExprContext):
                 lhs_expr_node = self.visit(lhs_expr_child)
+                if bool(re.fullmatch(r'\d{1,2}', lhs_expr_child.getText())):
+                    self.G.nodes[lhs_expr_node.node_id]['type'] = 'concrete_klee_offset'
                 rhs_expr_node = self.visit(rhs_expr_child)
-                self.G.update_list_value_node.append((rhs_expr_child.getText(), rhs_expr_node.node_id))
                 sub_node.children.append(lhs_expr_node)
                 sub_node.children.append(rhs_expr_node)
 
@@ -468,6 +473,18 @@ version: '[' (update_list)? ']' '@' version
         else:
             return self.visit(ctx)
 
+def fetch_value(key, offset_map, G):
+    field = get_last_field_number(key)
+    if field is None:
+        return None
+    cur = str(field)
+    offset = offset_map[cur]
+    if not offset:
+        return None
+
+    return find_target_value_node(G, offset)
+
+
 def convert_kquery_to_graph(expressions,
                             function_name,
                             output_dir,
@@ -502,86 +519,85 @@ def convert_kquery_to_graph(expressions,
         except Exception as e:
             print(f"error expression {expression}")
             raise RuntimeError(f"error in expression {i}") from e
-        seen_graphs.add(expression)
         print(f"finish processing expression {i}")
-
-        """
-        if len(visitor.G.update_list_value_node):
-            for idx, (current_exp, current_node) in enumerate(visitor.G.update_list_value_node):
-                if current_exp not in seen_graphs:
-                    output_file = os.path.join(output_dir,
-                                               "output_graph_" + function_name + "_" + str(
-                                                   expression_index + idx) + ".dot")
-                    new_graph = extract_and_relabel_subtree(visitor.G, current_node)
-                    seen_graphs.add(current_exp)
-                    write_dot(new_graph, output_file)
-                    # Generate the corresponding PDF using Graphviz
-            expression_index = expression_index + len(visitor.G.update_list_value_node)
-        else:
-        """
-        # TODO : @gabe : add to a else branch after finish development handle updatelist
         removed_offset = simplify_update_list(visitor.G)
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
         removed_sub = process_graph_sub(visitor.G)
         removed_empty_extract = process_extract_with_single_node_subtree(visitor.G)
         removed_zext_eq = process_root_zext_eq_only(visitor.G)
-        output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".dot")
-        write_dot(visitor.G, output_file)
-        # convert to pdf
-        """
-        png_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".png")
-        os.system(f"dot -Tpng {output_file} -o {png_file}")
-        """
-        expression_index += 1
+        if removed_offset:
+            target_value_nodes = fetch_value(output_dir, offset_map, visitor.G)
+            if not target_value_nodes:
+                output_file = os.path.join(output_dir,
+                                           "output_graph_" + function_name + "_" + str(expression_index) + ".dot")
+                write_dot(visitor.G, output_file)
+                expression_index += 1
+            else:
+                for idx, current_node in enumerate(target_value_nodes):
+                    output_file = os.path.join(output_dir,
+                                               "output_graph_" + function_name + "_" + str(
+                                                   expression_index + idx) + ".dot")
+                    new_graph = extract_and_relabel_subtree(visitor.G, current_node)
+                    write_dot(new_graph, output_file)
+                expression_index = expression_index + len(target_value_nodes)
+        else:
+            output_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".dot")
+            write_dot(visitor.G, output_file)
+            # convert to pdf
+            """
+            png_file = os.path.join(output_dir, "output_graph_" + function_name + "_" + str(expression_index) + ".png")
+            os.system(f"dot -Tpng {output_file} -o {png_file}")
+            """
+            expression_index += 1
 
 if __name__ == "__main__":
-    kquery_expression = r"""(ReadLSB w32 32 U0:[(Add w32 3
-                              N0:(Extract w32 0 (Add w64 18446742445916946464
-                                                         N1:(ReadLSB w64 0 U1:[(Extract w32 0 (Add w64 18446742473834233855
-                                                                                                       (Add w64 (ReadLSB w64 16 arg_value_0)
-                                                                                                                (Sub w64 N2:(Sub w64 (ReadLSB w64 24 arg_value_0)
-                                                                                                                                     N3:(ReadLSB w64 8 arg_value_0))
-                                                                                                                         N3))))=0] @ const_arr1))))=0,
-                     (Add w32 2 N0)=0,
-                     (Add w32 1 N0)=0,
-                     N0=0,
-                     (Add w32 7
-                              N4:(Extract w32 0 (Add w64 18446742445916946456 N1)))=0,
-                     (Add w32 6 N4)=0,
-                     (Add w32 5 N4)=0,
-                     (Add w32 4 N4)=0,
-                     (Add w32 3 N4)=0,
-                     (Add w32 2 N4)=0,
-                     (Add w32 1 N4)=0,
-                     N4=0,
-                     (Add w32 7
-                              N5:(Extract w32 0 (Add w64 18446742445916946440 N1)))=0,
-                     (Add w32 6 N5)=0,
-                     (Add w32 5 N5)=0,
-                     (Add w32 4 N5)=0,
-                     (Add w32 3 N5)=0,
-                     (Add w32 2 N5)=0,
-                     (Add w32 1 N5)=0,
-                     N5=0,
-                     (Add w32 3
-                              N6:(Extract w32 0 (Add w64 18446742445916946436 N1)))=0,
-                     (Add w32 2 N6)=0,
-                     (Add w32 1 N6)=0,
-                     N6=0,
-                     (Add w32 3
-                              N7:(Extract w32 0 (Add w64 18446742445916946432 N1)))=0,
-                     (Add w32 2 N7)=0,
-                     (Add w32 1 N7)=0,
-                     N7=0,
-                     31=(Extract w8 56 N8:(Add w64 18446744073709551615 N2)),
-                     30=(Extract w8 48 N8),
-                     29=(Extract w8 40 N8),
-                     28=(Extract w8 32 N8),
-                     27=(Extract w8 24 N8),
-                     26=(Extract w8 16 N8),
-                     25=(Extract w8 8 N8),
-                     24=(Extract w8 0 N8)] @ arg_value_0)"""
+    kquery_expression = r"""(ReadLSB w32 0 U0:[(Add w32 3
+                             N0:(Extract w32 0 (Add w64 18446742445916946464
+                                                        N1:(ReadLSB w64 0 U1:[(Extract w32 0 (Add w64 18446742473834233855
+                                                                                                      (Add w64 (ReadLSB w64 16 arg_value_0)
+                                                                                                               (Sub w64 N2:(Sub w64 (ReadLSB w64 24 arg_value_0)
+                                                                                                                                    N3:(ReadLSB w64 8 arg_value_0))
+                                                                                                                        N3))))=0] @ const_arr1))))=0,
+                    (Add w32 2 N0)=0,
+                    (Add w32 1 N0)=0,
+                    N0=0,
+                    (Add w32 7
+                             N4:(Extract w32 0 (Add w64 18446742445916946456 N1)))=0,
+                    (Add w32 6 N4)=0,
+                    (Add w32 5 N4)=0,
+                    (Add w32 4 N4)=0,
+                    (Add w32 3 N4)=0,
+                    (Add w32 2 N4)=0,
+                    (Add w32 1 N4)=0,
+                    N4=0,
+                    (Add w32 7
+                             N5:(Extract w32 0 (Add w64 18446742445916946440 N1)))=0,
+                    (Add w32 6 N5)=0,
+                    (Add w32 5 N5)=0,
+                    (Add w32 4 N5)=0,
+                    (Add w32 3 N5)=0,
+                    (Add w32 2 N5)=0,
+                    (Add w32 1 N5)=0,
+                    N5=0,
+                    (Add w32 3
+                             N6:(Extract w32 0 (Add w64 18446742445916946436 N1)))=0,
+                    (Add w32 2 N6)=0,
+                    (Add w32 1 N6)=0,
+                    N6=0,
+                    (Add w32 3
+                             N7:(Extract w32 0 (Add w64 18446742445916946432 N1)))=0,
+                    (Add w32 2 N7)=0,
+                    (Add w32 1 N7)=0,
+                    N7=0,
+                    31=(Extract w8 56 N8:(Add w64 18446744073709551615 N2)),
+                    30=(Extract w8 48 N8),
+                    29=(Extract w8 40 N8),
+                    28=(Extract w8 32 N8),
+                    27=(Extract w8 24 N8),
+                    26=(Extract w8 16 N8),
+                    25=(Extract w8 8 N8),
+                    24=(Extract w8 0 N8)] @ arg_value_0)"""
 
     expressions = [
         kquery_expression,
@@ -596,5 +612,5 @@ if __name__ == "__main__":
         '5':'32'
     }
 
-    convert_kquery_to_graph(expressions, "abc", "text", set(), json_map, base_address)
+    convert_kquery_to_graph(expressions, "abc", "arg_value_0.field_0", set(), json_map, base_address)
 

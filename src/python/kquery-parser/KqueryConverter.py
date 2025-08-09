@@ -1,5 +1,3 @@
-import re
-from collections import defaultdict
 from KqueryGrapher import *
 import sys
 import shutil
@@ -134,5 +132,5 @@ if __name__ == "__main__":
                                 "",
                                 key,
                                 seen_graph,
-                                json_map,
+                                target_json_map,
                                 all_address)

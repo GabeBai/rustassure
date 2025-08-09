@@ -1536,10 +1536,10 @@ namespace {
 
 	}; // end of struct
 }  // end of anonymous namespace
-//
-// static cl::opt<bool> isRust("isRust",
-// 	cl::desc("is processing rust"),
-// 	cl::init(false));
+
+static cl::opt<bool> isRust("isRust",
+	cl::desc("is processing rust"),
+	cl::init(false));
 
 /* New PM Registration */
 llvm::PassPluginLibraryInfo getSymbolizerPluginInfo() {
@@ -1549,7 +1549,7 @@ llvm::PassPluginLibraryInfo getSymbolizerPluginInfo() {
 					[](llvm::ModulePassManager &PM, OptimizationLevel Level) {
 					PM.addPass(Symbolizer());
 					});
-			is_rust = true;
+			is_rust = isRust;
 		}};
 }
 
