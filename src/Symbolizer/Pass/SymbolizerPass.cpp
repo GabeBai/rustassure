@@ -858,7 +858,7 @@ namespace {
 								}
 								gep = cur;
 							} else {
-								new_label = label;
+								new_label = label + "." + "field_" + std::to_string(i);
 							}
 							print_nested_klee_exprs(M, Builder, gep, new_label);
 						} else {
