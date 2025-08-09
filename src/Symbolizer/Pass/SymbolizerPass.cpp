@@ -393,8 +393,8 @@ namespace {
 			bool need_ignore = false;
 			bool need_cast = false;
 			if (!converted_type) {
-				converted_type = type;
-				need_ignore = true;
+				//we don't initialize function pointer
+				return;
 			} else {
 				if (converted_type != type) {
 					need_cast = true;
@@ -415,7 +415,8 @@ namespace {
 			StringRef name,
 			std::string &argument_name,
 			std::string &struct_name,
-			const std::string &index) {
+			const std::string &index,
+			bool from_struct) {
 			// If it is a pointer to a function, do nothing
 			if (isa<FunctionType>(ptr_type->getPointerElementType())) {
 				return;
@@ -425,8 +426,8 @@ namespace {
 			bool need_ignore = false;
 			bool need_cast = false;
 			if (!converted_type) {
-				converted_type = ptr_type->getPointerElementType();
-				need_ignore = true;
+				//we don't initialize function pointer
+				return;
 			} else {
 				if (converted_type != ptr_type->getPointerElementType()) {
 					need_cast = true;
@@ -442,7 +443,7 @@ namespace {
 				converted_type = PointerType::get(converted_type, 0);
 				stack_object = Builder.CreateBitCast(stack_object, converted_type);
 			}
-			if (!isa<StructType>(converted_type)) {
+			if (!isa<StructType>(converted_type) && from_struct) {
 				worklist.push(stack_object);
 			}
 		}
@@ -466,7 +467,7 @@ namespace {
 				if (PointerType* ptr_type = dyn_cast<PointerType>(pointer->getType()->getPointerElementType())) {
 				    std::string struct_name = "";
 					std::string index = "";
-					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), argument_name, struct_name, index);
+					initialize_inner_pointer(M, Builder, pointer, ptr_type, StringRef("ptr"), argument_name, struct_name, index, false);
 				}
 				if (StructType* struct_type = dyn_cast<StructType>(pointer->getType()->getPointerElementType())) { // these are stack variables
 					const DataLayout &DL = M.getDataLayout();
@@ -502,7 +503,8 @@ namespace {
 							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
 
 							const std::string &index = std::to_string(i);
-							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, struct_name, index);
+							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, struct_name, index, true
+							);
 							if (visited_struct_flag) {
 								visited_structs.erase(struct_type);
 							}
@@ -844,7 +846,7 @@ namespace {
 								is_struct_type = true;
 							}
 
-							if (!worklist.empty() && !is_struct_type) {
+							if (!worklist.empty() && !is_struct_type && label != "ret_value" && !isa<ArrayType>(field_type)) {
 								Value *cur = worklist.front();
 								worklist.pop();
 								if (PointerType *gep_pointer_type = dyn_cast<PointerType>(gep->getType()->getPointerElementType())) {
@@ -855,6 +857,8 @@ namespace {
 									}
 								}
 								gep = cur;
+							} else {
+								new_label = label;
 							}
 							print_nested_klee_exprs(M, Builder, gep, new_label);
 						} else {
@@ -926,6 +930,7 @@ namespace {
 					if (isa<PointerType>(field_type) || isa<StructType>(field_type) || isa<ArrayType>(field_type)) {
 						Type *converted_type = field_type;
 						bool visited_struct_flag = false;
+						bool is_struct_type = false;
 						if (isa<PointerType>(field_type)) {
 							if (StructType *inner_struct_type = dyn_cast<StructType>(field_type->getPointerElementType())) {
 								if (visited_structs.count(struct_type)) {
@@ -937,18 +942,17 @@ namespace {
 							}
 							Type *original_converted_type = get_target_type(M, field_type->getPointerElementType(), struct_name, index);
 							if (!original_converted_type) {
-								//function pointer
 								continue;
 							}
 							if (original_converted_type != field_type) {
 								//need cast to real type
 								need_cast = true;
 							}
+							if (isa<StructType>(original_converted_type)) {
+								is_struct_type = true;
+							}
 							converted_type = PointerType::get(original_converted_type, 0);
 							if (isa<FunctionType>(converted_type->getPointerElementType())) {
-								if (!worklist.empty()) {
-									worklist.pop();
-								}
 								continue;
 							}
 						} else {
@@ -957,12 +961,15 @@ namespace {
 								//function pointer
 								continue;
 							}
+							if (isa<StructType>(converted_type)) {
+								is_struct_type = true;
+							}
 							if (converted_type != field_type) {
 								//need cast to real type
 								need_cast = true;
 							}
 						}
-						if (!worklist.empty() && !isa<StructType>(converted_type)) {
+						if (!worklist.empty() && !is_struct_type && !isa<ArrayType>(field_type)) {
 							Value *cur = worklist.front();
 							worklist.pop();
 							std::string new_label = "";
