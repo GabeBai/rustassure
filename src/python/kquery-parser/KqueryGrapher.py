@@ -478,6 +478,8 @@ def fetch_value(key, offset_map, G):
     if field is None:
         return None
     cur = str(field)
+    if cur not in offset_map:
+        return None
     offset = offset_map[cur]
     if not offset:
         return None
@@ -552,65 +554,40 @@ def convert_kquery_to_graph(expressions,
             expression_index += 1
 
 if __name__ == "__main__":
-    kquery_expression = r"""(ReadLSB w32 0 U0:[(Add w32 3
-                             N0:(Extract w32 0 (Add w64 18446742445916946464
-                                                        N1:(ReadLSB w64 0 U1:[(Extract w32 0 (Add w64 18446742473834233855
-                                                                                                      (Add w64 (ReadLSB w64 16 arg_value_0)
-                                                                                                               (Sub w64 N2:(Sub w64 (ReadLSB w64 24 arg_value_0)
-                                                                                                                                    N3:(ReadLSB w64 8 arg_value_0))
-                                                                                                                        N3))))=0] @ const_arr1))))=0,
-                    (Add w32 2 N0)=0,
-                    (Add w32 1 N0)=0,
-                    N0=0,
-                    (Add w32 7
-                             N4:(Extract w32 0 (Add w64 18446742445916946456 N1)))=0,
-                    (Add w32 6 N4)=0,
-                    (Add w32 5 N4)=0,
-                    (Add w32 4 N4)=0,
-                    (Add w32 3 N4)=0,
-                    (Add w32 2 N4)=0,
-                    (Add w32 1 N4)=0,
-                    N4=0,
-                    (Add w32 7
-                             N5:(Extract w32 0 (Add w64 18446742445916946440 N1)))=0,
-                    (Add w32 6 N5)=0,
-                    (Add w32 5 N5)=0,
-                    (Add w32 4 N5)=0,
-                    (Add w32 3 N5)=0,
-                    (Add w32 2 N5)=0,
-                    (Add w32 1 N5)=0,
-                    N5=0,
-                    (Add w32 3
-                             N6:(Extract w32 0 (Add w64 18446742445916946436 N1)))=0,
-                    (Add w32 2 N6)=0,
-                    (Add w32 1 N6)=0,
-                    N6=0,
-                    (Add w32 3
-                             N7:(Extract w32 0 (Add w64 18446742445916946432 N1)))=0,
-                    (Add w32 2 N7)=0,
-                    (Add w32 1 N7)=0,
-                    N7=0,
-                    31=(Extract w8 56 N8:(Add w64 18446744073709551615 N2)),
-                    30=(Extract w8 48 N8),
-                    29=(Extract w8 40 N8),
-                    28=(Extract w8 32 N8),
-                    27=(Extract w8 24 N8),
-                    26=(Extract w8 16 N8),
-                    25=(Extract w8 8 N8),
-                    24=(Extract w8 0 N8)] @ arg_value_0)"""
+    kquery_expression = r"""(ReadLSB w32 0 U0:[(Extract w32 0 (Add w64 18446605706430775297
+                                            N0:(Add w64 (ReadLSB w64 16 arg_value_0)
+                                                        (ReadLSB w64 24 arg_value_0))))=(Read w8 1 arg_value_1),
+                    (Extract w32 0 (Add w64 18446605706430775296 N0))=(Read w8 0 arg_value_1),
+                    3=(Read w8 3 arg_value_0),
+                    2=(Read w8 2 arg_value_0),
+                    1=(Read w8 1 arg_value_0),
+                    0=(Read w8 0 arg_value_0)] @ const_arr161)"""
 
     expressions = [
         kquery_expression,
     ]
-    base_address = [1627792605184, 64, 1636382539776]
+    base_address = [138412375932928,
+                    138414523416576,
+                    138410228449280,
+                    138409154707456]
     json_map = {
-        '0':'0',
-        '1':'4',
-        '2':'8',
-        '3':'16',
-        '4':'24',
-        '5':'32'
-    }
+        "0": "0",
+        "1": "4",
+        "2": "8",
+        "3": "16",
+        "4": "24",
+        "5": "32",
+        "6": "40",
+        "7": "44",
+        "8": "45",
+        "9": "46",
+        "10": "48",
+        "11": "56",
+        "12": "64",
+        "13": "72",
+        "14": "80",
+        "15": "88"
+  }
 
     convert_kquery_to_graph(expressions, "abc", "arg_value_0.field_0", set(), json_map, base_address)
 

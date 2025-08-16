@@ -92,6 +92,8 @@ def matchNodes(node1,
                node2,
                function_name,
                c_is_target,
+               c_directory_name,
+               rust_directory_name,
                only_consider_struct):
     if only_consider_struct:
         return True
@@ -101,6 +103,8 @@ def matchNodes(node1,
     if label1 == label2:
         return True
     else:
+        if process_argument_name(function_name, c_is_target, c_directory_name, rust_directory_name, label1, label2):
+            return True
         if label1 in ["0", "false"] and label2 in ["0", "false"]:
             return True
         if label1 in ["1", "true"] and label2 in ["1", "true"]:
@@ -118,6 +122,32 @@ def matchNodes(node1,
             return special_handle_opng_initialize(c_is_target, label1, label2)
         if function_name in field_map:
             return special_handle_map(c_is_target, function_name, label1, label2)
+        return False
+
+def process_argument_name(function_name, c_is_target, c_directory_name, rust_directory_name, label1, label2):
+    def normalize(s: str) -> str:
+        if s.startswith("*(") and s.endswith(")"):
+            return s[2:-1]
+        return s
+
+    _PATTERN = re.compile(r"^arg_value_\d+(?:\.field_\d+)*$")
+    if not (bool(_PATTERN.fullmatch(label1)) and bool(_PATTERN.fullmatch(label2))):
+        return False
+
+    prefix = function_name + "/"
+    if c_directory_name.startswith(prefix) and rust_directory_name.startswith(prefix):
+        c_argument_name = c_directory_name[len(prefix):]
+        rust_argument_name = rust_directory_name[len(prefix):]
+
+        normalize_c_argument = normalize(c_argument_name)
+        normalize_rust_argument = normalize(rust_argument_name)
+        if c_is_target:
+            if label1 == normalize_c_argument and label2 == normalize_rust_argument:
+                return True
+        else:
+            if label1 == normalize_rust_argument and label2 == normalize_c_argument:
+                return True
+    else:
         return False
 
 def special_handle_map(c_is_target, function_name, label1, label2):
@@ -254,6 +284,8 @@ def compare_graph_optimize_edit_distance(G1,
                                          G2,
                                          function_name,
                                          c_is_target,
+                                         c_directory_name,
+                                         rust_directory_name,
                                          only_consider_struct,
                                          max_iterations = 1):
     logger = SingletonLogger()
@@ -264,6 +296,8 @@ def compare_graph_optimize_edit_distance(G1,
     matcher = partial(matchNodes,
                       function_name=function_name,
                       c_is_target=c_is_target,
+                      c_directory_name=c_directory_name,
+                      rust_directory_name=rust_directory_name,
                       only_consider_struct=only_consider_struct)
     ged_generator = nx.optimize_graph_edit_distance(G1, G2, node_match=matcher)  #
     ged = 0
@@ -289,7 +323,7 @@ def load_graph_from_dot(file_path):
 
 
 def calculate_distance(function_name, input_files_a,
-                       input_files_b, c_is_target, only_consider_struct):
+                       input_files_b, c_is_target, c_directory_name, rust_directory_name, only_consider_struct):
     best_distance = None
     for i, file_path_a in enumerate(input_files_a):
         G1 = load_graph_from_dot(file_path_a)
@@ -304,6 +338,8 @@ def calculate_distance(function_name, input_files_a,
                                                                                       G2,
                                                                                       function_name,
                                                                                       c_is_target,
+                                                                                      c_directory_name,
+                                                                                      rust_directory_name,
                                                                                       only_consider_struct))
 
         if best_distance is None:
@@ -387,7 +423,7 @@ def compare_and_export_csv(c_dict,
 
             if matching_r_keys:
                 if not all_lengths_equal(matching_r_keys):
-                    best_r_key = max(matching_r_keys, key=len)
+                    best_r_key = max(matching_r_keys, key=lambda k: (len(k), k.endswith("field_0)"), k))
                     found_match_input_directory = True
                 else:
                     for r_key in matching_r_keys:
@@ -429,15 +465,31 @@ def compare_and_export_csv(c_dict,
                                                        c_files,
                                                        rust_files,
                                                        True,
+                                                       c_key,
+                                                       best_r_key,
                                                        only_consider_struct),
                                     calculate_distance(function_name,
                                                        rust_files,
                                                        c_files,
                                                        False,
+                                                       c_key,
+                                                       best_r_key,
                                                        only_consider_struct))
             else:
-                edit_distance = max(calculate_distance(function_name, c_files, rust_files, True, only_consider_struct),
-                                    calculate_distance(function_name, rust_files, c_files, False, only_consider_struct))
+                edit_distance = max(calculate_distance(function_name,
+                                                       c_files,
+                                                       rust_files,
+                                                       True,
+                                                       c_key,
+                                                       best_r_key,
+                                                       only_consider_struct),
+                                    calculate_distance(function_name,
+                                                       rust_files,
+                                                       c_files,
+                                                       False,
+                                                       c_key,
+                                                       best_r_key,
+                                                       only_consider_struct))
             results_best.append((function_name, argument_name, str(edit_distance)))
         else:
             results_best.append((function_name, argument_name, "Rust Empty!"))
