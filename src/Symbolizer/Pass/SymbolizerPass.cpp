@@ -500,7 +500,7 @@ namespace {
 									visited_struct_flag = true;
 								}
 							}
-							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
+							std::string update_argument_name = argument_name + "." + "field_" + std::to_string(i);
 
 							const std::string &index = std::to_string(i);
 							initialize_inner_pointer(M, Builder, gep, field_ptr_type, "field", update_argument_name, struct_name, index, true
@@ -514,7 +514,7 @@ namespace {
 								pointer, 
 								i,
 							"gep");
-							std::string update_argument_name = argument_name + "field_" + std::to_string(i);
+							std::string update_argument_name = argument_name + "." + "field_" + std::to_string(i);
 							initialize_inner_struct(M, Builder, gep, inner_struct_type, "field", update_argument_name, struct_name, index);
 						}
 					}
@@ -535,6 +535,16 @@ namespace {
 					llvm::errs() << "json not founded " << global_target_function->getName() << "\n";
 				}
 			}
+		}
+
+		json fetch_function_list(std::string file_name) {
+			if (std::filesystem::exists(file_name)) {
+				std::ifstream jsonFile(file_name);
+				json jsonData;
+				jsonFile >> jsonData;
+				return jsonData;
+			}
+			return nullptr;
 		}
 
 		void initialize_struct_map() {
@@ -1528,6 +1538,40 @@ namespace {
 			return NULL;
 		}
 
+		bool check_keep_function(const std::string &function_name) {
+			std::string target_function_name = global_target_function->getName().str();
+			if (function_name == "main") {
+				return true;
+			}
+			if (target_function_name == function_name) {
+				return true;
+			}
+			json c_function_list = fetch_function_list("fn_type_map_c.json");
+			json rust_function_list = fetch_function_list("fn_type_map.json");
+			if (c_function_list == nullptr && rust_function_list == nullptr) {
+				return true;
+			}
+			if (c_function_list.contains(function_name) || rust_function_list.contains(function_name)) {
+				return false;
+			}
+			return true;
+		}
+
+		void traverse_and_remove_function(Module &M) {
+			if (!is_rust) {
+				return;
+			}
+			for (Function &F : M) {
+				if (F.isDeclaration() || F.isIntrinsic()) {
+					continue;
+				}
+				if (!check_keep_function(exec_rustfilt(F.getName().str()))) {
+					F.deleteBody();
+					F.setLinkage(GlobalValue::ExternalLinkage);
+				}
+			}
+		}
+
 		PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
 			FunctionType *func_type = FunctionType::get(PointerType::get(Type::getInt8Ty(M.getContext()), 0), IntegerType::get(M.getContext(), 64), 0);
 			Function *func = Function::Create(func_type, Function::ExternalLinkage, "malloc", M);
@@ -1535,6 +1579,7 @@ namespace {
 			create_klee_function_decls(M);
 			remove_unneeded_functions(M);
 			symbolize_function_args_and_invoke(M);
+			traverse_and_remove_function(M);
 			convert_function_calls(M);
 			convert_global_const(M);
 			//M.dump();
