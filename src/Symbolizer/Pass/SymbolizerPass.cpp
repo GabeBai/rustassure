@@ -1322,6 +1322,25 @@ namespace {
 						}
 					}
 				}
+				if (auto *BC = dyn_cast<BitCastInst>(U)) {
+					Type *dstTY = BC->getDestTy();
+					if (PointerType *inner_pointer_ty = dyn_cast<PointerType>(dstTY)) {
+						if (StructType *structTy = dyn_cast<StructType>(inner_pointer_ty->getPointerElementType())) {
+							if (!(structTy->isLiteral())) {
+								std::string struct_name = structTy->getName().str();
+								if (struct_name.find("::Some") != std::string::npos) {
+									for (User *U : BC->users()) {
+										if (auto *GEP = dyn_cast<GetElementPtrInst>(U)) {
+											if (GEP->getPointerOperand()) {
+												return GEP->getType();
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 
 			}
 			return NULL;
@@ -1460,6 +1479,22 @@ namespace {
 						return target_type;
 					}
 				}
+				if (PointerType *pointer_type = dyn_cast<PointerType>(arg.getType())) {
+					if (StructType *struct_type = dyn_cast<StructType>(pointer_type->getPointerElementType())) {
+						if (!(struct_type->isLiteral())) {
+							std::string struct_name = struct_type->getName().str();
+							if (struct_name.find("core::option") != std::string::npos) {
+								Type *target_type = check_struct_pointer(M, arg);
+								//check struct type
+								if (target_type) {
+									return target_type;
+								}
+							}
+						}
+					}
+				}
+
+
 				//check function pointer type
 				if (check_argument_function_ptr(std::to_string(index))) {
 					return NULL;
