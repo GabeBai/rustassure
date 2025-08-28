@@ -1,96 +1,21 @@
 import os
-import re
 import csv
-import argparse
 import subprocess
-
+import sys
+import re
 from sympy import false
 
-
-def tokenize_by_underscore(s: str) -> set:
-    lower_s = s.lower()
-    replaced = lower_s.replace('_', ' ')
-    tokens = replaced.split()
-    return set(tokens)
-
-
-def compare_strings(filename_without_ext: str, function_name: str) -> bool:
-
-    def normalize(s: str) -> str:
-        return ''.join(c.lower() for c in s if c != '_')
-
-
-    norm_str1 = normalize(filename_without_ext)
-    norm_str2 = normalize(function_name)
-    if norm_str1 == norm_str2:
-        return True
-    
-    file_tokens = tokenize_by_underscore(filename_without_ext)
-    func_tokens = tokenize_by_underscore(function_name)
-
-    for token in func_tokens:
-        if token not in file_tokens:
-            return False
-    return True
-
-
-def find_function_bodies(content: str, target_func_name: str):
-
-
-
-    func_pattern = re.compile(
-        r"\b(?:pub\s*\([^)]*\)\s*|pub\s+|async\s+|const\s+|unsafe\s+)*fn\s+([A-Za-z0-9_]+)\s*"
-    )
-
-    bodies = []
-    search_pos = 0
-
-    while True:
-        match = func_pattern.search(content, search_pos)
-        if not match:
-            break
-
-        captured_func_name = match.group(1)  
-
-
-        if compare_strings(target_func_name, captured_func_name):
-            brace_start = content.find('{', match.end())
-            if brace_start == -1:
-                search_pos = match.end()
-                continue
-
-            brace_count = 0
-            end_index = brace_start
-            for i in range(brace_start, len(content)):
-                if content[i] == '{':
-                    brace_count += 1
-                elif content[i] == '}':
-                    brace_count -= 1
-
-                if brace_count == 0:
-                    end_index = i
-                    break
-
-            function_body = content[brace_start:end_index + 1]
-            bodies.append(function_body)
-            search_pos = end_index + 1
-        else:
-            search_pos = match.end()
-
-    return bodies
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from fetchTargetFunction import *
 
 def count_unsafe_lines_in_body(body):
     total_unsafe_lines = 0
-    has_unsafe_block = False
 
     index = 0
     while True:
         unsafe_pos = body.find("unsafe {", index)
         if unsafe_pos == -1:
-            break  
-
-        has_unsafe_block = True
+            break
         brace_start = body.find('{', unsafe_pos)
         if brace_start == -1:
             break 
@@ -113,7 +38,7 @@ def count_unsafe_lines_in_body(body):
         total_unsafe_lines += block_lines
         index = block_end + 1
 
-    return has_unsafe_block, total_unsafe_lines
+    return total_unsafe_lines
 
 def compile_rust_file(file_path):
     compile_cmd = ["rustc", "-A", "dead_code", "--emit=llvm-bc", "--crate-type=lib", file_path]
@@ -134,6 +59,14 @@ def calculate_percentage(numerator, denominator):
     percentage = (numerator / denominator) * 100
     return f"{percentage:.2f}%"
 
+def has_unsafe_keyword(src_bytes: bytes, func_name: str) -> bool:
+    text = src_bytes.decode("utf-8", errors="ignore")
+    pattern = rf'\b(?:pub\s+)?(?:unsafe\s+)?(?:extern\s+\"[^\"]+\"\s+)?fn\s+{re.escape(func_name)}\b'
+    m = re.search(pattern, text)
+    if m:
+        return "unsafe" in m.group(0)
+    return False
+
 def analyze_rs_files(root_dir, csv_file_path, disable_write = false):
 
     if disable_write:
@@ -143,29 +76,25 @@ def analyze_rs_files(root_dir, csv_file_path, disable_write = false):
             for file in files:
                 if file.endswith('.rs'):
                     file_path = os.path.join(root, file)
-                    func_name = os.path.splitext(file)[0]
+                    file_name = os.path.splitext(file)[0]
+
+                    src = open(file_path, 'rb').read()
+                    func_name = find_target_rust_function(src, file_name)
 
                     if not compile_rust_file(file_path):
                         print(f"{func_name} compile fail")
                         continue
 
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
+                    function_body = find_function_body(src, func_name)
 
-                    function_bodies = find_function_bodies(content, func_name)
+                    total_lines = len(function_body.split("\n"))
+                    if has_unsafe_keyword(src, func_name):
+                        unsafe_lines = total_lines
+                    else:
+                        unsafe_lines = count_unsafe_lines_in_body(function_body)
 
-                    total_unsafe_lines_all = 0
-                    has_unsafe_any = False
-                    total_lines_all = sum(len(body.split("\n")) for body in function_bodies)
-
-                    for body in function_bodies:
-                        has_unsafe_block, unsafe_lines = count_unsafe_lines_in_body(body)
-                        if has_unsafe_block:
-                            has_unsafe_any = True
-                        total_unsafe_lines_all += unsafe_lines
-
-                    overall_unsafe_sum += total_unsafe_lines_all
-                    overall_lines_sum += total_lines_all
+                    overall_unsafe_sum += total_lines
+                    overall_lines_sum += unsafe_lines
             return overall_lines_sum, overall_unsafe_sum, overall_lines_sum - overall_unsafe_sum
 
     else:
@@ -176,74 +105,47 @@ def analyze_rs_files(root_dir, csv_file_path, disable_write = false):
             overall_unsafe_sum = 0
             overall_lines_sum = 0
 
-
             for root, dirs, files in os.walk(root_dir):
                 for file in files:
                     if file.endswith('.rs'):
                         file_path = os.path.join(root, file)
-                        func_name = os.path.splitext(file)[0]
+                        file_name = os.path.splitext(file)[0]
+
+                        src = open(file_path, 'rb').read()
+                        func_name = find_target_rust_function(src, file_name)
 
                         if not compile_rust_file(file_path):
                             print(f"{func_name} compile fail")
                             continue
 
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            content = f.read()
+                        function_body = find_function_body(src, func_name)
+                        if not function_body:
+                            writer.writerow([func_name, "notfound", "notfound", "notfound"])
+                            continue
 
-                        function_bodies = find_function_bodies(content, func_name)
-
-                        if not function_bodies:
-                            writer.writerow([func_name, False, 100000000])
+                        total_lines = len(function_body.split("\n"))
+                        if has_unsafe_keyword(src, func_name):
+                            unsafe_lines = total_lines
                         else:
-                            total_unsafe_lines_all = 0
-                            has_unsafe_any = False
-                            total_lines_all = sum(len(body.split("\n")) for body in function_bodies)
+                            unsafe_lines = count_unsafe_lines_in_body(function_body)
 
-                            for body in function_bodies:
-                                has_unsafe_block, unsafe_lines = count_unsafe_lines_in_body(body)
-                                if has_unsafe_block:
-                                    has_unsafe_any = True
-                                total_unsafe_lines_all += unsafe_lines
-
-                            writer.writerow([
-                                func_name,
-                                has_unsafe_any,
-                                total_unsafe_lines_all,
-                                total_lines_all,
-                                calculate_percentage(total_unsafe_lines_all, total_lines_all)
-                            ])
-                            overall_unsafe_sum += total_unsafe_lines_all
-                            overall_lines_sum += total_lines_all
+                        writer.writerow([
+                            func_name,
+                            unsafe_lines,
+                            total_lines,
+                            calculate_percentage(unsafe_lines, total_lines)
+                        ])
+                        overall_unsafe_sum += unsafe_lines
+                        overall_lines_sum += total_lines
                 overall_percentage = calculate_percentage(overall_unsafe_sum, overall_lines_sum)
 
                 writer.writerow([
                     "Overall",
-                    "",
                     overall_unsafe_sum,
                     overall_lines_sum,
                     overall_percentage
                 ])
 
-
 if __name__ == "__main__":
-    for dir_name in os.listdir("test"):
-        level_one_path = os.path.join("test", dir_name)
-
-        if not os.path.isdir(level_one_path):
-            continue
-
-        for sub_dir_name in os.listdir(level_one_path):
-            level_two_path = os.path.join(level_one_path, sub_dir_name)
-
-
-
-            if not os.path.isdir(level_two_path):
-                continue
-
-            for sub_dir in os.listdir(level_two_path):
-                level_three_path = os.path.join(level_two_path, sub_dir)
-                if sub_dir.startswith("individual"):
-                    analyze_rs_files(
-                        root_dir=level_three_path,
-                        csv_file_path=level_three_path + "unsafe_calculate" + ".csv")
-                    break
+    rust_test_case_directory = "./test"
+    analyze_rs_files(rust_test_case_directory, "./result.csv", False)

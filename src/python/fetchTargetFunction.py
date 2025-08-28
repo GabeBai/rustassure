@@ -102,15 +102,35 @@ def find_target_rust_function(src_bytes: bytes, file_name: str) -> str:
     visit(root)
     return best_name
 
+def find_function_body(src_bytes: bytes, name: str):
+    parser = Parser(RUST)
+    tree = parser.parse(src_bytes)
+
+    def dfs(node):
+        if node.type == "function_item":
+            name_node = node.child_by_field_name("name")
+            if name_node:
+                ident = src_bytes[name_node.start_byte:name_node.end_byte].decode("utf-8")
+                if ident == name:
+                    body_node = node.child_by_field_name("body")
+                    if body_node:
+                        return src_bytes[body_node.start_byte:body_node.end_byte].decode("utf-8")
+                    return ""
+
+        for i in range(node.child_count):
+            res = dfs(node.child(i))
+            if res is not None:
+                return res
+        return None
+
+    return dfs(tree.root_node)
 
 if __name__ == '__main__':
     intput_path = ""
     intput_name = ""
     language = ""
     if len(sys.argv) < 2:
-        input_path = "/Users/gab/repo/Rust/rustify-validator/src/Symbolizer/tempCase/r.rs"
-        input_name = "r"
-        language = "Z"
+        input_path = ""
     else:
         input_path = sys.argv[1]
         input_name = sys.argv[2]
