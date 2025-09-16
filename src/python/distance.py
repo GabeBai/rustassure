@@ -378,7 +378,7 @@ def compare_and_export_csv(c_dict,
                 mapped_c_key = replace_arg_index(mapped_c_key, new_argument_name_suffix)
 
         c_dir = os.path.join(c_base, c_key)
-        c_files = sorted(glob.glob(os.path.join(c_dir, "*.dot")))
+        c_files = sorted(glob.glob(os.path.join(glob.escape(c_dir), "*.dot")))
 
 
         found_match_input_directory = False
@@ -458,7 +458,7 @@ def compare_and_export_csv(c_dict,
         elif found_match_input_directory:
             print(f" c is {c_key}, rust is {best_r_key}")
 
-            rust_dir = os.path.join(rust_base, best_r_key)
+            rust_dir = os.path.join(rust_base, glob.escape(best_r_key))
             rust_files = sorted(glob.glob(os.path.join(rust_dir, "*.dot")))
             if only_consider_struct:
                 edit_distance = max(calculate_distance(function_name,
