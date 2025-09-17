@@ -332,7 +332,7 @@ def compare_and_export_csv(c_dict,
                 if r_key.startswith(c_key_modified) and function_name in r_key:
                     matching_r_keys.append(r_key)
                 elif "ret_value" in c_key_modified:
-                    if "ret_value" in r_key and function_name in r_key:
+                    if "ret_value" in r_key and function_name == r_key:
                         matching_r_keys.append(r_key)
                 else:
                     slash_index = c_key.find('/')
