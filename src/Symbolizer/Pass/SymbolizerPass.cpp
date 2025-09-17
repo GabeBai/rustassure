@@ -1022,7 +1022,10 @@ namespace {
 				}
 			} else if (ArrayType* array_type = dyn_cast<ArrayType>(arg_value->getType()->getPointerElementType())) {
 				Type* element_type = array_type->getElementType();
-				for (unsigned int i = 0; i < array_type->getNumElements(); i++) {
+				//C array will decay to pointer but Rust slice does not
+				//for pointer, now we only print 1 bit...
+				//TODO: fix this..
+				for (unsigned int i = 0; i < 1; i++) {
 					Value* gep = Builder.CreateGEP(
 							array_type, 
 							arg_value, 
