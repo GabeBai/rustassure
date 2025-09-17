@@ -1,4 +1,5 @@
 from antlr4 import *
+from sympy import false
 
 from KqueryLexer import KqueryLexer 
 from KqueryParser import KqueryParser
@@ -474,6 +475,8 @@ version: '[' (update_list)? ']' '@' version
             return self.visit(ctx)
 
 def fetch_value(key, offset_map, G):
+    if not offset_map:
+        return None
     field = get_last_field_number(key)
     if field is None:
         return None
@@ -486,6 +489,120 @@ def fetch_value(key, offset_map, G):
 
     return find_target_value_node(G, offset)
 
+def post_process_offset_node(G: nx.DiGraph, offset_map):
+    for upd in list(G.nodes()):
+        if upd not in G.nodes:
+            continue
+        if G.nodes[upd].get('label') == 'ReadLSB' or G.nodes[upd].get('label') == 'Read':
+            succs = list(G.successors(upd))
+            if not succs:
+                continue
+            left_root = succs[0]
+            left_root_childs = list(G.successors(left_root))
+
+            right_root = succs[1]
+
+            if G.nodes[right_root].get('label').startswith("arg_value") and (not left_root_childs):
+                left_node_value = G.nodes[left_root].get('label')
+                if offset_map:
+                    has_found_offset = False
+                    for k, v in offset_map.items():
+                        if v == left_node_value:
+                            G.nodes[left_root]['label'] = k
+                            has_found_offset = True
+                            break
+
+                    if not has_found_offset:
+                        for k, v in offset_map.items():
+                            offset = int(left_node_value) - int(v)
+                            mod = offset % 12
+                            multiple = offset / 12
+                            if offset > 0 and mod == 0 and multiple > 0 and multiple < 4:
+                                G.nodes[left_root]['label'] = k + "." + str(int(multiple))
+                                break
+
+def strip_wrappers(s: str) -> str:
+    def skip_ws(t, i):
+        while i < len(t) and t[i].isspace():
+            i += 1
+        return i
+
+    def match_token(t, i, tok):
+        i = skip_ws(t, i)
+        if t.startswith(tok, i):
+            return i + len(tok)
+        return -1
+
+    def match_wrapper(t, i, tokens):
+        if i >= len(t) or t[i] != '(':
+            return -1
+        j = i + 1
+        j = skip_ws(t, j)
+        for tok in tokens:
+            j = match_token(t, j, tok)
+            if j == -1:
+                return -1
+        j = skip_ws(t, j)
+        return j
+
+    patterns = [
+        ("Extract", "w32", "0"),
+        ("SExt", "w64"),
+        ("SExt", "w32"),
+        ("ZExt", "w32"),
+        ("Extract", "w64", "0"),
+        ("SExt", "w128"),
+    ]
+
+    changed = True
+    while changed:
+        changed = False
+        i = 0
+        while i < len(s):
+            start = s.find('(', i)
+            if start == -1:
+                break
+
+            expr_start = -1
+            matched_len_tokens = 0
+            for toks in patterns:
+                pos = match_wrapper(s, start, toks)
+                if pos != -1:
+                    expr_start = pos
+                    matched_len_tokens = len(toks)
+                    break
+
+            if expr_start == -1:
+                i = start + 1
+                continue
+
+            depth = 0
+            j = start
+            while j < len(s):
+                if s[j] == '(':
+                    depth += 1
+                elif s[j] == ')':
+                    depth -= 1
+                    if depth == 0:
+                        break
+                j += 1
+            if j >= len(s):
+                i = start + 1
+                continue
+
+            expr_end = j
+            while expr_end > expr_start and s[expr_end - 1].isspace():
+                expr_end -= 1
+            replacement = s[expr_start:expr_end]
+
+            s = s[:start] + replacement + s[j+1:]
+            changed = True
+            i = max(0, start - 1)
+
+    return s
+
+def pre_process_expression(expression):
+    return strip_wrappers(expression)
 
 def convert_kquery_to_graph(expressions,
                             function_name,
@@ -500,7 +617,7 @@ def convert_kquery_to_graph(expressions,
     expression_index = 0
     for i in range(len(expressions)):
         Node.reset_node_id()
-        expression = expressions[i]
+        expression = pre_process_expression(expressions[i])
     
         input_stream = InputStream(expression)
         lexer = KqueryLexer(input_stream)
@@ -510,7 +627,7 @@ def convert_kquery_to_graph(expressions,
         parser = KqueryParser(token_stream)
         
         tree = parser.prog()
-        # print(tree.toStringTree(recog=parser))
+        print(tree.toStringTree(recog=parser))
 
         # Create and apply the custom visitor
         print(f"processing expression {i}")
@@ -522,7 +639,10 @@ def convert_kquery_to_graph(expressions,
             print(f"error expression {expression}")
             raise RuntimeError(f"error in expression {i}") from e
         print(f"finish processing expression {i}")
+        post_process_offset_node(visitor.G, offset_map)
         removed_offset = simplify_update_list(visitor.G)
+
+        # TODO : remove this logic.. we can remove extension by string operation
         removed = process_graph(visitor.G)
         removed_zext = process_graph_ZExt(visitor.G)
         removed_sub = process_graph_sub(visitor.G)
@@ -554,14 +674,13 @@ def convert_kquery_to_graph(expressions,
             expression_index += 1
 
 if __name__ == "__main__":
-    kquery_expression = r"""(ReadLSB w32 0 U0:[(Extract w32 0 (Add w64 18446605706430775297
-                                            N0:(Add w64 (ReadLSB w64 16 arg_value_0)
-                                                        (ReadLSB w64 24 arg_value_0))))=(Read w8 1 arg_value_1),
-                    (Extract w32 0 (Add w64 18446605706430775296 N0))=(Read w8 0 arg_value_1),
-                    3=(Read w8 3 arg_value_0),
-                    2=(Read w8 2 arg_value_0),
-                    1=(Read w8 1 arg_value_0),
-                    0=(Read w8 0 arg_value_0)] @ const_arr161)"""
+    kquery_expression = r"""(And w32 (AShr w32 (Extract w32 0 (Extract w64 0 (Add w128 (SExt w128 (Extract w64 0 (Mul w128 4
+                                                                                                (SExt w128 N0:(Mul w64 5184443
+                                                                                                                       (SExt w64 (AShr w32 (ReadLSB w32 0 arg_value_0)
+                                                                                                                                           7)))))))
+                                                            (SExt w128 (AShr w64 N0 22)))))
+                    25)
+          1)"""
 
     expressions = [
         kquery_expression,
@@ -574,20 +693,11 @@ if __name__ == "__main__":
         "0": "0",
         "1": "4",
         "2": "8",
-        "3": "16",
-        "4": "24",
-        "5": "32",
-        "6": "40",
-        "7": "44",
-        "8": "45",
-        "9": "46",
-        "10": "48",
-        "11": "56",
-        "12": "64",
-        "13": "72",
-        "14": "80",
-        "15": "88"
-  }
+        "3": "24",
+        "4": "798",
+        "5": "846",
+        "6": "44"
+    }
 
     convert_kquery_to_graph(expressions, "abc", "arg_value_0.field_0", set(), json_map, base_address)
 

@@ -35,7 +35,7 @@ class Node:
         if offset:
             return offset
         else:
-            return value
+            return "klee_offset"
 
     def __init__(self, value, type_value, G):
         # We maintain a reference to the networkx graph in each Node

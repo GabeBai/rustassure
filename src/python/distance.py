@@ -116,10 +116,6 @@ def matchNodes(node1,
         if function_name.startswith("csv_strerror"):
             if label1 in ["8", "16"] and label2 in ["8", "16"]:
                 return True
-        if function_name.startswith("csv"):
-            return special_handle_csv(c_is_target, label1, label2)
-        if function_name.startswith("opng_initialize"):
-            return special_handle_opng_initialize(c_is_target, label1, label2)
         if function_name in field_map:
             return special_handle_map(c_is_target, function_name, label1, label2)
         return False
@@ -177,80 +173,6 @@ def special_handle_map(c_is_target, function_name, label1, label2):
                 return True
             else:
                 return False
-    return False
-
-
-def special_handle_opng_initialize(c_is_target, label1, label2):
-    memory_offset_map = {
-        "68" : "116",
-        "72" : "120",
-        "76" : "124",
-        "80" : "128",
-    }
-    if c_is_target:
-        if label1 in memory_offset_map:
-            map_offset = memory_offset_map[label1]
-            if isinstance(map_offset, str):
-                if label2 == map_offset:
-                    return True
-                else:
-                    return False
-            else:
-                if label2 in map_offset:
-                    return True
-                else:
-                    return False
-    else:
-        if label2 in memory_offset_map:
-            map_offset = memory_offset_map[label2]
-            if isinstance(map_offset, str):
-                if label1 == map_offset:
-                    return True
-                else:
-                    return False
-            else:
-                if label1 in map_offset:
-                    return True
-                else:
-                    return False
-    return False
-
-def special_handle_csv(c_is_target, label1, label2):
-    memory_offset_map = {
-        "24" : "40",
-        "32" : "48",
-        "40" : "56",
-        "44" : "60",
-        "45" : "61",
-        "46" : "62",
-        "64" : ["95", "63"]
-    }
-    if c_is_target:
-        if label1 in memory_offset_map:
-            map_offset = memory_offset_map[label1]
-            if isinstance(map_offset, str):
-                if label2 == map_offset:
-                    return True
-                else:
-                    return False
-            else:
-                if label2 in map_offset:
-                    return True
-                else:
-                    return False
-    else:
-        if label2 in memory_offset_map:
-            map_offset = memory_offset_map[label2]
-            if isinstance(map_offset, str):
-                if label1 == map_offset:
-                    return True
-                else:
-                    return False
-            else:
-                if label1 in map_offset:
-                    return True
-                else:
-                    return False
     return False
 
 def traverse_two_levels_rust():
@@ -319,8 +241,6 @@ def load_graph_from_dot(file_path):
     except Exception as e:
         print(f"Error loading graph from {file_path}: {e}")
         return None
-
-
 
 def calculate_distance(function_name, input_files_a,
                        input_files_b, c_is_target, c_directory_name, rust_directory_name, only_consider_struct):

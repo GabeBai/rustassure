@@ -114,7 +114,7 @@ def lookup_arg_value(s: str, json_map: dict):
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         result, all_address = process_sym_values("text.txt")
-        json_map = load_json_map("text.json")
+        json_map = {"a" : "b"}
     else:
         directory_name = sys.argv[2]
         if os.path.exists(directory_name):
