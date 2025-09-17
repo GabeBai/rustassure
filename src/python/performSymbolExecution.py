@@ -68,6 +68,25 @@ def libcsv_gpt_4o():
     start_process(subdirectory_path, Model.gpt_4o)
     return subdirectory_path
 
+def libopenaptx_RustAssure():
+    # original version
+    source_dir = "inputs-complex/libopenaptx/gpt4o"
+    function_name = inspect.currentframe().f_code.co_name
+    timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
+    directory_name = f"{function_name}_{timestamp}"
+    subdirectory_path = prepare_directory(source_dir, directory_name)
+    start_process(subdirectory_path, Model.gpt_4o)
+    return subdirectory_path
+
+def libopenaptx_FLUORINE():
+    # original version
+    source_dir = "inputs-complex/libopenaptx/flourine"
+    function_name = inspect.currentframe().f_code.co_name
+    timestamp = datetime.now().strftime("%Y%m%d_%Y-%m-%d_%H-%M-%S")
+    directory_name = f"{function_name}_{timestamp}"
+    subdirectory_path = prepare_directory(source_dir, directory_name)
+    start_process(subdirectory_path, Model.gpt_4o)
+    return subdirectory_path
 
 def libcsv_gpt_3_5_turbo():
     print("Executing libcsv task with GPT-3.5-turbo...")
@@ -323,8 +342,13 @@ if __name__ == "__main__":
         directory = perform_general_execution(args.src)
         process_output(directory, "custom", "custom")
     else:
-        codebases = ["libcsv", "libbmp", "optipng", "url_parser", "u8c"]
+        codebases = ["libcsv", "libbmp", "optipng", "url_parser", "u8c", "libopenaptx"]
         models = ["gpt-4o", "gpt-3_5-turbo", "gpt-4o-mini", "claude-3-5-sonnet"]
+        methods = ["RustAssure", "FLUORINE"]
         selected_codebase = select_option(codebases, "Select a Codebase:")
-        selected_model = select_option(models, "Select a GPT Model:")
-        execute_task(selected_codebase, selected_model)
+        if selected_codebase == "libopenaptx":
+            selected_method = select_option(methods, "Select a Method:")
+            execute_task(selected_codebase, selected_method)
+        else:
+            selected_model = select_option(models, "Select a GPT Model:")
+            execute_task(selected_codebase, selected_model)
