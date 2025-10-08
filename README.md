@@ -1,6 +1,6 @@
-# C2Rust Translation Validator
+# RustAssure: Differential Symbolic Testing for LLM-Transpiled C-to-Rust Code
 
-This is the repository for the `rustify-validator` tool to compute the semantic similarity between the original C code and the translation. 
+This is the repository for the tool to compute the semantic similarity between the original C code and the translation. 
 
 The overview of this tool is as follows. The script in `src/python/translationValidator.py` kicks off the process. 
 
