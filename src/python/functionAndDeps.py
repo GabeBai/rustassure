@@ -39,12 +39,17 @@ class FunctionAndDependencies:
         # The types of feedback (or additional context)
         self.structsWithUsageInfo = {} # {name: (startIndex, endIndex)}
         self.previouslyTranslatedFunctions = "" # Used for the merged modes
+        self.dependFunctions = []
+        self.rustFunctionSignature = ""
         
     def setFuncCodeLines(self, funcCodeLines):
         self.funcCodeLines = funcCodeLines
 
     def setTypeDeclDefCodeLines(self, typeDeclDefCodeLines):
         self.typeDeclDefCodeLines = typeDeclDefCodeLines
+
+    def setDepndFunctions(self, depenfunctions):
+        self.dependFunctions = depenfunctions
 
     def addTypeUsage(self, typeName, typeUsageCodeLine):
         if typeName not in self.typeUsageCodeLinesMap:

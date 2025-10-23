@@ -10,7 +10,6 @@ import tiktoken
 import argparse
 import shutil
 import threading
-import time
 
 from datetime import datetime
 
@@ -19,8 +18,6 @@ from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translat
     Claude_3_5_Translator, Gpt4MiniTranslator
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 from typedefFilter import TypedefFilter
-from progPropertyEvaluator import ProgPropertyEvaluator
-from llvmBitcodeEmitter import emitLLVMBitcodes
 
 
 CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell it to continue
@@ -69,7 +66,7 @@ def createTranslator(logger, useGpt4, useGpt4mini, useClaude, translatorMode, fi
                 systemPrompt, translatorMode) 
     return translator
 
-def getFunctions(logger, extractor, srcPath, singleFileName, fileList, functionOrderList = []): # The second time getFunctions is called fileList is empty
+def getFunctions(logger, extractor, srcPath, singleFileName, fileList, functionOrderList = [], oldmap = None): # The second time getFunctions is called fileList is empty
     fileFuncMap = {}
     allFiles = glob.iglob(os.path.join(srcPath, "**/*.i"), recursive=True)
 
@@ -85,7 +82,7 @@ def getFunctions(logger, extractor, srcPath, singleFileName, fileList, functionO
             if singleFileName not in filename and "individual-funcs" not in srcPath:
                 continue
         logger.debug("Extracting function bodies for file: %s", filename)
-        funcMap = extractor.extractFuncsAndDeps(filename, functionOrderList)
+        funcMap = extractor.extractFuncsAndDeps(filename, functionOrderList, oldmap)
         fileFuncMap.update(funcMap)
 
     # The second time we refresh the funcMap with the individual
@@ -194,19 +191,13 @@ def processCodebase(codebasePath,
     """
 
     # Refresh from the individual function files
-    funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, []) # No filtering using file-list this time because we have already filtered
+    funcMap = getFunctions(logger, extractor, individualFuncPath, singleFileName, [], [], funcMap) # No filtering using file-list this time because we have already filtered
 
     extractor.extractGlobalTypeUsageDetails(individualFuncPath, funcMap)
 
     translator.preanalyze(funcMap, individualFuncPath)
     if not preanalysisOnly:
-        translator.translateAll(funcMap, individualFuncPath, multiThreading)
-
-    # emitLLVMBitcodes(individualFuncPath, logger)
-
-    # Invoke the Program Property Evaluator (commented for now)
-    # PPE = ProgPropertyEvaluator(logger, individualFuncPath)
-    # PPE.compareAll()
+        translator.translateAll(funcMap, individualFuncPath, False)
 
     # Let's copy over the log file too to the individualFuncPath
     for handler in logger.handlers:
@@ -261,11 +252,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/libcsv", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
-    parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
+    parser.add_argument("--use-gpt4", type=bool, default=True, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")
     parser.add_argument("--use-gpt4mini", type=bool, default=False, help="Use GPT4Mini")
 
-    parser.add_argument("--translator-mode", type=str, default="feedback", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--translator-mode", type=str, default="struct-fn-replay", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")

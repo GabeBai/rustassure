@@ -201,7 +201,15 @@ class FunctionAndDepsExtractor:
                                 # Add it
                                 FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.add(useToken)
 
-    def extractFuncsAndDeps(self, filename, functionListOrder):
+    def extractDependFunctions(self, functionName, functionBody, allFunctions):
+        result = []
+        for function in allFunctions:
+            functionCall = function + "("
+            if functionCall in functionBody and function != functionName:
+                result.append(function)
+        return result
+
+    def extractFuncsAndDeps(self, filename, functionListOrder, oldmap):
         """
         Use Universal ctags to get the start and end line numbers for
         1. function definitions [f]
@@ -279,6 +287,17 @@ class FunctionAndDepsExtractor:
             functionAndDeps.setTypeDeclDefCodeLines("".join(typeDeclDefCode))
 
             functionAndDeps.setFuncCodeLines("".join(fileContents[funcRange.start : funcRange.end + 1]))
+
+            if oldmap:
+                dependencyFunctions = oldmap[funcSym].dependFunctions
+            else:
+                dependencyFunctions = self.extractDependFunctions(funcSym,
+                                                                  functionAndDeps.funcCodeLines,
+                                                                  fileRanges.funcRangesMap)
+
+            functionAndDeps.setDepndFunctions(dependencyFunctions)
+
+            print(f"[gabb]{funcSym} : {dependencyFunctions}")
             funcMap[funcSym] = functionAndDeps
             # self.logger.info(functionAndDeps.typeDeclDefCodeLines)
             # self.logger.info(functionAndDeps.funcCodeLines)
