@@ -395,7 +395,7 @@ class Translator:
             trialCount = 0
             err = ""
             while True:
-                request = "Please translate the struct in " + self.srcLang + " to " + self.dstLang + ". Please try to use safe and idiomatic Rust. After the struct definition, I will provide some sample uses of the struct enclosed in /* and */. Please consider them when translating. Reply only with the Rust code, no English words needed. Please do NOT add a main function.\n"
+                request = "Please translate the struct in " + self.srcLang + " to " + self.dstLang + ". Please try to use safe and idiomatic Rust. After the struct definition, I will provide some sample uses of the pointer fields of struct enclosed in /* and */. Please consider them when translating and try to generate more idiomatic Rust code. Reply only with the Rust code, no English words needed. Please do NOT add a main function.\n"
                 request = request + "\n".join(structWithUsageInfo.cCode)
                 request = request + "/*\n"
                 for usage in structWithUsageInfo.usageList:

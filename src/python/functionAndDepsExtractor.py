@@ -200,6 +200,8 @@ class FunctionAndDepsExtractor:
                             if fieldName in useToken:
                                 # Add it
                                 FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.add(useToken)
+                    else:
+                        FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.add(use)
 
     def extractDependFunctions(self, functionName, functionBody, allFunctions):
         result = []

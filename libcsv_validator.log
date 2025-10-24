@@ -1,0 +1,1 @@
+2025-10-23 23:01:16,541 - translator_logger - INFO - Command line options: Namespace(src='./inputs-complex/libcsv', preanalysis_only=False, use_gpt4=False, use_claude=False, use_gpt4mini=False, use_gpto3mini=True, translator_mode='struct-fn-replay', fine_tuned_model='', single_file_name='', dir_prefix='', file_list_file='', multithreading=True)
