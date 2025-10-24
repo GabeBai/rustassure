@@ -15,7 +15,7 @@ from datetime import datetime
 
 from loggerFactory import getLogger
 from gptTranslation import Gpt3Translator, Gpt4Translator, FineTunedGPT3Translator, TranslatorModes, Translator, \
-    Claude_3_5_Translator, Gpt4MiniTranslator
+    Claude_3_5_Translator, Gpt4MiniTranslator, Gpto3miniTranslator
 from functionAndDepsExtractor import FunctionAndDepsExtractor
 from typedefFilter import TypedefFilter
 
@@ -24,7 +24,13 @@ CONTINUATION_PROMPT_LEN = 200 # try repeating 200 chars of past response to tell
 MAX_THREADS=40
 
 
-def createTranslator(logger, useGpt4, useGpt4mini, useClaude, translatorMode, fineTunedModel):
+def createTranslator(logger,
+                     useGpt4,
+                     useGpt4mini,
+                     useClaude,
+                     useo3mini,
+                     translatorMode,
+                     fineTunedModel):
     # url = http://172.31.224.1:12345/v1 for LMStudio
     with open("system.prompt") as f:
         systemPrompt = f.read()
@@ -32,6 +38,14 @@ def createTranslator(logger, useGpt4, useGpt4mini, useClaude, translatorMode, fi
 
     if useGpt4mini:
         translator = Gpt4MiniTranslator(logger,
+                                        os.environ.get('OPENAI_KEY'),
+                                        "C",
+                                        "Rust",
+                                        systemPrompt,
+                                        translatorMode)
+        return translator
+    if useo3mini:
+        translator = Gpto3miniTranslator(logger,
                                         os.environ.get('OPENAI_KEY'),
                                         "C",
                                         "Rust",
@@ -119,6 +133,7 @@ def processCodebase(codebasePath,
                     useGpt4mini,
                     useClaude,
                     fineTunedModel,
+                    useo3mini,
                     preanalysisOnly,
                     translatorMode,
                     singleFileName,
@@ -136,7 +151,7 @@ def processCodebase(codebasePath,
     formattedDateTime = currentDatetime.strftime("%Y-%m-%d_%H-%M-%S")
     
     extractor = FunctionAndDepsExtractor(logger)
-    translator = createTranslator(logger, useGpt4, useGpt4mini, useClaude, translatorMode, fineTunedModel)
+    translator = createTranslator(logger, useGpt4, useGpt4mini, useClaude, useo3mini, translatorMode, fineTunedModel)
 
     fingerPrintModel(logger, codebasePath, translator)
 
@@ -252,10 +267,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
     parser.add_argument("--src", type=str, default="./inputs-complex/libcsv", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
-    parser.add_argument("--use-gpt4", type=bool, default=True, help="Use GPT4 instead of GPT3")
+    parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")
     parser.add_argument("--use-gpt4mini", type=bool, default=False, help="Use GPT4Mini")
-
+    parser.add_argument("--use-gpto3mini", type=bool, default=True, help="Use o3Mini")
+    
     parser.add_argument("--translator-mode", type=str, default="struct-fn-replay", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
@@ -280,6 +296,7 @@ if __name__ == "__main__":
                     args.use_gpt4mini,
                     args.use_claude,
                     args.fine_tuned_model,
+                    args.use_gpto3mini,
                     args.preanalysis_only,
                     Translator.getTranslatorMode(args.translator_mode),
                     args.single_file_name,

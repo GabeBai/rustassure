@@ -12,6 +12,10 @@ from more_itertools import unique_everseen
 from enum import Enum
 from functionAndDeps import FunctionAndDependencies
 
+GPT3_MINI_MODEL="o3-mini-2025-01-31"
+GPT3MINI_CTX_WINDOW_LEN=200000
+GPT3MINI_MAX_COMPLETION_TOKENS=100000
+
 GPT3_MODEL="gpt-3.5-turbo"
 GPT3_CTX_WINDOW_LEN=16*1024
 GPT3_MAX_COMPLETION_TOKENS=4096 # This is the max value you can put for max_tokens: the max size of a response, https://platform.openai.com/docs/models/gpt-4-turbo-and-gpt-4 and search for output tokens
@@ -179,29 +183,47 @@ class Translator:
 
     def getFingerPrint(self):
         self.logger.debug("Sending fingerprint request.")
-        completion = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "user", "content": "Hello, my favorite LLM!"}], 
-            max_tokens = self.maxCompletionTokens,
-            temperature = 0.0,
-            top_p = 0.1,
-            seed = 1000) # keeping seed same is supposed to improve determinism
+        # @Gabe : rewrite this....
+        if self.model != GPT3_MINI_MODEL:
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": "Hello, my favorite LLM!"}],
+                max_tokens = self.maxCompletionTokens,
+                temperature = 0.0,
+                top_p = 0.1,
+                seed = 1000) # keeping seed same is supposed to improve determinism
+        else:
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": "Hello, my favorite LLM!"}],
+                max_completion_tokens = self.maxCompletionTokens,
+                seed = 1000) # keeping seed same is supposed to improve determinism
         return (completion.model, completion.system_fingerprint)
 
 
 
     def getResponse(self, request):
         self.logger.debug("Sending request: %s", request)
-        completion = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": self.systemPrompt},
-                {"role": "user", "content": request}], 
-            max_tokens = self.maxCompletionTokens,
-            temperature = 0.0,
-            top_p = 0.1,
-            seed = 1000) # keeping seed same is supposed to improve determinism
+        if self.model != GPT3_MINI_MODEL:
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.systemPrompt},
+                    {"role": "user", "content": request}],
+                max_tokens = self.maxCompletionTokens,
+                temperature = 0.0,
+                top_p = 0.1,
+                seed = 1000) # keeping seed same is supposed to improve determinism
+        else:
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.systemPrompt},
+                    {"role": "user", "content": request}],
+                max_completion_tokens = self.maxCompletionTokens,
+                seed = 1000) # keeping seed same is supposed to improve determinism
         self.logger.debug("Raw response:")
         self.logger.debug(completion)
         response = completion.choices[0].message.content
@@ -779,6 +801,11 @@ class Translator:
                         incomingEdges[otherFunction] -= 1
                         if incomingEdges[otherFunction] == 0:
                             topoQueue.append(otherFunction)
+
+class Gpto3miniTranslator(Translator):
+    def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
+        super().__init__(logger, "", apiKey, GPT3MINI_CTX_WINDOW_LEN, GPT3MINI_MAX_COMPLETION_TOKENS,
+                srcLang, dstLang, GPT3_MINI_MODEL, systemPrompt, translatorMode)
 
 class Gpt3Translator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
