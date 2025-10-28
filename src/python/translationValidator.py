@@ -270,7 +270,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")
     parser.add_argument("--use-gpt4mini", type=bool, default=False, help="Use GPT4Mini")
-    parser.add_argument("--use-gpto3mini", type=bool, default=True, help="Use o3Mini")
+    parser.add_argument("--use-gpto3mini", type=bool, default=False, help="Use o3Mini")
     
     parser.add_argument("--translator-mode", type=str, default="struct-fn-replay", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")

@@ -763,6 +763,8 @@ class Translator:
 
                 while topoQueue:
                     funcSym = topoQueue.popleft()
+                    if funcSym == "csv_increase_buffer":
+                        print("123")
                     funcDepsObj = funcMap[funcSym]
                     funcDepsObj.previouslyTranslatedFunctions = previouslyTranslatedFunctions
                     (successFlag, translatedResult) = self.compileWithFeedback(funcSym, funcDepsObj, True)
