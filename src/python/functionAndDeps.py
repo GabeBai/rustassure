@@ -39,6 +39,7 @@ class FunctionAndDependencies:
         # The types of feedback (or additional context)
         self.structsWithUsageInfo = {} # {name: (startIndex, endIndex)}
         self.previouslyTranslatedFunctions = "" # Used for the merged modes
+        self.previouslyTranslatedFunctionSignatures = ""
         self.dependFunctions = []
         self.rustFunctionSignature = ""
         

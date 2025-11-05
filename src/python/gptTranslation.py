@@ -11,6 +11,7 @@ import threading
 from more_itertools import unique_everseen
 from enum import Enum
 from functionAndDeps import FunctionAndDependencies
+from createArgumentMap import fetch_rust_function_signature_with_byte
 
 GPT3_MINI_MODEL="o3-mini-2025-01-31"
 GPT3MINI_CTX_WINDOW_LEN=200000
@@ -413,7 +414,7 @@ class Translator:
                 if successFlag or trialCount > 5:
                     break
 
-    def compileWithFeedback(self, funcName, funcDepsObj, dependencyTranslate = False):
+    def compileWithFeedback(self, funcName, funcDepsObj, contextStructs, dependencyTranslate = False, useFunctionSignature = True):
         prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
 
         exitNow = False
@@ -440,11 +441,14 @@ class Translator:
 
         funcSrc = funcDepsObj.typeDeclDefCodeLines + "\n" + funcDepsObj.funcCodeLines
         if len(rustTranslatedStructs) > 0:
-            rustTranslatedStructs = rustTranslatedStructs + "*/\n"
+            rustTranslatedStructs = rustTranslatedStructs + "\n"
 
         previouslyTranslatedPrompt = ""
         if len(funcDepsObj.previouslyTranslatedFunctions) != 0:
-            previouslyTranslatedPrompt = "Please use the following previously translated Rust functions, included in /*// and //*/ for context. Please DO NOT include these already translated functions in your response.\n"
+            if not useFunctionSignature:
+                previouslyTranslatedPrompt = "Please use the following previously translated Rust functions, included in /*// and //*/ for context. Please DO NOT include these already translated functions in your response.\n"
+            else:
+                previouslyTranslatedPrompt = "For the dependency functions, please use the following function signatures, included in /*// and //*/ for context. Please DO NOT include these already translated functions in your response.\n"
         # Now we enter the compile + feedback loop
         if not dependencyTranslate:
             (successFlag, result) = self.compileAndRetryLoop(funcName,
@@ -455,13 +459,28 @@ class Translator:
                                                              funcDepsObj.previouslyTranslatedFunctions,
                                                              funcSrc)
         else:
-            (successFlag, result) = self.compileAndRetryLoopforDepency(funcName,
-                                                             prompt,
-                                                             rustTranslatedStructPrompt,
-                                                             rustTranslatedStructs,
-                                                             previouslyTranslatedPrompt,
-                                                             funcDepsObj.previouslyTranslatedFunctions,
-                                                             funcSrc)
+            if useFunctionSignature:
+                (successFlag, result) = self.compileAndRetryLoopforDepency(funcName,
+                                                                 prompt,
+                                                                 contextStructs,
+                                                                 rustTranslatedStructPrompt,
+                                                                 rustTranslatedStructs,
+                                                                 previouslyTranslatedPrompt,
+                                                                 funcDepsObj.previouslyTranslatedFunctionSignatures,
+                                                                 funcDepsObj.previouslyTranslatedFunctions,
+                                                                 funcSrc,
+                                                                 True)
+            else:
+                (successFlag, result) = self.compileAndRetryLoopforDepency(funcName,
+                                                                           prompt,
+                                                                           contextStructs,
+                                                                           rustTranslatedStructPrompt,
+                                                                           rustTranslatedStructs,
+                                                                           previouslyTranslatedPrompt,
+                                                                           "",
+                                                                           funcDepsObj.previouslyTranslatedFunctions,
+                                                                           funcSrc,
+                                                                           False)
         
         return (successFlag, result)
 
@@ -482,19 +501,24 @@ class Translator:
     def compileAndRetryLoopforDepency(self,
                                       funcName,
                                       prompt,
+                                      contextStructs,
                                       translatedStructPrompt,
                                       translatedStructs,
                                       translatedFuncPrompt,
+                                      translatedFuncsSignatures,
                                       translatedFuncs,
-                                      funcSrc):
+                                      funcSrc,
+                                      useFunctionSignature):
 
         request = prompt + "\n" + funcSrc + "\n";
         if len(translatedStructs) > 0:
-            request = request + "\n" + translatedStructPrompt + "/*\n" + translatedStructs + "\n*/\n"
-        if len(translatedFuncs) > 0:
-            request = request + "\n" + translatedFuncPrompt + "/*// \n" + translatedFuncs + "/*//\n";
+            request = request + "\n" + translatedStructPrompt + "\n" + translatedStructs + "\n"
+        if useFunctionSignature:
+            request = request + "\n" + translatedFuncPrompt + "/* \n" + translatedFuncsSignatures + "*/\n"
+        else:
+            request = request + "\n" + translatedFuncPrompt + "/* \n" + translatedFuncs + "*/\n"
         result = self.chunkAndSend(funcName, request)
-        completeResult = self.cleanCode(translatedFuncs + "\n" + result)
+        completeResult = self.cleanCode(contextStructs + "\n" + translatedFuncs + "\n" + result)
         (successFlag, err) = self.compile(completeResult)
         attempts = 0
         while not successFlag and attempts < COMPILATION_RETRIES:
@@ -504,7 +528,12 @@ class Translator:
             # Hack! We should probably use the messages API for both
             basicFeedback = "I got compilation error. Please help me fix or rewrite the target function" + "\n"
 
-            inputInformation = "The code is in the following :" + "\n" + completeResult + "\n"
+            if useFunctionSignature:
+                inputInformation = "The code is in the following :" + "\n" + self.cleanCode(result) + "\n"
+                inputInformation = inputInformation + "The function signature of the dependency functions is : " + "/* \n" + translatedFuncsSignatures + "*/\n"
+                inputInformation = inputInformation + "The dependency structs definition is  " + "/* \n" + contextStructs + "*/\n"
+            else:
+                inputInformation = "The code is in the following :" + "\n" + completeResult + "\n"
 
             targetFunction = "target function is " + funcName + "\n" + "Please do not change or modify any other functions" + "\n"
 
@@ -515,7 +544,7 @@ class Translator:
             otherInformation =  "Also DO NOT reply with anything other than the Rust code. No English words needed"
             request = basicFeedback + inputInformation + targetFunction + correctInformation + compileErrorInformation + otherInformation
             result = self.chunkAndSend(funcName, request)
-            completeResult = self.cleanCode(translatedFuncs + "\n" + result)
+            completeResult = self.cleanCode(contextStructs + "\n" + translatedFuncs + "\n" + result)
             (successFlag, err) = self.compile(completeResult)
             attempts = attempts + 1
         if attempts != 0:
@@ -665,7 +694,7 @@ class Translator:
             prompt = "Translate " + self.srcLang + " to " + self.dstLang + ". If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
             (successFlag, result) = self.compileAndRetryLoop(funcName, prompt,"",  "", "", "", funcSrc)
         elif self.translatorMode == TranslatorModes.CF_STRUCT_REPLAY:
-            (successFlag, result) = self.compileWithFeedback(funcName, funcDepsObj)
+            (successFlag, result) = self.compileWithFeedback(funcName, funcDepsObj, "")
         
         return result
 
@@ -704,7 +733,7 @@ class Translator:
         return incomingEdges, dependencyMaps
 
 
-    def translateAll(self, funcMap, individualFuncPath, multiThreading):
+    def translateAll(self, funcMap, individualFuncPath, multiThreading, useFunctionSinature = True):
         self.preTranslateComplexStructs()
         # If the translatorMode is per-function then
         if self.translatorMode in [TranslatorModes.BASIC_CHUNK_CHAIN, TranslatorModes.COMPILATION_FEEDBACK, TranslatorModes.CF_STRUCT_REPLAY]:
@@ -733,7 +762,7 @@ class Translator:
         else:
             if self.translatorMode == TranslatorModes.CF_SINGLE_REQUEST_MERGE:
                 mergedFuncDepsObj = self.mergeFuncDepsObjects(funcMap)
-                (successFlag, translatedResult) = self.compileWithFeedback("merged_files", mergedFuncDepsObj)
+                (successFlag, translatedResult) = self.compileWithFeedback("merged_files", mergedFuncDepsObj, "")
                 self.logger.debug("Translated entire library:")
                 self.logger.debug(translatedResult)
                 rs_path = os.path.join(individualFuncPath, "merged_funcs.rs")
@@ -741,9 +770,11 @@ class Translator:
                 # Get the merged header
                 previouslyTranslatedFunctions = ""
 
+                # Get the context structs
+                contextedStructs = ""
                 for structName in FunctionAndDependencies.structsWithUsageInfoMap:
                     structWithUsgaeInfo = FunctionAndDependencies.structsWithUsageInfoMap[structName]
-                    previouslyTranslatedFunctions = previouslyTranslatedFunctions + structWithUsgaeInfo.rustCode + "\n"
+                    contextedStructs = contextedStructs + "\n" + structWithUsgaeInfo.rustCode
 
                 """
                 Approach:
@@ -763,28 +794,25 @@ class Translator:
 
                 while topoQueue:
                     funcSym = topoQueue.popleft()
-                    if funcSym == "csv_increase_buffer":
-                        print("123")
                     funcDepsObj = funcMap[funcSym]
                     funcDepsObj.previouslyTranslatedFunctions = previouslyTranslatedFunctions
-                    (successFlag, translatedResult) = self.compileWithFeedback(funcSym, funcDepsObj, True)
 
-                    # @gabe : maybe we can have two different choice, one if the whole function context
-                    # another one is only the dependent function signature..
-                        # rust_function_name = find_target_rust_function(translatedResult.encode(), funcSym)
-                        # rust_function_signaure = fetch_rust_function_signature_with_byte(translatedResult.encode(), rust_function_name)
-                        # if rust_function_signaure and rust_function_signaure[0] == rust_function_name:
-                        #     rust_function_signaure = rust_function_signaure[1]
-                        # print(f"[signature]{rust_function_signaure}")
+                    allSignature = ""
+                    for dependentFunction in funcDepsObj.dependFunctions:
+                        rustSignature = funcMap[dependentFunction].rustFunctionSignature
+                        allSignature = allSignature + rustSignature + "\n"
 
-                    # A -> B
-                    # if A fail, what to do when we translate B?
+                    funcDepsObj.previouslyTranslatedFunctionSignatures = allSignature
+                    print(f"[gabb]{funcSym} : {allSignature}")
 
-                    # some of the compile error is hard to fix...
-                        # eg : quoted
-                        # if there is some kind of compile errors that LLM cannot fix and we need to use static analysis to fix?
+                    (successFlag, translatedResult) = self.compileWithFeedback(funcSym, funcDepsObj, contextedStructs, True, useFunctionSinature)
 
-                    # actually, fix is better than re-generated
+
+                    rust_function_name = find_target_rust_function(translatedResult.encode(), funcSym)
+                    rust_function_signaure = fetch_rust_function_signature_with_byte(translatedResult.encode(), rust_function_name)
+                    if rust_function_signaure and rust_function_signaure[0] == rust_function_name:
+                        rust_function_signaure = rust_function_signaure[1]
+                        funcDepsObj.rustFunctionSignature = rust_function_signaure
 
                     if successFlag:
                         self.logger.warn("Successfully added %s to the merged file.", funcSym)
@@ -803,6 +831,12 @@ class Translator:
                         incomingEdges[otherFunction] -= 1
                         if incomingEdges[otherFunction] == 0:
                             topoQueue.append(otherFunction)
+
+                translatedResult = contextedStructs + "\n" + previouslyTranslatedFunctions
+                rs_path = os.path.join(individualFuncPath, "merged_funcs.rs")
+                with open(rs_path, "w") as rs_file:
+                    rs_file.write(translatedResult)
+
 
 class Gpto3miniTranslator(Translator):
     def __init__(self, logger, apiKey, srcLang, dstLang, systemPrompt, translatorMode):
