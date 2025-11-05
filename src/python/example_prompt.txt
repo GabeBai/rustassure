@@ -1,0 +1,48 @@
+Translate the following C code to Rust, please try to use idiomatic Rust. Please use the following Rust struct.
+
+
+ int
+csv_increase_buffer(struct csv_parser *p)
+{
+if (p == ((void*)0)) return 0;
+if (p->realloc_func == ((void*)0)) return 0;
+size_t to_add = p->blk_size;
+void *vp;
+if ( p->entry_size >= (18446744073709551615UL) - to_add )
+to_add = (18446744073709551615UL) - p->entry_size;
+if (!to_add) {
+p->status = 3;
+return -1;
+}
+while ((vp = p->realloc_func(p->entry_buf, p->entry_size + to_add)) == ((void*)0)) {
+to_add /= 2;
+if (!to_add) {
+  p->status = 2;
+  return -1;
+}
+}
+p->entry_buf = vp;
+p->entry_size += to_add;
+return 0;
+}
+
+struct CsvParser {
+    pub pstate: i32,
+    pub quoted: i32,
+    pub spaces: usize,
+    pub entry_buf: Vec<u8>,
+    pub entry_pos: usize,
+    pub entry_size: usize,
+    pub status: i32,
+    pub options: u8,
+    pub quote_char: u8,
+    pub delim_char: u8,
+    pub is_space: Option<fn(u8) -> i32>,
+    pub is_term: Option<fn(u8) -> i32>,
+    pub blk_size: usize,
+    pub malloc_func: Option<fn(usize) -> *mut u8>,
+    pub realloc_func: Option<fn(*mut u8, usize) -> *mut u8>,
+    pub free_func: Option<fn(*mut u8)>,
+}
+
+
