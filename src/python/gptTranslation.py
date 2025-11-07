@@ -224,6 +224,7 @@ class Translator:
                     {"role": "system", "content": self.systemPrompt},
                     {"role": "user", "content": request}],
                 max_completion_tokens = self.maxCompletionTokens,
+                reasoning_effort = "medium",
                 seed = 1000) # keeping seed same is supposed to improve determinism
         self.logger.debug("Raw response:")
         self.logger.debug(completion)
@@ -396,12 +397,17 @@ class Translator:
             trialCount = 0
             err = ""
             while True:
-                request = "Please translate the struct in " + self.srcLang + " to " + self.dstLang + ". Please try to use safe and idiomatic Rust. After the struct definition, I will provide some sample uses of the pointer fields of struct enclosed in /* and */. Please consider them when translating and try to generate more idiomatic Rust code. Reply only with the Rust code, no English words needed. Please do NOT add a main function.\n"
+                request = "Please translate the struct in " + self.srcLang + " to " + self.dstLang + ". I will provide the example usage for the pointer in the struct. Please try to translate the type to more idiomatic type in Rust according to the usage in the C. please reply with only the Rust code and no english word need.\n"
+                request = request + "struct : " + "\n"
                 request = request + "\n".join(structWithUsageInfo.cCode)
-                request = request + "/*\n"
-                for usage in structWithUsageInfo.usageList:
-                    request = request + usage + "\n"
-                request = request + "*/\n"
+                request = request + "\n"    
+                request = request + "example usage: " + "\n"
+                for fieldName, useageList in structWithUsageInfo.usageList.items():
+                    for realuse in useageList:
+                        request = request + "" + structName + ":     "
+                        request = request + fieldName +":     "
+                        request = request + realuse + "\n"
+                request = request + "\n"
                 if len(err):
                     request = request + "Previous translation gave error \n" + err
                 result = self.chunkAndSend(structName, request)
@@ -820,7 +826,7 @@ class Translator:
                         with open(rs_path, "w") as rs_file:
                             rs_file.write(previouslyTranslatedFunctions + "\n" + translatedResult)
                         previouslyTranslatedFunctions = previouslyTranslatedFunctions + "\n" + translatedResult
-                        self.logger.info("[COMPILE AND LINK] Updated translation for merged_funcs.rs, %s", funcSym)
+                        # self.logger.info("[COMPILE AND LINK] Updated translation for merged_funcs.rs, %s", funcSym)
                     else:
                         self.logger.warn("[COMPILE AND LINK] Failed to add %s to the merged file.", funcSym)
                         rs_path = os.path.join(individualFuncPath, f"{funcSym}.rs")

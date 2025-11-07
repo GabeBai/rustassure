@@ -40,13 +40,15 @@ class TypedefFilter:
             self.logger.warn("Broke something during removing unused dependencies, but will continue...")
 
         while result.returncode != 0 and retryCount < 10:
-            self.logger.warn("Retrying command: %s", cmd)
+            # self.logger.warn("Retrying command: %s", cmd)
             result = subprocess.run(cmd, shell=True, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             retryCount = retryCount + 1
 
         if result.returncode == 0:
-            self.logger.info("Succeeded command: %s", cmd)
+            # self.logger.info("Succeeded command: %s", cmd)
+            print(f"succesfully run {cmd}")
         else:
+            print(f"fail run {cmd}")
             self.logger.info("Failed and bailing command: %s", cmd)
 
         cmd = f"sed -i 's/__extension__//g' "+srcFile

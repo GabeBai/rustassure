@@ -136,8 +136,9 @@ class FunctionAndDepsExtractor:
                 self.logger.info("Failed command and bailing: %s\nReturn code: %d\nStderr: %s\n", cmd, result.returncode, result.stderr)
                 continue
             else:
-                self.logger.debug("Output of %s", cmd)
-                self.logger.debug("%s", result.stdout)
+                # self.logger.debug("Output of %s", cmd)
+                # self.logger.debug("%s", result.stdout)
+                print(f"successfully run {cmd}")
 
 
             structNames = set()
@@ -178,8 +179,9 @@ class FunctionAndDepsExtractor:
                     self.logger.info("Failed command and bailing: %s", otherCmd)
                     continue
                 else:
-                    self.logger.debug("Output of %s", otherCmd)
-                    self.logger.debug("%s", result.stdout)
+                    # self.logger.debug("Output of %s", otherCmd)
+                    # self.logger.debug("%s", result.stdout)
+                    print(f"successfully run {cmd}")
 
                 # Let's parse
                 # output looks like this
@@ -199,9 +201,19 @@ class FunctionAndDepsExtractor:
                         for useToken in useTokens:
                             if fieldName in useToken:
                                 # Add it
-                                FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.add(useToken)
+                                if fieldName in FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList:
+                                    FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList[fieldName].append(useToken)
+                                else:
+                                    newSet = []
+                                    newSet.append(useToken)
+                                    FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList[fieldName] = newSet
                     else:
-                        FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList.add(use)
+                        if fieldName in FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList:
+                            FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList[fieldName].append(use)
+                        else:
+                            newSet = []
+                            newSet.append(use)
+                            FunctionAndDependencies.structsWithUsageInfoMap[structName].usageList[fieldName] = newSet
 
     def extractDependFunctions(self, functionName, functionBody, allFunctions):
         result = []

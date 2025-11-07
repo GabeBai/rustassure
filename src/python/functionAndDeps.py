@@ -6,7 +6,7 @@ class StructWithUsageInfo:
     def __init__(self, name, cCode):
         self.name = name
         self.cCode = cCode
-        self.usageList = set()
+        self.usageList = {}
         self.rustCode = ""
 
 class FunctionAndDependencies:
