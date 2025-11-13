@@ -578,7 +578,7 @@ class Translator:
 
                 # pat = re.compile(r"\bstruct\s+([A-Za-z_]\w*)\s*\{")
                 # struct_name = pat.search(translatedStructs)
-                request = ("The original function miss a necessary struct definition. please help me include that and make sure the result function can be compiled"
+                request = ("The original function miss a necessary struct definition. please help me include that and make sure the result function can be compiled. Please reply with only the Rust Code and no English word need"
                             + "\n" + "The original function is" + "\n" + result + "necessary struct : " + translatedStructs)
                 if len(translatedStructs) > 0:
                     request = request + "\n" + translatedStructPrompt + "/*\n" + translatedStructs + "\n*/\n"
@@ -611,7 +611,7 @@ class Translator:
             errorStr = self.extractError(err)
             # Hack! We should probably use the messages API for both 
             if "claude" in self.model:
-                feedback = "I got compilation error. If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition. Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
+                feedback = "I got compilation error. If the C source code does not have a main function, please do not add a main function. If the C source code does not have a called function defined, please do NOT add a dummy definition.\n"
 
             else:
                 feedback = "I got compilation error.\n" + str(errorStr) + "\n The original function was "
@@ -621,6 +621,8 @@ class Translator:
  
             if len(translatedFuncs) > 0:
                 request = request + "\n" + translatedFuncPrompt + "/*// \n" + translatedFuncs + "/*//\n";
+            
+            request = request + "\n Translate ONLY the provided function. Also DO NOT reply with anything other than the Rust code. No English words needed.\n"
 
             result = self.chunkAndSend(funcName, request)
             (successFlag, err) = self.compile(self.cleanCode(result + "\n" + translatedFuncs))

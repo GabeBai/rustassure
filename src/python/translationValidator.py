@@ -134,6 +134,7 @@ def processCodebase(codebasePath,
                     useClaude,
                     fineTunedModel,
                     useo3mini,
+                    useAllFunctions,
                     preanalysisOnly,
                     translatorMode,
                     singleFileName,
@@ -212,7 +213,7 @@ def processCodebase(codebasePath,
 
     translator.preanalyze(funcMap, individualFuncPath)
     if not preanalysisOnly:
-        translator.translateAll(funcMap, individualFuncPath, False)
+        translator.translateAll(funcMap, individualFuncPath, False, not useAllFunctions)
 
     # Let's copy over the log file too to the individualFuncPath
     for handler in logger.handlers:
@@ -265,14 +266,15 @@ Some common invocations:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
-    parser.add_argument("--src", type=str, default="./inputs-complex/input", help="The source directory that contains the preprocessed C files")
+    parser.add_argument("--src", type=str, default="./inputs-complex/cjson", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")
     parser.add_argument("--use-gpt4mini", type=bool, default=False, help="Use GPT4Mini")
     parser.add_argument("--use-gpto3mini", type=bool, default=True, help="Use o3Mini")
+    parser.add_argument("--use-allfunctions", type=bool, default=False, help="use all functions")
     
-    parser.add_argument("--translator-mode", type=str, default="struct-fn-replay", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
+    parser.add_argument("--translator-mode", type=str, default="cf-struct-replay", help="Controls how the input file and its dependencies are chunked to fit into the LLM model context window. See gptTranslation.py for more information.")
     parser.add_argument("--fine-tuned-model", type=str, default="", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--single-file-name", type=str, default="", help="The name of the single file that should be analyzed")
     parser.add_argument("--dir-prefix", type=str, default="", help="Add a prefix to the individual-funcs directory name")
@@ -297,6 +299,7 @@ if __name__ == "__main__":
                     args.use_claude,
                     args.fine_tuned_model,
                     args.use_gpto3mini,
+                    args.use_allfunctions,
                     args.preanalysis_only,
                     Translator.getTranslatorMode(args.translator_mode),
                     args.single_file_name,
