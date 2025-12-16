@@ -266,7 +266,7 @@ Some common invocations:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Translate C code to Rust and then validate the translation, because why not?")
-    parser.add_argument("--src", type=str, default="./inputs-complex/cjson", help="The source directory that contains the preprocessed C files")
+    parser.add_argument("--src", type=str, default="./inputs-complex/input/", help="The source directory that contains the preprocessed C files")
     parser.add_argument("--preanalysis-only", type=bool, default=False, help="Only run the preanalysis")
     parser.add_argument("--use-gpt4", type=bool, default=False, help="Use GPT4 instead of GPT3")
     parser.add_argument("--use-claude", type=bool, default=False, help="Use Claude")

@@ -6,6 +6,9 @@ import glob
 from openai import OpenAI
 import subprocess
 import traceback
+
+from sympy.codegen.cnodes import struct
+
 import util
 
 # sys.path.append("/home/tpalit/clang-llvm/llvm-project-14.0.0.src/clang/bindings/python/")
@@ -168,6 +171,15 @@ class FunctionAndDepsExtractor:
 
             # Then go over every other function
             for otherFunc in funcMap:
+
+                # we first fetch the struct usage in all functions
+                # right now we only use string match..
+                for structName in structNames:
+                    if structName not in FunctionAndDependencies.structsWithUsageInfoMap[structName].useFunctionList:
+                        # use string match
+                        if structName in funcMap[otherFunc].funcCodeLines:
+                            FunctionAndDependencies.structsWithUsageInfoMap[structName].useFunctionList.append(otherFunc)
+
                 # We will use the python-clang bindings
                 # It is read-only so it shouldn't cause much of a trouble
                 otherFullFileName = os.path.join(srcPath, otherFunc+".i")

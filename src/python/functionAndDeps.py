@@ -7,6 +7,7 @@ class StructWithUsageInfo:
         self.name = name
         self.cCode = cCode
         self.usageList = {}
+        self.useFunctionList = []
         self.rustCode = ""
 
 class FunctionAndDependencies:

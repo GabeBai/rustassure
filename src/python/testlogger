@@ -1,0 +1,6 @@
+2025-12-12 17:12:38,158 - translator_logger - DEBUG - Extracting function bodies for file: ./inputs-simple/example/case1.i
+2025-12-12 17:12:38,158 - translator_logger - INFO - (Re-)extracting functions from file ./inputs-simple/example/case1.i
+2025-12-12 17:12:38,179 - translator_logger - INFO - Extracting char*/void* fields from 3 functions
+2025-12-12 17:12:38,179 - translator_logger - INFO - Extracting char*/void* field pointers from structs for file bar
+2025-12-12 17:12:38,343 - translator_logger - INFO - Extracting char*/void* field pointers from structs for file baz
+2025-12-12 17:12:38,387 - translator_logger - INFO - Extracting char*/void* field pointers from structs for file foo
